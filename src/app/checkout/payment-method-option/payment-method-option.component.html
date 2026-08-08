@@ -1,0 +1,24 @@
+<div
+  class="relative flex flex-col items-center justify-center p-md border-2 rounded-xl cursor-pointer transition-all"
+  [class.border-primary]="selected()"
+  [class.bg-surface-container-low]="selected()"
+  [class.border-outline-variant]="!selected()"
+  [class.hover:border-primary/50]="!selected()"
+>
+  <span
+    class="material-symbols-outlined mb-sm"
+    [class.text-primary]="selected()"
+    [class.text-on-surface-variant]="!selected()"
+    style="font-size: 32px;"
+  >{{ icon() }}</span>
+  <span
+    class="font-label-md text-label-md"
+    [class.text-primary]="selected()"
+    [class.text-on-surface-variant]="!selected()"
+  >{{ label() }}</span>
+  @if (selected()) {
+    <div class="absolute top-2 right-2 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+      <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+    </div>
+  }
+</div>

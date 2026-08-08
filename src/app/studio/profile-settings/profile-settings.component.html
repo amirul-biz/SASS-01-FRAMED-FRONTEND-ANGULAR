@@ -1,0 +1,75 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Profile Settings</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Manage how riders and the platform see you.</p>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
+    <div class="flex items-center gap-md mb-lg">
+      <img [src]="avatarUrl" alt="Your avatar" class="w-16 h-16 rounded-full object-cover" />
+      <div>
+        <span class="font-label-md text-label-md text-on-surface block">Profile Photo</span>
+        <span class="text-caption text-on-surface-variant">Avatar uploads aren't available in this demo.</span>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-lg">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="name">Display Name</label>
+        <input
+          id="name"
+          formControlName="name"
+          type="text"
+          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <p class="text-caption text-error mt-xs">Display name is required.</p>
+        }
+      </div>
+
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address</label>
+        <input
+          id="email"
+          formControlName="email"
+          type="email"
+          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface-container-low text-on-surface-variant cursor-not-allowed"
+        />
+        <p class="text-caption text-on-surface-variant mt-xs">Your email is tied to your login and can't be changed here.</p>
+      </div>
+
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="location">Location</label>
+        <input
+          id="location"
+          formControlName="location"
+          type="text"
+          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="bio">Bio</label>
+        <textarea
+          id="bio"
+          formControlName="bio"
+          rows="4"
+          class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+        ></textarea>
+        <p class="text-caption text-on-surface-variant mt-xs">Shown on your public photographer profile.</p>
+      </div>
+
+      <div class="flex items-center gap-md">
+        <button type="submit" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+          Save Changes
+        </button>
+        @if (saved()) {
+          <span class="text-caption font-label-md text-secondary flex items-center gap-xs">
+            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            Saved
+          </span>
+        }
+      </div>
+    </form>
+  </div>
+</div>

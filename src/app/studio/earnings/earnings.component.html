@@ -1,0 +1,48 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Earnings</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Estimated revenue across your events, based on each event's current pricing.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-md mb-xl">
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Estimated Total Revenue</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ formatCurrency(totalRevenue()) }}</span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Photos Uploaded</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalPhotos() }}</span>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md border-b border-outline-variant">
+      <h2 class="font-headline-md text-headline-md text-on-surface">Revenue by Event</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+            <th class="p-md">Event Name</th>
+            <th class="p-md">Photos</th>
+            <th class="p-md">Base Price</th>
+            <th class="p-md text-right">Estimated Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.event.id) {
+            <tr class="border-b border-outline-variant last:border-0">
+              <td class="p-md font-label-md text-label-md text-on-surface">{{ row.event.title }}</td>
+              <td class="p-md font-body-md text-body-md text-on-surface tabular-nums">{{ row.event.photoCount }}</td>
+              <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ formatCurrency(row.basePrice) }}</td>
+              <td class="p-md font-label-md text-label-md text-on-surface text-right">{{ formatCurrency(row.estimatedRevenue) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (rows().length === 0) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No events yet.</p>
+      }
+    </div>
+  </div>
+</div>

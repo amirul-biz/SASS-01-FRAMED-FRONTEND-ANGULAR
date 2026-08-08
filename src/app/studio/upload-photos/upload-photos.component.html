@@ -1,0 +1,94 @@
+@if (event(); as ev) {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+    <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
+      <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
+      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <span class="text-on-surface">{{ ev.title }}</span>
+      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <span class="text-on-surface">Upload</span>
+    </nav>
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+      <div>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Upload Photos</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant">{{ ev.title }}</p>
+      </div>
+      <label class="flex items-center gap-sm cursor-pointer">
+        <span class="font-label-md text-label-md text-on-surface-variant">Publish Gallery</span>
+        <button
+          type="button"
+          (click)="togglePublish()"
+          class="w-11 h-6 rounded-full transition-colors relative"
+          [class.bg-secondary]="publishGallery()"
+          [class.bg-outline-variant]="!publishGallery()"
+        >
+          <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="publishGallery()"></span>
+        </button>
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
+      <div class="lg:col-span-2 flex flex-col gap-lg">
+        <div
+          class="border-2 border-dashed rounded-xl p-xl flex flex-col items-center justify-center bg-surface-container-lowest cursor-pointer transition-all"
+          [class.border-primary]="isDragging()"
+          [class.bg-surface-container-low]="isDragging()"
+          [class.border-outline-variant]="!isDragging()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          <span class="material-symbols-outlined text-outline text-[48px] mb-md">cloud_upload</span>
+          <span class="font-label-md text-label-md text-on-surface text-center">Drag &amp; Drop high-res photos here</span>
+          <span class="text-caption text-on-surface-variant mt-xs text-center">Or click to browse. Supports JPG, PNG up to 50MB each.</span>
+          <button type="button" class="mt-lg px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md">Select Files</button>
+          <input #fileInput type="file" multiple accept="image/*" class="hidden" (change)="onFileInputChange($event)" (click)="$event.stopPropagation()" />
+        </div>
+
+        @if (uploading().length > 0) {
+          <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+            <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-md">Uploading ({{ uploading().length }})</h3>
+            <div class="flex flex-col gap-md">
+              @for (item of uploading(); track item.id) {
+                <div class="flex items-center gap-md">
+                  <img [src]="item.previewUrl" class="w-10 h-10 rounded-md object-cover" alt="Upload preview" />
+                  <div class="flex-1">
+                    <div class="flex justify-between text-caption font-label-md text-on-surface-variant mb-xs">
+                      <span>{{ item.fileName }}</span>
+                      <span>{{ item.progress }}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                      <div class="h-full bg-secondary transition-all" [style.width.%]="item.progress"></div>
+                    </div>
+                  </div>
+                  <button type="button" (click)="cancelUpload(item.id)" class="text-on-surface-variant hover:text-error">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <div class="flex items-center justify-between mb-md">
+          <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Recently Uploaded</h3>
+          <span class="text-caption text-on-surface-variant">{{ recentPhotos().length }} items</span>
+        </div>
+        <div class="grid grid-cols-2 gap-sm max-h-[500px] overflow-y-auto pr-xs">
+          @for (photo of recentPhotos(); track photo.id) {
+            <div class="relative aspect-square rounded-lg overflow-hidden bg-surface-container">
+              <img [src]="photo.imageUrl" [alt]="photo.label" class="w-full h-full object-cover" />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Event not found.</p>
+  </div>
+}

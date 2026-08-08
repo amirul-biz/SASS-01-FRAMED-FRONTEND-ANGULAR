@@ -1,0 +1,70 @@
+<aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(20,33,61,0.04)]">
+  <div class="p-lg flex items-center gap-sm mb-lg">
+    <span class="material-symbols-outlined text-primary text-[28px]">photo_camera</span>
+    <span class="font-headline-md text-headline-md text-primary tracking-tight">PICSWEEP</span>
+  </div>
+  <div class="px-lg mb-xl flex items-center gap-md">
+    <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center shadow-sm">
+      <span class="material-symbols-outlined text-on-surface-variant">person</span>
+    </div>
+    <div class="flex flex-col">
+      <span class="font-label-md text-label-md text-on-surface font-bold">{{ auth.currentUser()?.name }}</span>
+      <span class="font-caption text-caption text-on-surface-variant">Photographer</span>
+    </div>
+  </div>
+  <nav class="flex-1 px-md flex flex-col gap-xs">
+    <a
+      routerLink="/studio/events"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+    >
+      <span class="material-symbols-outlined mr-md">calendar_today</span>
+      <span class="font-label-md text-label-md">My Events</span>
+    </a>
+    <a
+      routerLink="/studio/pricing-bundles"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+    >
+      <span class="material-symbols-outlined mr-md">sell</span>
+      <span class="font-label-md text-label-md">Pricing Bundles</span>
+    </a>
+    <a
+      routerLink="/studio/earnings"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+    >
+      <span class="material-symbols-outlined mr-md">account_balance_wallet</span>
+      <span class="font-label-md text-label-md">Earnings</span>
+    </a>
+    <a
+      routerLink="/studio/profile-settings"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all mt-xl"
+    >
+      <span class="material-symbols-outlined mr-md">settings</span>
+      <span class="font-label-md text-label-md">Profile Settings</span>
+    </a>
+    <button
+      type="button"
+      (click)="logout()"
+      class="flex items-center px-md py-sm rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-all text-left"
+    >
+      <span class="material-symbols-outlined mr-md">logout</span>
+      <span class="font-label-md text-label-md">Log Out</span>
+    </button>
+  </nav>
+</aside>
+<div class="pl-72">
+  <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-end px-margin-desktop gap-lg">
+    <div class="flex-1 flex justify-start">
+      <div class="bg-surface-container flex items-center px-md py-xs rounded-full w-64">
+        <span class="material-symbols-outlined text-on-surface-variant mr-sm">search</span>
+        <input class="bg-transparent border-none focus:ring-0 text-caption w-full" placeholder="Search gallery..." aria-label="Search gallery" type="text" />
+      </div>
+    </div>
+  </header>
+  <main class="relative pt-16 min-h-screen bg-surface">
+    <router-outlet />
+  </main>
+</div>

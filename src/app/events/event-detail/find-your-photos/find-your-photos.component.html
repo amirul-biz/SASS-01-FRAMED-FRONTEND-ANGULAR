@@ -1,0 +1,83 @@
+<div class="bg-surface-container-lowest rounded-[12px] p-md shadow-[0px_4px_12px_rgba(20,33,61,0.08)]">
+  <h2 class="font-headline-md text-headline-md text-on-surface mb-md">Find Your Photos</h2>
+
+  <div class="flex w-full mb-md p-unit bg-surface-container rounded-lg">
+    <button
+      type="button"
+      class="flex-1 py-sm text-label-md font-label-md rounded-md transition-all"
+      [class.bg-surface-container-lowest]="activeTab() === 'plate'"
+      [class.shadow-sm]="activeTab() === 'plate'"
+      [class.text-primary]="activeTab() === 'plate'"
+      [class.text-on-surface-variant]="activeTab() !== 'plate'"
+      (click)="setTab('plate')"
+    >By Plate #</button>
+    <button
+      type="button"
+      class="flex-1 py-sm text-label-md font-label-md rounded-md transition-all"
+      [class.bg-surface-container-lowest]="activeTab() === 'facial'"
+      [class.shadow-sm]="activeTab() === 'facial'"
+      [class.text-primary]="activeTab() === 'facial'"
+      [class.text-on-surface-variant]="activeTab() !== 'facial'"
+      (click)="setTab('facial')"
+    >Facial Match</button>
+  </div>
+
+  @if (activeTab() === 'plate') {
+    <div class="flex flex-col gap-sm">
+      <label class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider" for="plate-input">Rider Plate Number</label>
+      <div class="flex gap-sm">
+        <input
+          #plateInput
+          id="plate-input"
+          type="text"
+          placeholder="e.g. 402"
+          class="w-full bg-surface rounded-[12px] border border-outline-variant px-md py-sm text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+          (keydown.enter)="search(plateInput.value)"
+        />
+        <button
+          type="button"
+          class="bg-primary text-on-primary rounded-[12px] px-md py-sm font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center min-w-[48px]"
+          (click)="search(plateInput.value)"
+        >
+          <span class="material-symbols-outlined">search</span>
+        </button>
+      </div>
+      <p class="text-caption text-on-surface-variant mt-xs">Leave blank to browse all photos.</p>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-sm">
+      <label class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider">Upload a selfie</label>
+      <div class="border-2 border-dashed border-outline-variant rounded-[12px] p-lg flex flex-col items-center justify-center bg-surface cursor-pointer hover:border-primary hover:bg-surface-container-low transition-all">
+        <span class="material-symbols-outlined text-outline text-[32px] mb-sm">face</span>
+        <span class="text-label-md font-label-md text-on-surface text-center">Drag &amp; drop or click to upload</span>
+        <span class="text-caption text-on-surface-variant mt-xs">We'll find matches across the event.</span>
+      </div>
+    </div>
+  }
+
+  <div class="mt-md pt-md border-t border-outline-variant flex flex-col gap-sm">
+    <span class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider">Filter by Time</span>
+    <div class="flex items-center gap-sm">
+      <div class="flex-1 flex flex-col gap-xs">
+        <label class="text-caption text-on-surface-variant" for="time-from">From</label>
+        <input
+          id="time-from"
+          type="time"
+          class="w-full bg-surface rounded-[12px] border border-outline-variant px-md py-sm text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+          [value]="fromTime()"
+          (change)="setFromTime($any($event.target).value)"
+        />
+      </div>
+      <div class="flex-1 flex flex-col gap-xs">
+        <label class="text-caption text-on-surface-variant" for="time-to">To</label>
+        <input
+          id="time-to"
+          type="time"
+          class="w-full bg-surface rounded-[12px] border border-outline-variant px-md py-sm text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+          [value]="toTime()"
+          (change)="setToTime($any($event.target).value)"
+        />
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+<aside class="fixed left-0 top-0 h-full w-72 bg-primary z-50 flex flex-col shadow-[0_1px_8px_rgba(20,33,61,0.04)]">
+  <div class="p-lg flex flex-col gap-sm mb-lg">
+    <div class="flex items-center gap-sm">
+      <span class="material-symbols-outlined text-on-primary text-[28px]">photo_camera</span>
+      <span class="font-headline-md text-headline-md text-on-primary tracking-tight">PICSWEEP</span>
+    </div>
+    <span class="self-start px-sm py-xs bg-on-primary/10 rounded-full text-caption font-label-md text-on-primary uppercase tracking-widest">Admin Console</span>
+  </div>
+  <div class="px-lg mb-xl flex items-center gap-md">
+    <div class="w-12 h-12 rounded-full bg-on-primary/10 flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary">person</span>
+    </div>
+    <div class="flex flex-col">
+      <span class="font-label-md text-label-md text-on-primary font-bold">{{ auth.currentUser()?.name }}</span>
+      <span class="font-caption text-caption text-on-primary/60">Platform Admin</span>
+    </div>
+  </div>
+  <nav class="flex-1 px-md flex flex-col gap-xs">
+    <a
+      routerLink="/admin/overview"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+    >
+      <span class="material-symbols-outlined mr-md">dashboard</span>
+      <span class="font-label-md text-label-md">Overview</span>
+    </a>
+    <span class="flex items-center px-md py-sm rounded-lg text-on-primary/40 cursor-not-allowed" title="Coming soon">
+      <span class="material-symbols-outlined mr-md">photo_camera</span>
+      <span class="font-label-md text-label-md">Photographers</span>
+    </span>
+    <span class="flex items-center px-md py-sm rounded-lg text-on-primary/40 cursor-not-allowed" title="Coming soon">
+      <span class="material-symbols-outlined mr-md">event</span>
+      <span class="font-label-md text-label-md">Events</span>
+    </span>
+    <span class="flex items-center px-md py-sm rounded-lg text-on-primary/40 cursor-not-allowed" title="Coming soon">
+      <span class="material-symbols-outlined mr-md">manage_accounts</span>
+      <span class="font-label-md text-label-md">Accounts</span>
+    </span>
+    <span class="flex items-center px-md py-sm rounded-lg text-on-primary/40 cursor-not-allowed mt-xl" title="Coming soon">
+      <span class="material-symbols-outlined mr-md">settings</span>
+      <span class="font-label-md text-label-md">Settings</span>
+    </span>
+    <button
+      type="button"
+      (click)="logout()"
+      class="flex items-center px-md py-sm rounded-lg text-secondary-fixed-dim hover:bg-on-primary/10 transition-all text-left"
+    >
+      <span class="material-symbols-outlined mr-md">logout</span>
+      <span class="font-label-md text-label-md">Log Out</span>
+    </button>
+  </nav>
+</aside>
+<div class="pl-72">
+  <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-end px-margin-desktop gap-lg">
+    <div class="flex-1 flex justify-start">
+      <div class="bg-surface-container flex items-center px-md py-xs rounded-full w-80">
+        <span class="material-symbols-outlined text-on-surface-variant mr-sm">search</span>
+        <input class="bg-transparent border-none focus:ring-0 text-caption w-full" placeholder="Search photographers, events or transactions..." type="text" />
+      </div>
+    </div>
+    <span class="text-caption font-label-md text-on-surface-variant opacity-70">Platform Admin / Superuser Access</span>
+  </header>
+  <main class="relative pt-16 min-h-screen bg-surface">
+    <router-outlet />
+  </main>
+</div>

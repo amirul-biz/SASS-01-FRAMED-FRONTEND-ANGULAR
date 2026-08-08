@@ -1,0 +1,97 @@
+@if (event(); as ev) {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+    <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
+      <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
+      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <span class="text-on-surface">{{ ev.title }}</span>
+      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <span class="text-on-surface">Pricing</span>
+    </nav>
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+      <div>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Pricing</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant">Choose which pricing bundle applies to {{ ev.title }}.</p>
+      </div>
+      <div class="flex items-center gap-sm">
+        <a routerLink="/studio/pricing-bundles" class="px-lg py-sm border-2 border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
+          Manage Pricing Bundles
+        </a>
+        <button type="button" (click)="save()" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+          Save
+        </button>
+      </div>
+    </div>
+
+    @if (availableBundles().length === 0) {
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md">
+        <span class="material-symbols-outlined text-outline text-[48px]">sell</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">You don't have any pricing bundles yet.</p>
+        <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+          Create a Pricing Bundle
+        </a>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl items-start">
+        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-md">
+          @for (bundle of availableBundles(); track bundle.id) {
+            <button
+              type="button"
+              (click)="selectBundle(bundle.id)"
+              class="text-left bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)] border-2 transition-all"
+              [class.border-primary]="selectedBundleId() === bundle.id"
+              [class.bg-surface-container-low]="selectedBundleId() === bundle.id"
+              [class.border-transparent]="selectedBundleId() !== bundle.id"
+            >
+              <div class="flex items-start justify-between mb-xs">
+                <span class="font-label-md text-label-md text-on-surface">{{ bundle.name }}</span>
+                @if (selectedBundleId() === bundle.id) {
+                  <span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                }
+              </div>
+              <span class="font-headline-md text-headline-md text-primary block">{{ formatCurrency(bundle.basePrice) }}<span class="text-caption font-body-md text-on-surface-variant">/photo</span></span>
+              @if (bundle.bundleModel !== 'none' && bundle.bundleTiers.length > 0) {
+                <span class="text-caption text-on-surface-variant block mt-xs">
+                  {{ bundle.bundleTiers[0].minQuantity }}+ photos
+                  {{ bundle.bundleModel === 'flat-tier' ? ('for ' + formatCurrency(bundle.bundleTiers[0].value) + ' flat') : (bundle.bundleTiers[0].value + '% off each') }}
+                </span>
+              }
+            </button>
+          }
+        </div>
+
+        <aside class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] sticky top-24">
+          <h2 class="font-headline-md text-headline-md text-primary mb-md">Live Preview (Rider View)</h2>
+          @if (selectedBundle(); as bundle) {
+            <div class="flex flex-col gap-sm">
+              <div class="flex justify-between items-center">
+                <span class="font-body-md text-body-md text-on-surface-variant">Single Photo</span>
+                <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(bundle.basePrice) }}</span>
+              </div>
+              @if (bundle.bundleModel !== 'none' && previewTiers().length > 0) {
+                <div class="border-t border-outline-variant mt-sm pt-sm flex flex-col gap-sm">
+                  <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Bundle Deals</span>
+                  @for (row of previewTiers(); track row.tier.minQuantity) {
+                    <div class="flex justify-between items-center">
+                      <span class="font-body-md text-body-md text-on-surface-variant">{{ row.tier.minQuantity }}+ Photos</span>
+                      <span class="font-label-md text-label-md text-on-surface">
+                        {{ formatCurrency(row.preview.subtotal) }} Total / {{ formatCurrency(row.preview.pricePerPhoto) }} / photo
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-body-md font-body-md text-on-surface-variant">Select a bundle to preview it here.</p>
+          }
+          <p class="text-caption text-on-surface-variant text-center mt-lg">This preview updates automatically.</p>
+        </aside>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Event not found.</p>
+  </div>
+}

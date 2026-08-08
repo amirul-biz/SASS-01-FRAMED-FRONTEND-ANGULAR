@@ -1,0 +1,65 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full py-xl">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md mb-xl">
+    <div>
+      <h1 class="font-display-lg text-display-lg text-primary tracking-tight">Events Directory</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-sm">
+        Browse the latest extreme sports events captured by our professional network.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-md">
+      <div class="relative">
+        <label class="sr-only" for="location-filter">Filter by Location</label>
+        <div class="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+        </div>
+        <select
+          id="location-filter"
+          class="appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer hover:bg-surface-container-low min-w-[160px]"
+          (change)="onLocationChange($event)"
+        >
+          <option value="">All Locations</option>
+          @for (location of locations; track location) {
+            <option [value]="location">{{ location }}</option>
+          }
+        </select>
+      </div>
+      <div class="relative">
+        <label class="sr-only" for="sort-select">Sort Events</label>
+        <div class="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">sort</span>
+        </div>
+        <select
+          id="sort-select"
+          class="appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer hover:bg-surface-container-low min-w-[180px]"
+          (change)="onSortChange($event)"
+        >
+          <option value="latest">Latest Uploads</option>
+          <option value="photographer">Photographer (A-Z)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (selectedLocation()) {
+    <div class="flex gap-sm mb-lg">
+      <span class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-md font-caption text-caption text-on-surface-variant">
+        Location: {{ selectedLocation() }}
+        <button (click)="clearLocationFilter()" class="hover:text-primary transition-colors flex items-center">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </span>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
+    @for (event of events(); track event.id) {
+      <app-event-card [event]="event" />
+    }
+  </div>
+
+  @if (events().length === 0) {
+    <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">
+      No events match this filter.
+    </p>
+  }
+</div>

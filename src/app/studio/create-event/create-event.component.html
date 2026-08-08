@@ -1,0 +1,109 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
+    <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
+    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    <span class="text-on-surface">New Event</span>
+  </nav>
+
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Create New Event</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">It'll be saved as a draft — publish it once you've uploaded photos and set pricing.</p>
+  </div>
+
+  @if (availableBundles.length === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md max-w-[36rem]">
+      <span class="material-symbols-outlined text-outline text-[48px]">sell</span>
+      <p class="font-body-md text-body-md text-on-surface-variant">You need at least one pricing bundle before you can create an event.</p>
+      <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+        Create a Pricing Bundle
+      </a>
+    </div>
+  } @else {
+  <form [formGroup]="form" (ngSubmit)="create()" class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="title">Event Title</label>
+      <input
+        id="title"
+        formControlName="title"
+        type="text"
+        placeholder="e.g. Bukit Kiara MTB Challenge 2024"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
+      @if (form.controls.title.invalid && form.controls.title.touched) {
+        <p class="text-caption text-error mt-xs">Event title is required.</p>
+      }
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="category">Category</label>
+      <input
+        id="category"
+        formControlName="category"
+        type="text"
+        placeholder="e.g. Mountain Biking"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
+      @if (form.controls.category.invalid && form.controls.category.touched) {
+        <p class="text-caption text-error mt-xs">Category is required.</p>
+      }
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="location">Location</label>
+      <input
+        id="location"
+        formControlName="location"
+        type="text"
+        placeholder="e.g. Kuala Lumpur"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
+      @if (form.controls.location.invalid && form.controls.location.touched) {
+        <p class="text-caption text-error mt-xs">Location is required.</p>
+      }
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="date-range">Date</label>
+      <input
+        id="date-range"
+        formControlName="dateRange"
+        type="text"
+        placeholder="e.g. November 4, 2024"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
+      @if (form.controls.dateRange.invalid && form.controls.dateRange.touched) {
+        <p class="text-caption text-error mt-xs">Date is required.</p>
+      }
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="pricing-bundle">Pricing Bundle</label>
+      <select
+        id="pricing-bundle"
+        formControlName="pricingBundleId"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      >
+        <option value="" disabled>Select a bundle...</option>
+        @for (bundle of availableBundles; track bundle.id) {
+          <option [value]="bundle.id">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</option>
+        }
+      </select>
+      @if (form.controls.pricingBundleId.invalid && form.controls.pricingBundleId.touched) {
+        <p class="text-caption text-error mt-xs">Choose a pricing bundle.</p>
+      }
+      <p class="text-caption text-on-surface-variant mt-xs">
+        <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-md pt-sm">
+      <a routerLink="/studio/events" class="px-lg py-sm border-2 border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
+        Cancel
+      </a>
+      <button type="submit" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+        Create Event
+      </button>
+    </div>
+  </form>
+  }
+</div>

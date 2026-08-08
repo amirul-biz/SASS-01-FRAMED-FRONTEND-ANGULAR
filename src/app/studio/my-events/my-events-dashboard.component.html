@@ -1,0 +1,107 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">My Events</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Manage your photography events, uploads, and pricing.</p>
+    </div>
+    <a
+      routerLink="/studio/events/new"
+      class="flex items-center gap-xs px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors"
+    >
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      Create New Event
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Events</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalEvents() }}</span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Photos Uploaded</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalPhotos() }}</span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Revenue</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ formatCurrency(totalRevenue()) }}</span>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Published</span>
+      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ publishedCount() }}</span>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex items-center justify-between gap-md border-b border-outline-variant">
+      <div class="flex items-center gap-sm">
+        <h2 class="font-headline-md text-headline-md text-on-surface">Event Roster</h2>
+        <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ totalEvents() }} total</span>
+      </div>
+      <input
+        class="h-10 px-md border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-64"
+        placeholder="Filter events..."
+        type="text"
+        (input)="onFilterChange($event)"
+      />
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+            <th class="p-md">Event Name</th>
+            <th class="p-md">Photos</th>
+            <th class="p-md">Status</th>
+            <th class="p-md text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (event of events(); track event.id) {
+            <tr class="border-b border-outline-variant last:border-0">
+              <td class="p-md">
+                <div class="flex items-center gap-sm">
+                  <img [src]="event.coverImageUrl" [alt]="event.title" class="w-12 h-12 rounded-lg object-cover" />
+                  <div class="flex flex-col">
+                    <span class="font-label-md text-label-md text-on-surface">{{ event.title }}</span>
+                    <span class="font-caption text-caption text-on-surface-variant">{{ event.category }} &middot; {{ event.location }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="p-md font-body-md text-body-md text-on-surface tabular-nums">{{ event.photoCount }}</td>
+              <td class="p-md">
+                @if (event.status === 'published') {
+                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
+                } @else if (event.status === 'flagged') {
+                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-error-container text-on-error-container">Flagged</span>
+                } @else {
+                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
+                }
+              </td>
+              <td class="p-md">
+                <div class="flex items-center justify-end gap-xs">
+                  <a
+                    [routerLink]="['/studio/events', event.id, 'upload']"
+                    class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                    title="Upload More"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+                  </a>
+                  <a
+                    [routerLink]="['/studio/events', event.id, 'pricing']"
+                    class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                    title="Set Pricing"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">sell</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (events().length === 0) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No events match this filter.</p>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-md" (click)="close()">
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(20,33,61,0.2)] w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="w-full md:w-1/2 aspect-square md:aspect-auto bg-surface-variant relative shrink-0">
+      <img [src]="photo().imageUrl" [alt]="photo().label" class="w-full h-full object-cover" />
+      <button
+        type="button"
+        (click)="close()"
+        class="absolute top-sm right-sm w-9 h-9 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+    <div class="w-full md:w-1/2 p-md md:p-lg flex flex-col gap-md">
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface">{{ photo().label }}</h2>
+        <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>
+      </div>
+      <div class="flex flex-col gap-sm">
+        <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Format</span>
+        @for (option of formatOptions; track option.id) {
+          <label
+            class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
+            [class.border-primary]="selectedFormatId() === option.id"
+            [class.bg-surface-container-low]="selectedFormatId() === option.id"
+            [class.border-outline-variant]="selectedFormatId() !== option.id"
+          >
+            <span class="flex items-center gap-sm">
+              <input
+                type="radio"
+                name="format-option"
+                class="accent-primary"
+                [checked]="selectedFormatId() === option.id"
+                (change)="chooseFormat(option)"
+              />
+              <span class="font-label-md text-label-md text-on-surface">{{ option.label }}</span>
+            </span>
+            <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(priceFor(option)) }}</span>
+          </label>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="confirmAddToCart()"
+        class="mt-auto w-full h-12 bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-xs"
+      >
+        <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+        Add to Cart
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,118 @@
+<div class="flex flex-col w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+  @if (orderPlaced()) {
+    <div class="flex flex-col items-center text-center gap-md py-xl">
+      <span class="material-symbols-outlined text-secondary text-[64px]">check_circle</span>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Purchase Complete</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+        Your high-resolution downloads are on their way to your inbox.
+      </p>
+      <button
+        type="button"
+        (click)="backToEvents()"
+        class="mt-md px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+      >
+        Back to Events
+      </button>
+    </div>
+  } @else {
+    <div class="mb-lg">
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Checkout</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Review your photos and complete your purchase securely.</p>
+    </div>
+
+    @if (selection.selectedCount() === 0) {
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md">
+        <span class="material-symbols-outlined text-outline text-[48px]">shopping_bag</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">You haven't selected any photos yet.</p>
+        <button
+          type="button"
+          (click)="backToEvents()"
+          class="px-lg py-md border-2 border-primary text-primary font-label-md rounded-xl hover:bg-primary/5 transition-colors"
+        >
+          Browse Events
+        </button>
+      </div>
+    } @else {
+      <div class="flex flex-col lg:flex-row gap-xl items-start w-full">
+        <div class="w-full lg:w-7/12 flex flex-col gap-lg order-2 lg:order-1">
+          <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+            <h2 class="font-headline-md text-headline-md text-primary mb-md flex items-center gap-sm">
+              <span class="material-symbols-outlined text-secondary">contact_mail</span> Contact Information
+            </h2>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-md">Where should we send your high-resolution downloads?</p>
+            <form [formGroup]="contactForm" class="flex flex-col gap-md">
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address</label>
+                <input
+                  id="email"
+                  formControlName="email"
+                  placeholder="rider@example.com"
+                  type="email"
+                  class="w-full h-12 px-md border rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest placeholder:text-outline"
+                  [class.border-outline-variant]="contactForm.controls.email.valid || contactForm.controls.email.pristine"
+                  [class.border-error]="contactForm.controls.email.invalid && contactForm.controls.email.touched"
+                />
+                @if (contactForm.controls.email.invalid && contactForm.controls.email.touched) {
+                  <p class="text-caption text-error mt-xs">Enter a valid email address.</p>
+                }
+              </div>
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="phone">Phone Number</label>
+                <div class="flex gap-sm">
+                  <select
+                    formControlName="countryCode"
+                    class="h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest"
+                  >
+                    <option value="+60">+60</option>
+                    <option value="+65">+65</option>
+                  </select>
+                  <input
+                    id="phone"
+                    formControlName="phone"
+                    placeholder="12 345 6789"
+                    type="tel"
+                    class="flex-1 h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest placeholder:text-outline"
+                  />
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+            <h2 class="font-headline-md text-headline-md text-primary mb-md flex items-center gap-sm">
+              <span class="material-symbols-outlined text-secondary">payments</span> Payment Method
+            </h2>
+            <form [formGroup]="paymentForm" class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+              @for (method of paymentMethods; track method.value) {
+                <label class="cursor-pointer">
+                  <input type="radio" formControlName="paymentMethod" [value]="method.value" class="sr-only" />
+                  <app-payment-method-option
+                    [icon]="method.icon"
+                    [label]="method.label"
+                    [selected]="selectedPaymentMethod === method.value"
+                  />
+                </label>
+              }
+            </form>
+            <button
+              type="button"
+              (click)="completePurchase()"
+              class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] hover:scale-[1.01] flex items-center justify-center gap-sm"
+            >
+              Complete Purchase
+              <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+            </button>
+            <div class="mt-md flex items-center justify-center gap-sm text-on-surface-variant opacity-80">
+              <span class="material-symbols-outlined text-[16px]">lock</span>
+              <span class="font-caption text-caption">Payments are secure and encrypted.</span>
+            </div>
+          </section>
+        </div>
+
+        <div class="w-full lg:w-5/12 order-1 lg:order-2">
+          <app-order-summary />
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,30 @@
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+  <div class="h-20 w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between gap-sm">
+    <a routerLink="/" class="flex items-center gap-md shrink-0">
+      <span class="material-symbols-outlined text-primary text-[28px]">photo_camera</span>
+      <span class="font-headline-md text-headline-md text-primary tracking-tight">PICSWEEP</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-lg ml-xl">
+      <a
+        routerLink="/photographers"
+        routerLinkActive="text-primary font-bold"
+        [ariaCurrentWhenActive]="'page'"
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+      >Photographers</a>
+      <a
+        routerLink="/events"
+        routerLinkActive="text-primary font-bold"
+        [ariaCurrentWhenActive]="'page'"
+        class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
+      >Events</a>
+      <span class="text-label-md font-label-md text-on-surface-variant/50 cursor-not-allowed" title="Coming soon">How It Works</span>
+    </nav>
+    <div class="flex items-center gap-md ml-auto shrink-0">
+      <a routerLink="/login" class="hidden sm:inline text-caption font-label-md text-on-surface-variant hover:text-primary transition-colors opacity-70 hover:opacity-100">Photographer / Admin Login</a>
+      <div class="hidden sm:block w-unit h-8 bg-outline-variant/30 mx-xs"></div>
+      <a [routerLink]="profileLink()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0">
+        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+      </a>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,51 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Pricing Bundles</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Reusable pricing presets you can apply to any event.</p>
+    </div>
+    <a
+      routerLink="/studio/pricing-bundles/new"
+      class="flex items-center gap-xs px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors"
+    >
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      New Bundle
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+    @for (row of bundles(); track row.bundle.id) {
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex flex-col gap-sm">
+        <div class="flex items-start justify-between">
+          <h3 class="font-headline-md text-headline-md text-on-surface">{{ row.bundle.name }}</h3>
+          <span class="font-label-md text-label-md text-secondary">{{ formatCurrency(row.bundle.basePrice) }}/photo</span>
+        </div>
+        <p class="text-caption text-on-surface-variant">{{ ruleSummary(row.bundle) }}</p>
+        <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full self-start">
+          {{ row.eventCount }} {{ row.eventCount === 1 ? 'event' : 'events' }} using this
+        </span>
+        <div class="flex items-center gap-sm mt-md pt-md border-t border-outline-variant">
+          <a
+            [routerLink]="['/studio/pricing-bundles', row.bundle.id, 'edit']"
+            class="flex-1 text-center px-md py-sm border-2 border-outline-variant text-on-surface-variant rounded-lg font-label-md hover:bg-surface-container-low transition-colors"
+          >
+            Edit
+          </a>
+          <button
+            type="button"
+            [disabled]="row.eventCount > 0"
+            [title]="row.eventCount > 0 ? row.eventCount + ' event(s) use this bundle' : ''"
+            (click)="deleteBundle(row.bundle.id)"
+            class="px-md py-sm rounded-lg text-error hover:bg-error-container transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (bundles().length === 0) {
+    <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No pricing bundles yet. Create one to get started.</p>
+  }
+</div>

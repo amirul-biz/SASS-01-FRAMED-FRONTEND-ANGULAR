@@ -1,0 +1,35 @@
+<div
+  class="fixed bottom-0 left-0 w-full bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 shadow-[0_-4px_24px_rgba(20,33,61,0.1)] z-50 transform transition-transform duration-300"
+  [class.translate-y-full]="selection.selectedCount() === 0"
+>
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-md flex flex-col md:flex-row items-center justify-between gap-md">
+    <div class="flex flex-col">
+      <div class="flex items-baseline gap-sm">
+        <span class="font-headline-md text-headline-md text-on-surface">{{ selection.selectedCount() }} Photos Selected</span>
+        <span class="text-body-lg font-body-lg text-on-surface-variant">&mdash;</span>
+        <span class="font-headline-md text-headline-md text-primary">{{ formatCurrency(selection.pricing().total) }}</span>
+      </div>
+      @if (selection.pricing().bundleApplied) {
+        <span class="text-caption font-label-md text-secondary flex items-center gap-xs">
+          <span class="material-symbols-outlined text-[14px]">local_offer</span>
+          Bundle price applied ({{ formatCurrency(selection.pricing().pricePerPhoto) }}/photo)
+        </span>
+      } @else if (nextTierHint()) {
+        <span class="text-caption font-label-md text-secondary flex items-center gap-xs">
+          <span class="material-symbols-outlined text-[14px]">local_offer</span>
+          {{ nextTierHint() }}
+        </span>
+      }
+    </div>
+    <div class="flex items-center gap-md w-full md:w-auto">
+      <button
+        type="button"
+        (click)="proceedToCheckout()"
+        class="flex-1 md:flex-none px-xl py-md bg-secondary text-on-secondary rounded-[12px] font-label-md hover:bg-secondary-container hover:text-on-secondary-container transition-all shadow-md active:scale-95 flex items-center justify-center gap-sm"
+      >
+        Proceed to Checkout
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </button>
+    </div>
+  </div>
+</div>

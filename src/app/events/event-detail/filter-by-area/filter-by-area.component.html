@@ -1,0 +1,17 @@
+<div class="bg-surface-container-lowest rounded-[12px] p-md shadow-[0px_4px_12px_rgba(20,33,61,0.08)] hidden lg:block">
+  <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-widest mb-md">Filter by Area</h3>
+  <div class="flex flex-col gap-sm">
+    @for (area of areaCounts(); track area.areaId) {
+      <label class="flex items-center gap-sm cursor-pointer group">
+        <input
+          type="checkbox"
+          class="accent-secondary w-4 h-4 rounded border-outline-variant text-secondary focus:ring-secondary/20"
+          [checked]="isChecked(area.areaId)"
+          (change)="toggle(area.areaId)"
+        />
+        <span class="text-body-md font-body-md text-on-surface-variant group-hover:text-primary transition-colors">{{ area.area }}</span>
+        <span class="ml-auto text-caption bg-surface-container px-sm py-xs rounded-full text-on-surface-variant">{{ area.count }}</span>
+      </label>
+    }
+  </div>
+</div>

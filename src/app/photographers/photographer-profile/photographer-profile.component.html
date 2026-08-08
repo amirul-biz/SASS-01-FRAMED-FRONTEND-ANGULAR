@@ -1,0 +1,89 @@
+@if (photographer(); as p) {
+  <div class="flex flex-col w-full min-h-screen">
+    <div
+      class="relative w-full h-[300px] md:h-[400px] -mt-20 bg-surface-container bg-cover bg-center"
+      [style.background-image]="'url(https://picsum.photos/seed/' + p.id + '-cover/1600/500)'"
+    >
+      <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
+    </div>
+
+    <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full relative -mt-24 md:-mt-32">
+      <div class="flex flex-col md:flex-row gap-lg md:gap-xl items-start md:items-end w-full mb-xl">
+        <div class="relative flex-shrink-0">
+          <img
+            [src]="p.avatarUrl"
+            [alt]="p.name"
+            class="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-surface shadow-[0_8px_24px_rgba(20,33,61,0.12)] object-cover bg-surface-variant z-10 relative"
+          />
+          @if (p.status === 'active') {
+            <div class="absolute bottom-2 right-2 bg-secondary w-6 h-6 rounded-full flex items-center justify-center border-2 border-surface shadow-sm z-20" title="Verified Photographer">
+              <span class="material-symbols-outlined text-on-secondary text-[14px]">check</span>
+            </div>
+          }
+        </div>
+        <div class="flex-grow flex flex-col md:flex-row justify-between items-start md:items-end gap-md w-full">
+          <div class="flex flex-col text-on-surface">
+            <h1 class="font-display-lg text-display-lg text-primary mb-xs">{{ p.name }}</h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-md">{{ p.bio }}</p>
+            <div class="flex items-center gap-md text-caption font-caption text-on-surface-variant">
+              <div class="flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px]">location_on</span>
+                {{ p.location }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-xl">
+        <div class="bg-surface-container rounded-xl p-md flex flex-col items-start shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-xs">Total Events</span>
+          <span class="font-headline-lg text-headline-lg text-primary">{{ p.stats.eventsShot }}</span>
+        </div>
+        <div class="bg-surface-container rounded-xl p-md flex flex-col items-start shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-xs">Photos Uploaded</span>
+          <span class="font-headline-lg text-headline-lg text-primary">{{ p.stats.photosUploaded }}</span>
+        </div>
+        <div class="bg-surface-container rounded-xl p-md flex flex-col items-start shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-xs">Member Since</span>
+          <span class="font-headline-lg text-headline-md text-primary mt-1">{{ p.joinedDate }}</span>
+        </div>
+        <div class="bg-surface-container rounded-xl p-md flex flex-col items-start shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-xs">Top Category</span>
+          <div class="flex items-center gap-xs mt-1">
+            <span class="bg-secondary/10 text-secondary px-2 py-1 rounded-sm font-label-md text-label-md whitespace-nowrap">{{ topCategory() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col w-full mb-xl">
+        <div class="flex justify-between items-end mb-lg border-b-2 border-surface-variant pb-sm">
+          <h2 class="font-headline-lg text-headline-lg text-primary">Captured Events</h2>
+          <div class="flex items-center gap-sm">
+            <span class="font-caption text-caption text-on-surface-variant">Sort by:</span>
+            <select
+              class="bg-surface text-primary font-label-md text-label-md border border-outline-variant rounded-lg px-sm py-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer hover:bg-surface-container transition-colors"
+              (change)="onSortChange($event)"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="popular">Most Photos</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+          @for (event of events(); track event.id) {
+            <app-event-card [event]="event" />
+          }
+        </div>
+        @if (events().length === 0) {
+          <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No published events yet.</p>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Photographer not found.</p>
+  </div>
+}

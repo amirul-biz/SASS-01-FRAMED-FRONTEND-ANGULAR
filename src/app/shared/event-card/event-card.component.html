@@ -1,0 +1,37 @@
+<article
+  [routerLink]="['/events', event().id]"
+  class="group bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0px_8px_24px_rgba(20,33,61,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden cursor-pointer relative h-full"
+>
+  <div class="relative w-full aspect-[4/3] bg-surface-variant overflow-hidden">
+    <img
+      [src]="event().coverImageUrl"
+      [alt]="event().title"
+      class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+    <div class="absolute top-sm right-sm bg-surface-container-lowest/90 backdrop-blur-md px-sm py-xs rounded-md shadow-sm flex items-center gap-xs">
+      <span class="material-symbols-outlined text-[14px] text-primary">photo_library</span>
+      <span class="font-label-md text-label-md text-on-surface">{{ event().photoCount }}</span>
+    </div>
+    @if (event().isLive) {
+      <div class="absolute top-sm left-sm px-sm py-xs bg-secondary rounded-md text-caption font-label-md text-on-secondary uppercase tracking-widest">
+        Live
+      </div>
+    }
+  </div>
+  <div class="p-md flex flex-col gap-xs flex-1">
+    <span class="text-caption font-label-md text-secondary uppercase tracking-widest">{{ event().category }}</span>
+    <h3 class="font-headline-md text-headline-md text-on-surface leading-tight">{{ event().title }}</h3>
+    <div class="flex items-center gap-xs text-on-surface-variant">
+      <span class="material-symbols-outlined text-[16px]">calendar_today</span>
+      <span class="text-caption font-body-md">{{ event().dateRange }}</span>
+    </div>
+    <div class="flex items-center gap-xs text-on-surface-variant">
+      <span class="material-symbols-outlined text-[16px]">location_on</span>
+      <span class="text-caption font-body-md">{{ event().location }}</span>
+    </div>
+    <div class="flex items-center gap-xs text-on-surface-variant pt-xs border-t border-outline-variant mt-auto">
+      <span class="material-symbols-outlined text-[16px]">photo_camera</span>
+      <span class="text-caption font-body-md truncate">{{ event().photographerName }}</span>
+    </div>
+  </div>
+</article>
