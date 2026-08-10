@@ -35,7 +35,6 @@ describe('calculatePricing', () => {
       bundleApplied: false,
       subtotal: 0,
       bundleDiscount: 0,
-      platformFee: 0,
       total: 0,
     });
   });
@@ -47,7 +46,6 @@ describe('calculatePricing', () => {
       bundleApplied: false,
       subtotal: 0,
       bundleDiscount: 0,
-      platformFee: 0,
       total: 0,
     });
   });
@@ -60,8 +58,7 @@ describe('calculatePricing', () => {
       bundleApplied: false,
       subtotal: 60,
       bundleDiscount: 0,
-      platformFee: 2,
-      total: 62,
+      total: 60,
     });
   });
 
@@ -73,8 +70,7 @@ describe('calculatePricing', () => {
       bundleApplied: true,
       subtotal: 30,
       bundleDiscount: 45,
-      platformFee: 2,
-      total: 32,
+      total: 30,
     });
   });
 
@@ -86,8 +82,7 @@ describe('calculatePricing', () => {
       bundleApplied: true,
       subtotal: 50,
       bundleDiscount: 100,
-      platformFee: 2,
-      total: 52,
+      total: 50,
     });
   });
 
@@ -98,7 +93,7 @@ describe('calculatePricing', () => {
     expect(result.pricePerPhoto).toBeCloseTo(12.75);
     expect(result.subtotal).toBeCloseTo(63.75);
     expect(result.bundleDiscount).toBeCloseTo(11.25);
-    expect(result.total).toBeCloseTo(65.75);
+    expect(result.total).toBeCloseTo(63.75);
   });
 
   it('never applies a bundle when bundleModel is none', () => {
@@ -108,8 +103,7 @@ describe('calculatePricing', () => {
       bundleApplied: false,
       subtotal: 300,
       bundleDiscount: 0,
-      platformFee: 2,
-      total: 302,
+      total: 300,
     });
   });
 
@@ -119,7 +113,7 @@ describe('calculatePricing', () => {
     expect(result.pricePerPhoto).toBe(6);
     expect(result.subtotal).toBe(60);
     expect(result.bundleApplied).toBe(true);
-    expect(result.total).toBe(62);
+    expect(result.total).toBe(60);
   });
 
   it('forces no discount at all when forcedTier is explicitly null, even if tiers would qualify', () => {
@@ -128,7 +122,7 @@ describe('calculatePricing', () => {
     expect(result.bundleApplied).toBe(false);
     expect(result.subtotal).toBe(150);
     expect(result.bundleDiscount).toBe(0);
-    expect(result.total).toBe(152);
+    expect(result.total).toBe(150);
   });
 });
 

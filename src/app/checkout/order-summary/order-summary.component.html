@@ -1,4 +1,9 @@
-<aside class="w-full lg:w-5/12 bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] sticky top-24">
+<aside
+  class="w-full bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]"
+  [class.lg:w-5/12]="!fullWidth()"
+  [class.sticky]="!fullWidth()"
+  [class.top-24]="!fullWidth()"
+>
   <h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-outline-variant pb-md flex justify-between items-end">
     Order Summary
     <span class="font-label-md text-label-md text-secondary bg-secondary/10 px-2 py-1 rounded-full">{{ selection.selectedCount() }} Items</span>
@@ -15,6 +20,16 @@
           </div>
         </div>
         <span class="font-label-md text-label-md text-on-surface-variant shrink-0">{{ formatCurrency(entry.formatOption.price) }}</span>
+        @if (removable()) {
+          <button
+            type="button"
+            (click)="removePhoto(entry.photo)"
+            class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors"
+            [attr.aria-label]="'Remove ' + entry.photo.label"
+          >
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        }
       </div>
     }
     @if (selection.selectedCount() === 0) {
@@ -22,45 +37,45 @@
     }
   </div>
 
-  @if (voucherOffers().length >= 1) {
+  @if (selection.voucherOffers().length >= 1) {
     <div class="border-t border-outline-variant pt-md pb-sm flex flex-col gap-sm">
       <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Your Voucher</span>
       <label
         class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
-        [class.border-primary]="selectedTier() === null"
-        [class.bg-surface-container-low]="selectedTier() === null"
-        [class.border-outline-variant]="selectedTier() !== null"
+        [class.border-primary]="selection.selectedTier() === null"
+        [class.bg-surface-container-low]="selection.selectedTier() === null"
+        [class.border-outline-variant]="selection.selectedTier() !== null"
       >
         <span class="flex items-center gap-sm">
           <input
             type="radio"
             name="bundle-tier"
             class="accent-primary"
-            [checked]="selectedTier() === null"
-            (change)="chooseTier(null)"
+            [checked]="selection.selectedTier() === null"
+            (change)="selection.chooseTier(null)"
           />
           <span class="font-label-md text-label-md text-on-surface">No voucher applied</span>
         </span>
-        <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(tierPricePerPhoto(null)) }}/photo</span>
+        <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(null)) }}/photo</span>
       </label>
-      @for (offer of voucherOffers(); track offer.bundle.id + ':' + offer.tier.minQuantity) {
+      @for (offer of selection.voucherOffers(); track offer.bundle.id + ':' + offer.tier.minQuantity) {
         <label
           class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
-          [class.border-primary]="selectedTier() === offer.tier"
-          [class.bg-surface-container-low]="selectedTier() === offer.tier"
-          [class.border-outline-variant]="selectedTier() !== offer.tier"
+          [class.border-primary]="selection.selectedTier() === offer.tier"
+          [class.bg-surface-container-low]="selection.selectedTier() === offer.tier"
+          [class.border-outline-variant]="selection.selectedTier() !== offer.tier"
         >
           <span class="flex items-center gap-sm">
             <input
               type="radio"
               name="bundle-tier"
               class="accent-primary"
-              [checked]="selectedTier() === offer.tier"
-              (change)="chooseTier(offer.tier)"
+              [checked]="selection.selectedTier() === offer.tier"
+              (change)="selection.chooseTier(offer.tier)"
             />
             <span class="font-label-md text-label-md text-on-surface">{{ offer.bundle.name }}: {{ offer.tier.minQuantity }}+ photos</span>
           </span>
-          <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(tierPricePerPhoto(offer.tier)) }}/photo</span>
+          <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(offer.tier)) }}/photo</span>
         </label>
       }
     </div>
@@ -71,24 +86,19 @@
       <span class="font-body-md text-body-md text-on-surface-variant">Subtotal ({{ selection.selectedCount() }} photos)</span>
       <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(selection.photosTotal()) }}</span>
     </div>
-    @if (pricing().bundleApplied) {
+    @if (selection.pricing().bundleApplied) {
       <div class="flex justify-between items-center text-secondary">
         <span class="font-body-md text-body-md flex items-center gap-xs">
           <span class="material-symbols-outlined text-[18px]">loyalty</span> Voucher discount applied
         </span>
-        <span class="font-body-md text-body-md font-semibold">-{{ formatCurrency(pricing().bundleDiscount) }}</span>
+        <span class="font-body-md text-body-md font-semibold">-{{ formatCurrency(selection.pricing().bundleDiscount) }}</span>
       </div>
     }
-    <div class="flex justify-between items-center">
-      <span class="font-body-md text-body-md text-on-surface-variant">Platform Fee</span>
-      <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(pricing().platformFee) }}</span>
-    </div>
     <div class="border-t border-outline-variant mt-sm pt-sm flex justify-between items-end">
       <div>
         <span class="font-headline-md text-headline-md text-primary block">Total</span>
-        <span class="font-caption text-caption text-on-surface-variant">Including all fees</span>
       </div>
-      <span class="font-display-lg text-headline-lg-mobile md:text-display-lg text-primary">{{ formatCurrency(pricing().total) }}</span>
+      <span class="font-display-lg text-headline-lg-mobile md:text-display-lg text-primary">{{ formatCurrency(selection.pricing().total) }}</span>
     </div>
   </div>
 </aside>

@@ -14,15 +14,12 @@ export interface IEventPricing {
   fullGalleryPrice: number;
 }
 
-export const PLATFORM_FEE = 2;
-
 export interface PricingBreakdown {
   photoCount: number;
   pricePerPhoto: number;
   bundleApplied: boolean;
   subtotal: number;
   bundleDiscount: number;
-  platformFee: number;
   total: number;
 }
 
@@ -33,7 +30,6 @@ function zeroBreakdown(photoCount: number): PricingBreakdown {
     bundleApplied: false,
     subtotal: 0,
     bundleDiscount: 0,
-    platformFee: 0,
     total: 0,
   };
 }
@@ -60,23 +56,6 @@ export function qualifyingTiers(photoCount: number, pricing: IEventPricing | und
  *   independent of the individual photos' prices (a flat bulk rate).
  * - percent-tier takes a percentage off the real `photosTotal`.
  */
-/**
- * Picks whichever of several assigned vouchers (each auto-picking its own best qualifying tier)
- * gives the lowest total for the current cart — used when an event has more than one voucher.
- */
-export function bestPricingAcrossBundles(
-  photosTotal: number,
-  photoCount: number,
-  bundles: IEventPricing[],
-): PricingBreakdown {
-  if (bundles.length === 0) {
-    return calculatePricing(photosTotal, photoCount, undefined);
-  }
-  return bundles
-    .map((bundle) => calculatePricing(photosTotal, photoCount, bundle))
-    .reduce((best, candidate) => (candidate.total < best.total ? candidate : best));
-}
-
 export function calculatePricing(
   photosTotal: number,
   photoCount: number,
@@ -105,7 +84,6 @@ export function calculatePricing(
     bundleApplied: !!tier,
     subtotal,
     bundleDiscount,
-    platformFee: PLATFORM_FEE,
-    total: subtotal + PLATFORM_FEE,
+    total: subtotal,
   };
 }

@@ -13,13 +13,18 @@
     >By Plate #</button>
     <button
       type="button"
-      class="flex-1 py-sm text-label-md font-label-md rounded-md transition-all"
-      [class.bg-surface-container-lowest]="activeTab() === 'facial'"
-      [class.shadow-sm]="activeTab() === 'facial'"
-      [class.text-primary]="activeTab() === 'facial'"
-      [class.text-on-surface-variant]="activeTab() !== 'facial'"
-      (click)="setTab('facial')"
-    >Facial Match</button>
+      class="relative flex-1 py-sm text-label-md font-label-md rounded-md transition-all flex items-center justify-center gap-xs overflow-hidden"
+      [class.bg-gradient-to-r]="activeTab() === 'ai'"
+      [class.from-primary]="activeTab() === 'ai'"
+      [class.to-secondary]="activeTab() === 'ai'"
+      [class.text-on-primary]="activeTab() === 'ai'"
+      [class.shadow-md]="activeTab() === 'ai'"
+      [class.text-on-surface-variant]="activeTab() !== 'ai'"
+      (click)="setTab('ai')"
+    >
+      <span class="material-symbols-outlined text-[16px]" [class.animate-pulse]="activeTab() === 'ai'">auto_awesome</span>
+      AI Powered Search
+    </button>
   </div>
 
   @if (activeTab() === 'plate') {
@@ -46,11 +51,16 @@
     </div>
   } @else {
     <div class="flex flex-col gap-sm">
-      <label class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider">Upload a selfie</label>
-      <div class="border-2 border-dashed border-outline-variant rounded-[12px] p-lg flex flex-col items-center justify-center bg-surface cursor-pointer hover:border-primary hover:bg-surface-container-low transition-all">
-        <span class="material-symbols-outlined text-outline text-[32px] mb-sm">face</span>
-        <span class="text-label-md font-label-md text-on-surface text-center">Drag &amp; drop or click to upload</span>
-        <span class="text-caption text-on-surface-variant mt-xs">We'll find matches across the event.</span>
+      <label class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+        <span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
+        Upload a Selfie
+        <span class="ml-auto px-xs py-[1px] rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary text-[9px] font-label-md tracking-widest">AI</span>
+      </label>
+      <div class="group relative border-2 border-dashed border-secondary/40 rounded-[12px] p-lg flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-surface to-secondary/10 cursor-pointer hover:border-secondary hover:shadow-[0_0_28px_-4px_rgba(171,53,0,0.35)] transition-all duration-300 overflow-hidden">
+        <div class="pointer-events-none absolute -inset-1 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-secondary/20 blur-xl transition-opacity duration-500"></div>
+        <span class="relative material-symbols-outlined text-transparent bg-clip-text bg-gradient-to-br from-primary to-secondary text-[40px] mb-sm animate-pulse" style="-webkit-text-fill-color: transparent;">auto_awesome</span>
+        <span class="relative font-headline-md text-[16px] text-on-surface text-center">Drag &amp; drop or click to upload</span>
+        <span class="relative text-caption text-on-surface-variant mt-xs text-center max-w-[220px]">Our AI instantly scans and matches your face across every photo in this event.</span>
       </div>
     </div>
   }

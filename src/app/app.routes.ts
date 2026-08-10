@@ -30,6 +30,10 @@ export const routes: Routes = [
           import('./photographers/photographer-profile/photographer-profile.component').then((m) => m.PhotographerProfileComponent),
       },
       {
+        path: 'cart',
+        loadComponent: () => import('./checkout/cart/cart.component').then((m) => m.CartComponent),
+      },
+      {
         path: 'checkout',
         loadComponent: () => import('./checkout/checkout.component').then((m) => m.CheckoutComponent),
       },

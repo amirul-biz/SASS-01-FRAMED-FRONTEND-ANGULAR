@@ -1,0 +1,30 @@
+<div class="flex flex-col w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+  <div class="mb-lg">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Your Cart</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Review your selected photos before you check out.</p>
+  </div>
+
+  @if (selection.selectedCount() === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md">
+      <span class="material-symbols-outlined text-outline text-[48px]">shopping_cart</span>
+      <p class="font-body-md text-body-md text-on-surface-variant">Your cart is empty.</p>
+      <a
+        routerLink="/events"
+        class="px-lg py-md border-2 border-primary text-primary font-label-md rounded-xl hover:bg-primary/5 transition-colors"
+      >
+        Browse Events
+      </a>
+    </div>
+  } @else {
+    <div class="max-w-2xl mx-auto w-full flex flex-col gap-lg">
+      <app-order-summary [removable]="true" [fullWidth]="true" />
+      <a
+        routerLink="/checkout"
+        class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] flex items-center justify-center gap-sm"
+      >
+        Proceed to Checkout
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+  }
+</div>

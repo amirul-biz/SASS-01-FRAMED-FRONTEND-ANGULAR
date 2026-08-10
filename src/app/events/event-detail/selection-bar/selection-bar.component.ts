@@ -54,7 +54,7 @@ export class SelectionBarComponent {
       : `Buy ${tier.minQuantity}+ and get ${tier.value}% off each`;
   }
 
-  proceedToCheckout(): void {
-    this.router.navigate(['/checkout']);
+  viewCart(): void {
+    this.router.navigate(['/cart']);
   }
 }

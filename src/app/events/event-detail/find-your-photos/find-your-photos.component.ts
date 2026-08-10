@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
 
-type SearchTab = 'plate' | 'facial';
+type SearchTab = 'plate' | 'ai';
 
 export interface TimeRange {
   from: string;
