@@ -21,7 +21,7 @@ describe('PhotoCardComponent', () => {
   it('renders the photo label and emits toggleSelect on click', () => {
     const fixture = TestBed.createComponent(PhotoCardComponent);
     fixture.componentRef.setInput('photo', mockPhoto);
-    fixture.componentRef.setInput('basePrice', 15);
+    fixture.componentRef.setInput('price', 15);
     fixture.detectChanges();
 
     let emitted = false;
@@ -37,7 +37,7 @@ describe('PhotoCardComponent', () => {
   it('emits previewPhoto when the image is clicked', () => {
     const fixture = TestBed.createComponent(PhotoCardComponent);
     fixture.componentRef.setInput('photo', mockPhoto);
-    fixture.componentRef.setInput('basePrice', 15);
+    fixture.componentRef.setInput('price', 15);
     fixture.detectChanges();
 
     let emitted = false;

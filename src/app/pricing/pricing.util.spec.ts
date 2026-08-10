@@ -29,9 +29,9 @@ const noBundlePricing: IEventPricing = {
 
 describe('calculatePricing', () => {
   it('returns a zeroed breakdown for 0 photos', () => {
-    expect(calculatePricing(0, flatTierPricing)).toEqual({
+    expect(calculatePricing(0, 0, flatTierPricing)).toEqual({
       photoCount: 0,
-      pricePerPhoto: 15,
+      pricePerPhoto: 0,
       bundleApplied: false,
       subtotal: 0,
       bundleDiscount: 0,
@@ -41,7 +41,7 @@ describe('calculatePricing', () => {
   });
 
   it('returns a zeroed breakdown when pricing is undefined', () => {
-    expect(calculatePricing(3, undefined)).toEqual({
+    expect(calculatePricing(0, 3, undefined)).toEqual({
       photoCount: 3,
       pricePerPhoto: 0,
       bundleApplied: false,
@@ -52,8 +52,9 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('charges base price below the lowest tier threshold', () => {
-    expect(calculatePricing(4, flatTierPricing)).toEqual({
+  it('charges the real photos total below the lowest tier threshold', () => {
+    // 4 photos totalling RM60 (e.g. RM15/photo)
+    expect(calculatePricing(60, 4, flatTierPricing)).toEqual({
       photoCount: 4,
       pricePerPhoto: 15,
       bundleApplied: false,
@@ -65,8 +66,8 @@ describe('calculatePricing', () => {
   });
 
   it('applies a flat-tier rate once its threshold is met', () => {
-    // tier: 5+ -> RM30 flat => RM6/photo
-    expect(calculatePricing(5, flatTierPricing)).toEqual({
+    // tier: 5+ -> RM30 flat => RM6/photo, independent of the real photos total (RM75 here)
+    expect(calculatePricing(75, 5, flatTierPricing)).toEqual({
       photoCount: 5,
       pricePerPhoto: 6,
       bundleApplied: true,
@@ -79,7 +80,7 @@ describe('calculatePricing', () => {
 
   it('selects the best (highest-threshold) qualifying flat tier', () => {
     // tier: 10+ -> RM50 flat => RM5/photo
-    expect(calculatePricing(10, flatTierPricing)).toEqual({
+    expect(calculatePricing(150, 10, flatTierPricing)).toEqual({
       photoCount: 10,
       pricePerPhoto: 5,
       bundleApplied: true,
@@ -90,9 +91,9 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('applies a percent-tier discount once its threshold is met', () => {
-    // tier: 5+ -> 15% off RM15 => RM12.75/photo
-    const result = calculatePricing(5, percentTierPricing);
+  it('applies a percent-tier discount off the real photos total once its threshold is met', () => {
+    // tier: 5+ -> 15% off a RM75 total => RM63.75
+    const result = calculatePricing(75, 5, percentTierPricing);
     expect(result.bundleApplied).toBe(true);
     expect(result.pricePerPhoto).toBeCloseTo(12.75);
     expect(result.subtotal).toBeCloseTo(63.75);
@@ -101,7 +102,7 @@ describe('calculatePricing', () => {
   });
 
   it('never applies a bundle when bundleModel is none', () => {
-    expect(calculatePricing(20, noBundlePricing)).toEqual({
+    expect(calculatePricing(300, 20, noBundlePricing)).toEqual({
       photoCount: 20,
       pricePerPhoto: 15,
       bundleApplied: false,
@@ -114,7 +115,7 @@ describe('calculatePricing', () => {
 
   it('applies a caller-forced tier instead of auto-picking the best one', () => {
     // forced to the 5+ tier (RM6/photo) even though 10 photos also qualify for the better 10+ tier
-    const result = calculatePricing(10, flatTierPricing, flatTierPricing.bundleTiers[0]);
+    const result = calculatePricing(150, 10, flatTierPricing, flatTierPricing.bundleTiers[0]);
     expect(result.pricePerPhoto).toBe(6);
     expect(result.subtotal).toBe(60);
     expect(result.bundleApplied).toBe(true);
@@ -122,7 +123,7 @@ describe('calculatePricing', () => {
   });
 
   it('forces no discount at all when forcedTier is explicitly null, even if tiers would qualify', () => {
-    const result = calculatePricing(10, flatTierPricing, null);
+    const result = calculatePricing(150, 10, flatTierPricing, null);
     expect(result.pricePerPhoto).toBe(15);
     expect(result.bundleApplied).toBe(false);
     expect(result.subtotal).toBe(150);

@@ -101,7 +101,7 @@ export class PricingBundlesService {
   }
 
   eventCountUsingBundle(id: string): number {
-    return this.eventsService.getEvents().filter((e) => e.pricingBundleId === id).length;
+    return this.eventsService.getEvents().filter((e) => e.pricingBundleIds.includes(id)).length;
   }
 
   createBundle(input: PricingBundleInput): IPricingBundle {

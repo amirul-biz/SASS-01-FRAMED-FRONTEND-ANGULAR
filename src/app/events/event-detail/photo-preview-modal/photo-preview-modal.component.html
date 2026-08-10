@@ -20,7 +20,7 @@
       </div>
       <div class="flex flex-col gap-sm">
         <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Format</span>
-        @for (option of formatOptions; track option.id) {
+        @for (option of formatOptions(); track option.id) {
           <label
             class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
             [class.border-primary]="selectedFormatId() === option.id"
@@ -37,7 +37,7 @@
               />
               <span class="font-label-md text-label-md text-on-surface">{{ option.label }}</span>
             </span>
-            <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(priceFor(option)) }}</span>
+            <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(option.price) }}</span>
           </label>
         }
       </div>

@@ -16,7 +16,8 @@ const mockEvent: IEvent = {
   photoCount: 5,
   areas: [],
   status: 'published',
-  pricingBundleId: 'test-bundle',
+  pricingBundleIds: ['test-bundle'],
+  pricingOptionIds: [],
 };
 
 describe('EventCardComponent', () => {

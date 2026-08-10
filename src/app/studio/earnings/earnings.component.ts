@@ -20,7 +20,7 @@ export class EarningsComponent {
 
   readonly rows = computed(() =>
     this.events().map((event) => {
-      const basePrice = this.pricingBundlesService.getBundle(event.pricingBundleId)?.basePrice ?? 0;
+      const basePrice = this.pricingBundlesService.getBundle(event.pricingBundleIds[0])?.basePrice ?? 0;
       return { event, basePrice, estimatedRevenue: event.photoCount * basePrice };
     }),
   );

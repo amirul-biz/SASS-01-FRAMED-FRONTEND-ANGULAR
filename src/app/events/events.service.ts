@@ -20,7 +20,10 @@ export interface IEvent {
   photoCount: number;
   areas: IEventArea[];
   status: EventStatus;
-  pricingBundleId: string;
+  /** vouchers that can apply to this event; riders get whichever qualifying one gives the best discount */
+  pricingBundleIds: string[];
+  /** the subset of the photographer's pricing options (formats/resolutions) offered for this event */
+  pricingOptionIds: string[];
 }
 
 export interface IPhoto {
@@ -32,6 +35,10 @@ export interface IPhoto {
   label: string;
   plateNumber: string;
   capturedAt: string;
+}
+
+function optionIdsFor(photographerId: string): string[] {
+  return [`${photographerId}-jpeg-30mp`, `${photographerId}-jpeg-50mp`, `${photographerId}-heic`, `${photographerId}-raw`];
 }
 
 const INITIAL_EVENTS: IEvent[] = [
@@ -52,7 +59,8 @@ const INITIAL_EVENTS: IEvent[] = [
       { id: 'rock-garden', name: 'Rock Garden' },
       { id: 'finish-line-jumps', name: 'Finish Line Jumps' },
     ],
-    pricingBundleId: 'alex-standard-bundle',
+    pricingBundleIds: ['alex-standard-bundle'],
+    pricingOptionIds: optionIdsFor('alex-rivers'),
   },
   {
     id: 'bukit-kiara-mtb-challenge-2023',
@@ -70,7 +78,8 @@ const INITIAL_EVENTS: IEvent[] = [
       { id: 'summit-climb', name: 'Summit Climb' },
       { id: 'forest-descent', name: 'Forest Descent' },
     ],
-    pricingBundleId: 'alex-budget-mtb-bundle',
+    pricingBundleIds: ['alex-budget-mtb-bundle'],
+    pricingOptionIds: optionIdsFor('alex-rivers'),
   },
   {
     id: 'national-velodrome-sprint',
@@ -88,7 +97,8 @@ const INITIAL_EVENTS: IEvent[] = [
       { id: 'home-straight', name: 'Home Straight' },
       { id: 'banking-turn', name: 'Banking Turn' },
     ],
-    pricingBundleId: 'alex-premium-percent-bundle',
+    pricingBundleIds: ['alex-premium-percent-bundle'],
+    pricingOptionIds: optionIdsFor('alex-rivers'),
   },
   {
     id: 'penang-round-island-tour',
@@ -103,7 +113,8 @@ const INITIAL_EVENTS: IEvent[] = [
     photoCount: 0,
     status: 'draft',
     areas: [],
-    pricingBundleId: 'alex-per-photo-only',
+    pricingBundleIds: ['alex-per-photo-only', 'alex-standard-bundle'],
+    pricingOptionIds: optionIdsFor('alex-rivers'),
   },
   {
     id: 'klang-valley-century-ride-2024',
@@ -121,7 +132,8 @@ const INITIAL_EVENTS: IEvent[] = [
       { id: 'water-station', name: 'Water Station' },
       { id: 'hill-climb', name: 'Hill Climb' },
     ],
-    pricingBundleId: 'marcus-standard-bundle',
+    pricingBundleIds: ['marcus-standard-bundle'],
+    pricingOptionIds: optionIdsFor('marcus-chen'),
   },
   {
     id: 'penang-round-island-epic',
@@ -136,7 +148,8 @@ const INITIAL_EVENTS: IEvent[] = [
     photoCount: 4,
     status: 'draft',
     areas: [{ id: 'coastal-road', name: 'Coastal Road' }],
-    pricingBundleId: 'sarah-per-photo-only',
+    pricingBundleIds: ['sarah-per-photo-only'],
+    pricingOptionIds: optionIdsFor('sarah-jenkins'),
   },
   {
     id: 'urban-night-criterium',
@@ -151,7 +164,8 @@ const INITIAL_EVENTS: IEvent[] = [
     photoCount: 2,
     status: 'flagged',
     areas: [{ id: 'city-loop', name: 'City Loop' }],
-    pricingBundleId: 'unknown-per-photo-only',
+    pricingBundleIds: ['unknown-per-photo-only'],
+    pricingOptionIds: optionIdsFor('unknown-uploader'),
   },
 ];
 
@@ -268,8 +282,12 @@ export class EventsService {
     return this.getPhotos(eventId).filter((p) => p.plateNumber.includes(normalized));
   }
 
-  assignPricingBundle(eventId: string, pricingBundleId: string): void {
-    this.events.update((list) => list.map((e) => (e.id === eventId ? { ...e, pricingBundleId } : e)));
+  assignPricingBundles(eventId: string, pricingBundleIds: string[]): void {
+    this.events.update((list) => list.map((e) => (e.id === eventId ? { ...e, pricingBundleIds } : e)));
+  }
+
+  assignPricingOptions(eventId: string, pricingOptionIds: string[]): void {
+    this.events.update((list) => list.map((e) => (e.id === eventId ? { ...e, pricingOptionIds } : e)));
   }
 
   setEventStatus(eventId: string, status: EventStatus): void {
@@ -290,7 +308,8 @@ export class EventsService {
     dateRange: string;
     photographerId: string;
     photographerName: string;
-    pricingBundleId: string;
+    pricingBundleIds: string[];
+    pricingOptionIds: string[];
   }): IEvent {
     const id = this.uniqueSlug(input.title);
     const newEvent: IEvent = {
@@ -301,7 +320,8 @@ export class EventsService {
       dateRange: input.dateRange,
       photographerId: input.photographerId,
       photographerName: input.photographerName,
-      pricingBundleId: input.pricingBundleId,
+      pricingBundleIds: input.pricingBundleIds,
+      pricingOptionIds: input.pricingOptionIds,
       isLive: false,
       photoCount: 0,
       status: 'draft',

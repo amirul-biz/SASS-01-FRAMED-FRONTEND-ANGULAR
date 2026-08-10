@@ -61,14 +61,24 @@ describe('EventsService', () => {
     expect(service.getEvent('does-not-exist')).toBeUndefined();
   });
 
-  it('assignPricingBundle updates the bundle reference for that event only', () => {
+  it('assignPricingBundles updates the voucher references for that event only', () => {
     const [event, other] = service.getEvents();
-    const newBundleId = 'some-other-bundle';
+    const newBundleIds = ['some-other-bundle'];
 
-    service.assignPricingBundle(event.id, newBundleId);
+    service.assignPricingBundles(event.id, newBundleIds);
 
-    expect(service.getEvent(event.id)?.pricingBundleId).toBe(newBundleId);
-    expect(service.getEvent(other.id)?.pricingBundleId).not.toBe(newBundleId);
+    expect(service.getEvent(event.id)?.pricingBundleIds).toEqual(newBundleIds);
+    expect(service.getEvent(other.id)?.pricingBundleIds).not.toEqual(newBundleIds);
+  });
+
+  it('assignPricingOptions updates the pricing-option references for that event only', () => {
+    const [event, other] = service.getEvents();
+    const newOptionIds = ['some-other-option'];
+
+    service.assignPricingOptions(event.id, newOptionIds);
+
+    expect(service.getEvent(event.id)?.pricingOptionIds).toEqual(newOptionIds);
+    expect(service.getEvent(other.id)?.pricingOptionIds).not.toEqual(newOptionIds);
   });
 
   it('setEventStatus updates only the targeted event', () => {
@@ -106,14 +116,16 @@ describe('EventsService', () => {
       dateRange: 'December 1, 2024',
       photographerId: 'alex-rivers',
       photographerName: 'Alex Rivers',
-      pricingBundleId: 'alex-standard-bundle',
+      pricingBundleIds: ['alex-standard-bundle'],
+      pricingOptionIds: ['alex-rivers-jpeg-30mp'],
     });
 
     expect(service.getEvents().length).toBe(before + 1);
     expect(created.id).toBe('my-new-race');
     expect(created.status).toBe('draft');
     expect(created.photoCount).toBe(0);
-    expect(created.pricingBundleId).toBe('alex-standard-bundle');
+    expect(created.pricingBundleIds).toEqual(['alex-standard-bundle']);
+    expect(created.pricingOptionIds).toEqual(['alex-rivers-jpeg-30mp']);
     expect(service.getEvent(created.id)).toEqual(created);
   });
 
@@ -127,7 +139,8 @@ describe('EventsService', () => {
       dateRange: 'Test',
       photographerId: 'alex-rivers',
       photographerName: 'Alex Rivers',
-      pricingBundleId: 'alex-standard-bundle',
+      pricingBundleIds: ['alex-standard-bundle'],
+      pricingOptionIds: ['alex-rivers-jpeg-30mp'],
     });
 
     expect(created.id).not.toBe(existing.id);

@@ -10,7 +10,7 @@ import { formatCurrency } from '../../../pricing/currency.util';
 export class PhotoCardComponent {
   photo = input.required<IPhoto>();
   selected = input<boolean>(false);
-  basePrice = input.required<number>();
+  price = input.required<number>();
   toggleSelect = output<void>();
   previewPhoto = output<void>();
 

@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EventsService, IPhoto } from '../events.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
 import { SelectionService } from '../../pricing/selection.service';
 import { FindYourPhotosComponent, TimeRange } from './find-your-photos/find-your-photos.component';
 import { FilterByAreaComponent } from './filter-by-area/filter-by-area.component';
 import { PhotoCardComponent } from './photo-card/photo-card.component';
 import { SelectionBarComponent } from './selection-bar/selection-bar.component';
 import { PhotoPreviewModalComponent } from './photo-preview-modal/photo-preview-modal.component';
-import { DEFAULT_FORMAT_OPTION } from '../../pricing/photo-format-options';
+import { IPhotoFormatOption, PricingOptionsService, STANDARD_FORMAT_OPTION } from '../../pricing/pricing-options.service';
 
 const CAPTURED_AT_PATTERN = /^(\d{1,2}):(\d{2})\s?(AM|PM)$/i;
 
@@ -45,14 +44,18 @@ function parseTimeInputMinutes(value: string): number | null {
 })
 export class EventDetailComponent {
   private readonly eventsService = inject(EventsService);
-  private readonly pricingBundlesService = inject(PricingBundlesService);
+  private readonly pricingOptionsService = inject(PricingOptionsService);
   readonly selection = inject(SelectionService);
 
   id = input.required<string>();
 
   readonly event = computed(() => this.eventsService.getEvent(this.id()));
-  readonly bundle = computed(() => this.pricingBundlesService.getBundle(this.event()?.pricingBundleId ?? ''));
   readonly areaCounts = computed(() => this.eventsService.getAreaCounts(this.id()));
+  readonly formatOptions = computed(() =>
+    (this.event()?.pricingOptionIds ?? [])
+      .map((id) => this.pricingOptionsService.getOption(id))
+      .filter((option): option is IPhotoFormatOption => !!option),
+  );
 
   private readonly plateQuery = signal('');
   private readonly activeAreaIds = signal<Set<string>>(new Set());
@@ -93,10 +96,18 @@ export class EventDetailComponent {
     this.selection.toggle(photo);
   }
 
+  priceForPhoto(photo: IPhoto): number {
+    const formatId = this.selection.formatIdFor(photo.id) ?? this.formatOptions()[0]?.id;
+    return this.pricingOptionsService.getOption(formatId ?? '')?.price ?? STANDARD_FORMAT_OPTION.price;
+  }
+
   readonly previewPhoto = signal<IPhoto | null>(null);
 
   readonly previewFormatId = computed(
-    () => this.selection.formatIdFor(this.previewPhoto()?.id ?? '') ?? DEFAULT_FORMAT_OPTION.id,
+    () =>
+      this.selection.formatIdFor(this.previewPhoto()?.id ?? '') ??
+      this.formatOptions()[0]?.id ??
+      STANDARD_FORMAT_OPTION.id,
   );
 
   openPreview(photo: IPhoto): void {

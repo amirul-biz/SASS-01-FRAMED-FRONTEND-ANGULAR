@@ -46,7 +46,7 @@ export class PricingBundleFormComponent {
   readonly previewTiers = computed(() =>
     this.draft().bundleTiers.map((tier) => ({
       tier,
-      preview: calculatePricing(tier.minQuantity, this.draft()),
+      preview: calculatePricing(tier.minQuantity * this.draft().basePrice, tier.minQuantity, this.draft()),
     })),
   );
 

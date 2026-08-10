@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, linkedSignal, output } from '@angular/core';
 import { IPhoto } from '../../events.service';
-import { PHOTO_FORMAT_OPTIONS, DEFAULT_FORMAT_OPTION, IPhotoFormatOption } from '../../../pricing/photo-format-options';
+import { IPhotoFormatOption, STANDARD_FORMAT_OPTION } from '../../../pricing/pricing-options.service';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -10,13 +10,12 @@ import { formatCurrency } from '../../../pricing/currency.util';
 })
 export class PhotoPreviewModalComponent {
   photo = input.required<IPhoto>();
-  basePrice = input.required<number>();
-  initialFormatId = input<string>(DEFAULT_FORMAT_OPTION.id);
+  formatOptions = input<IPhotoFormatOption[]>([STANDARD_FORMAT_OPTION]);
+  initialFormatId = input<string>(STANDARD_FORMAT_OPTION.id);
 
   closed = output<void>();
   addToCart = output<{ photo: IPhoto; formatId: string }>();
 
-  readonly formatOptions = PHOTO_FORMAT_OPTIONS;
   readonly formatCurrency = formatCurrency;
 
   // Resets whenever `initialFormatId` changes (modal reopened for a different photo),
@@ -25,10 +24,6 @@ export class PhotoPreviewModalComponent {
 
   chooseFormat(option: IPhotoFormatOption): void {
     this.selectedFormatId.set(option.id);
-  }
-
-  priceFor(option: IPhotoFormatOption): number {
-    return this.basePrice() + option.extraPrice;
   }
 
   confirmAddToCart(): void {

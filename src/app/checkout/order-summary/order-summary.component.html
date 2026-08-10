@@ -14,7 +14,7 @@
             <span class="text-caption text-on-surface-variant">{{ entry.formatOption.label }}</span>
           </div>
         </div>
-        <span class="font-label-md text-label-md text-on-surface-variant shrink-0">{{ formatCurrency(basePrice() + entry.formatOption.extraPrice) }}</span>
+        <span class="font-label-md text-label-md text-on-surface-variant shrink-0">{{ formatCurrency(entry.formatOption.price) }}</span>
       </div>
     }
     @if (selection.selectedCount() === 0) {
@@ -22,9 +22,9 @@
     }
   </div>
 
-  @if (qualifyingTiers().length >= 1) {
+  @if (voucherOffers().length >= 1) {
     <div class="border-t border-outline-variant pt-md pb-sm flex flex-col gap-sm">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Your Bundle</span>
+      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Your Voucher</span>
       <label
         class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
         [class.border-primary]="selectedTier() === null"
@@ -39,28 +39,28 @@
             [checked]="selectedTier() === null"
             (change)="chooseTier(null)"
           />
-          <span class="font-label-md text-label-md text-on-surface">No coupon applied</span>
+          <span class="font-label-md text-label-md text-on-surface">No voucher applied</span>
         </span>
         <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(tierPricePerPhoto(null)) }}/photo</span>
       </label>
-      @for (tier of qualifyingTiers(); track tier.minQuantity) {
+      @for (offer of voucherOffers(); track offer.bundle.id + ':' + offer.tier.minQuantity) {
         <label
           class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
-          [class.border-primary]="selectedTier() === tier"
-          [class.bg-surface-container-low]="selectedTier() === tier"
-          [class.border-outline-variant]="selectedTier() !== tier"
+          [class.border-primary]="selectedTier() === offer.tier"
+          [class.bg-surface-container-low]="selectedTier() === offer.tier"
+          [class.border-outline-variant]="selectedTier() !== offer.tier"
         >
           <span class="flex items-center gap-sm">
             <input
               type="radio"
               name="bundle-tier"
               class="accent-primary"
-              [checked]="selectedTier() === tier"
-              (change)="chooseTier(tier)"
+              [checked]="selectedTier() === offer.tier"
+              (change)="chooseTier(offer.tier)"
             />
-            <span class="font-label-md text-label-md text-on-surface">{{ tier.minQuantity }}+ photo bundle</span>
+            <span class="font-label-md text-label-md text-on-surface">{{ offer.bundle.name }}: {{ offer.tier.minQuantity }}+ photos</span>
           </span>
-          <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(tierPricePerPhoto(tier)) }}/photo</span>
+          <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(tierPricePerPhoto(offer.tier)) }}/photo</span>
         </label>
       }
     </div>
@@ -68,23 +68,15 @@
 
   <div class="border-t border-outline-variant pt-md flex flex-col gap-sm">
     <div class="flex justify-between items-center">
-      <span class="font-body-md text-body-md text-on-surface-variant">Subtotal ({{ selection.selectedCount() }} &times; {{ formatCurrency(basePrice()) }})</span>
-      <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(selection.selectedCount() * basePrice()) }}</span>
+      <span class="font-body-md text-body-md text-on-surface-variant">Subtotal ({{ selection.selectedCount() }} photos)</span>
+      <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(selection.photosTotal()) }}</span>
     </div>
     @if (pricing().bundleApplied) {
       <div class="flex justify-between items-center text-secondary">
         <span class="font-body-md text-body-md flex items-center gap-xs">
-          <span class="material-symbols-outlined text-[18px]">loyalty</span> Bundle discount applied
+          <span class="material-symbols-outlined text-[18px]">loyalty</span> Voucher discount applied
         </span>
         <span class="font-body-md text-body-md font-semibold">-{{ formatCurrency(pricing().bundleDiscount) }}</span>
-      </div>
-    }
-    @if (selection.formatExtrasTotal() > 0) {
-      <div class="flex justify-between items-center">
-        <span class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
-          <span class="material-symbols-outlined text-[18px]">high_quality</span> Format Upgrades
-        </span>
-        <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(selection.formatExtrasTotal()) }}</span>
       </div>
     }
     <div class="flex justify-between items-center">
@@ -96,7 +88,7 @@
         <span class="font-headline-md text-headline-md text-primary block">Total</span>
         <span class="font-caption text-caption text-on-surface-variant">Including all fees</span>
       </div>
-      <span class="font-display-lg text-headline-lg-mobile md:text-display-lg text-primary">{{ formatCurrency(grandTotal()) }}</span>
+      <span class="font-display-lg text-headline-lg-mobile md:text-display-lg text-primary">{{ formatCurrency(pricing().total) }}</span>
     </div>
   </div>
 </aside>

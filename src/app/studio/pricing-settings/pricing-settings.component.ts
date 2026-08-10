@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { EventsService } from '../../events/events.service';
 import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { PricingOptionsService } from '../../pricing/pricing-options.service';
 import { calculatePricing } from '../../pricing/pricing.util';
 import { formatCurrency } from '../../pricing/currency.util';
 
@@ -16,6 +17,7 @@ export class PricingSettingsComponent {
   private readonly auth = inject(AuthService);
   private readonly eventsService = inject(EventsService);
   private readonly pricingBundlesService = inject(PricingBundlesService);
+  private readonly pricingOptionsService = inject(PricingOptionsService);
   private readonly router = inject(Router);
 
   id = input.required<string>();
@@ -23,37 +25,66 @@ export class PricingSettingsComponent {
   readonly formatCurrency = formatCurrency;
   readonly event = computed(() => this.eventsService.getEvent(this.id()));
   readonly availableBundles = computed(() => this.pricingBundlesService.getBundles(this.auth.demoPhotographerId));
+  readonly availableOptions = computed(() => this.pricingOptionsService.getOptions(this.auth.demoPhotographerId));
 
-  // Resets whenever `id` changes (new event navigated to), but not on unrelated data mutations
+  // Reset whenever `id` changes (new event navigated to), but not on unrelated data mutations
   // elsewhere in the app — the event lookup itself is read untracked for that reason.
-  readonly selectedBundleId = linkedSignal<string | undefined>(() => {
+  readonly selectedBundleIds = linkedSignal<Set<string>>(() => {
     this.id();
-    return untracked(() => this.event())?.pricingBundleId;
+    return new Set(untracked(() => this.event())?.pricingBundleIds ?? []);
   });
 
-  readonly selectedBundle = computed(() => this.pricingBundlesService.getBundle(this.selectedBundleId() ?? ''));
+  readonly selectedOptionIds = linkedSignal<Set<string>>(() => {
+    this.id();
+    return new Set(untracked(() => this.event())?.pricingOptionIds ?? []);
+  });
 
-  readonly previewTiers = computed(() => {
-    const bundle = this.selectedBundle();
-    if (!bundle) {
-      return [];
+  readonly selectedBundles = computed(() => this.availableBundles().filter((b) => this.selectedBundleIds().has(b.id)));
+
+  readonly previewByBundle = computed(() =>
+    this.selectedBundles().map((bundle) => ({
+      bundle,
+      tiers: bundle.bundleTiers.map((tier) => ({
+        tier,
+        preview: calculatePricing(tier.minQuantity * bundle.basePrice, tier.minQuantity, bundle),
+      })),
+    })),
+  );
+
+  isBundleChecked(id: string): boolean {
+    return this.selectedBundleIds().has(id);
+  }
+
+  toggleBundle(id: string): void {
+    const next = new Set(this.selectedBundleIds());
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
     }
-    return bundle.bundleTiers.map((tier) => ({
-      tier,
-      preview: calculatePricing(tier.minQuantity, bundle),
-    }));
-  });
+    this.selectedBundleIds.set(next);
+  }
 
-  selectBundle(bundleId: string): void {
-    this.selectedBundleId.set(bundleId);
+  isOptionChecked(id: string): boolean {
+    return this.selectedOptionIds().has(id);
+  }
+
+  toggleOption(id: string): void {
+    const next = new Set(this.selectedOptionIds());
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    this.selectedOptionIds.set(next);
   }
 
   save(): void {
-    const bundleId = this.selectedBundleId();
-    if (!bundleId) {
+    if (this.selectedBundleIds().size === 0) {
       return;
     }
-    this.eventsService.assignPricingBundle(this.id(), bundleId);
+    this.eventsService.assignPricingBundles(this.id(), Array.from(this.selectedBundleIds()));
+    this.eventsService.assignPricingOptions(this.id(), Array.from(this.selectedOptionIds()));
     this.router.navigate(['/studio/events']);
   }
 }

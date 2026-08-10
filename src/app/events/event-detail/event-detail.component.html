@@ -50,7 +50,7 @@
             <app-photo-card
               [photo]="photo"
               [selected]="selection.isSelected(photo.id)"
-              [basePrice]="bundle()?.basePrice ?? 0"
+              [price]="priceForPhoto(photo)"
               (toggleSelect)="onTogglePhoto(photo)"
               (previewPhoto)="openPreview(photo)"
             />
@@ -67,7 +67,7 @@
     @if (previewPhoto(); as photo) {
       <app-photo-preview-modal
         [photo]="photo"
-        [basePrice]="bundle()?.basePrice ?? 0"
+        [formatOptions]="formatOptions()"
         [initialFormatId]="previewFormatId()"
         (closed)="closePreview()"
         (addToCart)="onAddToCartFromModal($event)"

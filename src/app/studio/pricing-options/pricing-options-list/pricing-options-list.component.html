@@ -1,0 +1,61 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Pricing Options</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Delivery formats and resolutions riders can choose when adding a photo to their cart.</p>
+    </div>
+    <a
+      routerLink="/studio/pricing-options/new"
+      class="flex items-center gap-xs px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors"
+    >
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      New Option
+    </a>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+            <th class="p-md">Format</th>
+            <th class="p-md">Price</th>
+            <th class="p-md text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (option of options(); track option.id) {
+            <tr class="border-b border-outline-variant last:border-0">
+              <td class="p-md font-label-md text-label-md text-on-surface">{{ option.label }}</td>
+              <td class="p-md font-body-md text-body-md text-on-surface-variant tabular-nums">
+                {{ formatCurrency(option.price) }}
+              </td>
+              <td class="p-md">
+                <div class="flex items-center justify-end gap-xs">
+                  <a
+                    [routerLink]="['/studio/pricing-options', option.id, 'edit']"
+                    class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                    title="Edit"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                  </a>
+                  <button
+                    type="button"
+                    (click)="deleteOption(option.id)"
+                    class="w-9 h-9 flex items-center justify-center rounded-full text-error hover:bg-error-container transition-colors"
+                    title="Delete"
+                  >
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (options().length === 0) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No pricing options yet. Add one so riders can choose a delivery format.</p>
+      }
+    </div>
+  </div>
+</div>

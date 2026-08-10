@@ -34,7 +34,7 @@ export class MyEventsDashboardComponent {
   readonly totalPhotos = computed(() => this.allEvents().reduce((sum, e) => sum + e.photoCount, 0));
   readonly totalRevenue = computed(() =>
     this.allEvents().reduce(
-      (sum, e) => sum + e.photoCount * (this.pricingBundlesService.getBundle(e.pricingBundleId)?.basePrice ?? 0),
+      (sum, e) => sum + e.photoCount * (this.pricingBundlesService.getBundle(e.pricingBundleIds[0])?.basePrice ?? 0),
       0,
     ),
   );

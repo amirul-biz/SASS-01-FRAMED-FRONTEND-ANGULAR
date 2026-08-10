@@ -10,13 +10,20 @@
     <p class="font-body-md text-body-md text-on-surface-variant">It'll be saved as a draft — publish it once you've uploaded photos and set pricing.</p>
   </div>
 
-  @if (availableBundles.length === 0) {
+  @if (availableBundles.length === 0 || availableOptions.length === 0) {
     <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md max-w-[36rem]">
       <span class="material-symbols-outlined text-outline text-[48px]">sell</span>
-      <p class="font-body-md text-body-md text-on-surface-variant">You need at least one pricing bundle before you can create an event.</p>
-      <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
-        Create a Pricing Bundle
-      </a>
+      <p class="font-body-md text-body-md text-on-surface-variant">You need at least one pricing bundle and one pricing option before you can create an event.</p>
+      @if (availableBundles.length === 0) {
+        <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+          Create a Pricing Bundle
+        </a>
+      }
+      @if (availableOptions.length === 0) {
+        <a routerLink="/studio/pricing-options/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+          Create a Pricing Option
+        </a>
+      }
     </div>
   } @else {
   <form [formGroup]="form" (ngSubmit)="create()" class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
@@ -77,22 +84,50 @@
     </div>
 
     <div>
-      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="pricing-bundle">Pricing Bundle</label>
-      <select
-        id="pricing-bundle"
-        formControlName="pricingBundleId"
-        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-      >
-        <option value="" disabled>Select a bundle...</option>
+      <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
+      <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>
+      <div class="flex flex-col gap-sm">
         @for (bundle of availableBundles; track bundle.id) {
-          <option [value]="bundle.id">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</option>
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input
+              type="checkbox"
+              class="accent-primary w-4 h-4 rounded border-outline-variant"
+              [checked]="isBundleChecked(bundle.id)"
+              (change)="toggleBundle(bundle.id)"
+            />
+            <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</span>
+          </label>
         }
-      </select>
-      @if (form.controls.pricingBundleId.invalid && form.controls.pricingBundleId.touched) {
-        <p class="text-caption text-error mt-xs">Choose a pricing bundle.</p>
+      </div>
+      @if (submitted() && selectedBundleIds().size === 0) {
+        <p class="text-caption text-error mt-xs">Choose at least one pricing bundle.</p>
       }
       <p class="text-caption text-on-surface-variant mt-xs">
         <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit.
+      </p>
+    </div>
+
+    <div>
+      <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Options</span>
+      <p class="text-caption text-on-surface-variant mb-sm">Check which delivery formats/resolutions riders can choose for this event.</p>
+      <div class="flex flex-col gap-sm">
+        @for (option of availableOptions; track option.id) {
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input
+              type="checkbox"
+              class="accent-primary w-4 h-4 rounded border-outline-variant"
+              [checked]="isOptionChecked(option.id)"
+              (change)="toggleOption(option.id)"
+            />
+            <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — RM{{ option.price }}</span>
+          </label>
+        }
+      </div>
+      @if (submitted() && selectedOptionIds().size === 0) {
+        <p class="text-caption text-error mt-xs">Choose at least one pricing option.</p>
+      }
+      <p class="text-caption text-on-surface-variant mt-xs">
+        <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create a new option</a> if none of these fit.
       </p>
     </div>
 

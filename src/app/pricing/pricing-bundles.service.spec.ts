@@ -67,15 +67,15 @@ describe('PricingBundlesService', () => {
 
   it('eventCountUsingBundle reflects how many events reference a bundle', () => {
     const [event] = eventsService.getEvents();
-    expect(service.eventCountUsingBundle(event.pricingBundleId)).toBeGreaterThan(0);
+    expect(service.eventCountUsingBundle(event.pricingBundleIds[0])).toBeGreaterThan(0);
     expect(service.eventCountUsingBundle('does-not-exist')).toBe(0);
   });
 
   it('deleteBundle is blocked while an event still references it', () => {
     const [event] = eventsService.getEvents();
-    const result = service.deleteBundle(event.pricingBundleId);
+    const result = service.deleteBundle(event.pricingBundleIds[0]);
     expect(result).toBe(false);
-    expect(service.getBundle(event.pricingBundleId)).toBeTruthy();
+    expect(service.getBundle(event.pricingBundleIds[0])).toBeTruthy();
   });
 
   it('deleteBundle succeeds once no event references it', () => {

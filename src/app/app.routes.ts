@@ -86,6 +86,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'pricing-options',
+        loadComponent: () =>
+          import('./studio/pricing-options/pricing-options-list/pricing-options-list.component').then(
+            (m) => m.PricingOptionsListComponent,
+          ),
+      },
+      {
+        path: 'pricing-options/new',
+        loadComponent: () =>
+          import('./studio/pricing-options/pricing-option-form/pricing-option-form.component').then(
+            (m) => m.PricingOptionFormComponent,
+          ),
+      },
+      {
+        path: 'pricing-options/:id/edit',
+        loadComponent: () =>
+          import('./studio/pricing-options/pricing-option-form/pricing-option-form.component').then(
+            (m) => m.PricingOptionFormComponent,
+          ),
+      },
+      {
         path: 'earnings',
         loadComponent: () => import('./studio/earnings/earnings.component').then((m) => m.EarningsComponent),
       },
