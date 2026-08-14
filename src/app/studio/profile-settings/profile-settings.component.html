@@ -13,63 +13,109 @@
       </div>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-lg">
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="name">Display Name</label>
-        <input
-          id="name"
-          formControlName="name"
-          type="text"
-          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-        />
-        @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p class="text-caption text-error mt-xs">Display name is required.</p>
+    @if (isLoading()) {
+      <p class="text-caption text-on-surface-variant">Loading your profile...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-lg">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="name">Display Name</label>
+          <input
+            id="name"
+            formControlName="name"
+            type="text"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p class="text-caption text-error mt-xs">Display name is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address</label>
+          <input
+            id="email"
+            formControlName="email"
+            type="email"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface-container-low text-on-surface-variant cursor-not-allowed"
+          />
+          <p class="text-caption text-on-surface-variant mt-xs">Your email is tied to your login and can't be changed here.</p>
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="companyName">Company Name</label>
+          <input
+            id="companyName"
+            formControlName="companyName"
+            type="text"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="phone">Phone</label>
+          <input
+            id="phone"
+            formControlName="phone"
+            type="tel"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="contactNo">Contact Number</label>
+          <div class="flex items-center gap-sm">
+            <input
+              id="contactNo"
+              formControlName="contactNo"
+              type="tel"
+              class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+            <a
+              [href]="whatsappTestUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 h-12 px-md flex items-center rounded-xl font-label-md text-label-md border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors"
+              [class.pointer-events-none]="!whatsappTestUrl()"
+              [class.opacity-40]="!whatsappTestUrl()"
+              [attr.aria-disabled]="!whatsappTestUrl()"
+            >
+              Test WhatsApp
+            </a>
+          </div>
+          <p class="text-caption text-on-surface-variant mt-xs">Shown on your public photographer profile.</p>
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="bio">Bio</label>
+          <textarea
+            id="bio"
+            formControlName="bio"
+            rows="4"
+            class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+          ></textarea>
+          <p class="text-caption text-on-surface-variant mt-xs">Shown on your public photographer profile.</p>
+        </div>
+
+        @if (errorMsg()) {
+          <p class="text-caption text-error">{{ errorMsg() }}</p>
         }
-      </div>
 
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address</label>
-        <input
-          id="email"
-          formControlName="email"
-          type="email"
-          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface-container-low text-on-surface-variant cursor-not-allowed"
-        />
-        <p class="text-caption text-on-surface-variant mt-xs">Your email is tied to your login and can't be changed here.</p>
-      </div>
-
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="location">Location</label>
-        <input
-          id="location"
-          formControlName="location"
-          type="text"
-          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-        />
-      </div>
-
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="bio">Bio</label>
-        <textarea
-          id="bio"
-          formControlName="bio"
-          rows="4"
-          class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-        ></textarea>
-        <p class="text-caption text-on-surface-variant mt-xs">Shown on your public photographer profile.</p>
-      </div>
-
-      <div class="flex items-center gap-md">
-        <button type="submit" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
-          Save Changes
-        </button>
-        @if (saved()) {
-          <span class="text-caption font-label-md text-secondary flex items-center gap-xs">
-            <span class="material-symbols-outlined text-[16px]">check_circle</span>
-            Saved
-          </span>
-        }
-      </div>
-    </form>
+        <div class="flex items-center gap-md">
+          <button
+            type="submit"
+            [disabled]="isSaving()"
+            class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {{ isSaving() ? 'Saving...' : 'Save Changes' }}
+          </button>
+          @if (saved()) {
+            <span class="text-caption font-label-md text-secondary flex items-center gap-xs">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span>
+              Saved
+            </span>
+          }
+        </div>
+      </form>
+    }
   </div>
 </div>

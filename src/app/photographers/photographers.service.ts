@@ -102,10 +102,6 @@ export class PhotographersService {
     this.photographers.update((list) => list.map((p) => (p.id === id ? { ...p, status } : p)));
   }
 
-  updateProfile(id: string, changes: Partial<Pick<PhotographerSeed, 'name' | 'bio' | 'location'>>): void {
-    this.photographers.update((list) => list.map((p) => (p.id === id ? { ...p, ...changes } : p)));
-  }
-
   private toPhotographer(seed: PhotographerSeed): IPhotographer {
     const events = this.eventsService.getEventsByPhotographer(seed.id);
     const photosUploaded = events.reduce((sum, e) => sum + this.eventsService.getPhotos(e.id).length, 0);

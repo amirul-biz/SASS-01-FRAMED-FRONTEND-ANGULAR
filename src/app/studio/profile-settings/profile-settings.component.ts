@@ -1,7 +1,19 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
-import { PhotographersService } from '../../photographers/photographers.service';
+import { StudioProfileService } from '../studio-profile.service';
+import { createProfileSettingsForm } from './profile-settings-form.config';
+
+const AVATAR_PLACEHOLDER_URL = 'https://i.pravatar.cc/150?u=studio-profile';
 
 @Component({
   selector: 'app-profile-settings',
@@ -10,31 +22,76 @@ import { PhotographersService } from '../../photographers/photographers.service'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileSettingsComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-  private readonly photographersService = inject(PhotographersService);
+  private readonly profileService = inject(StudioProfileService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly photographerId = this.auth.demoPhotographerId;
-  private readonly photographer = this.photographersService.getPhotographer(this.photographerId);
-
-  readonly avatarUrl = this.photographer?.avatarUrl ?? '';
+  readonly avatarUrl = AVATAR_PLACEHOLDER_URL;
   readonly saved = signal(false);
+  readonly isLoading = signal(true);
+  readonly isSaving = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
-  readonly form = this.fb.nonNullable.group({
-    name: [this.photographer?.name ?? '', Validators.required],
-    email: [{ value: this.photographer?.email ?? '', disabled: true }],
-    location: [this.photographer?.location ?? ''],
-    bio: [this.photographer?.bio ?? ''],
+  readonly form = createProfileSettingsForm(
+    this.auth.currentUser()?.email ?? '',
+  );
+
+  private readonly contactNoValue = toSignal(
+    this.form.controls.contactNo.valueChanges,
+    { initialValue: this.form.controls.contactNo.value },
+  );
+
+  readonly whatsappTestUrl = computed(() => {
+    const digits = this.contactNoValue().replace(/\D/g, '');
+    return digits ? `https://wa.me/${digits}` : null;
   });
+
+  constructor() {
+    this.profileService
+      .getMyProfile()
+      .pipe(
+        finalize(() => this.isLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (profile) => {
+          this.form.patchValue({
+            name: profile.name,
+            companyName: profile.companyName ?? '',
+            phone: profile.phone ?? '',
+            contactNo: profile.contactNo ?? '',
+            bio: profile.bio ?? '',
+          });
+        },
+        error: () => {
+          this.errorMsg.set('Failed to load your profile. Please try again.');
+        },
+      });
+  }
 
   save(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       return;
     }
-    const { name, location, bio } = this.form.getRawValue();
-    this.photographersService.updateProfile(this.photographerId, { name, location, bio });
-    this.saved.set(true);
-    setTimeout(() => this.saved.set(false), 2000);
+    const { name, companyName, phone, contactNo, bio } =
+      this.form.getRawValue();
+    this.errorMsg.set(null);
+    this.isSaving.set(true);
+    this.profileService
+      .updateMyProfile({ name, companyName, phone, contactNo, bio })
+      .pipe(
+        finalize(() => this.isSaving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.saved.set(true);
+          setTimeout(() => this.saved.set(false), 2000);
+        },
+        error: () => {
+          this.errorMsg.set('Failed to save your profile. Please try again.');
+        },
+      });
   }
 }

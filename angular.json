@@ -83,7 +83,10 @@
           "defaultConfiguration": "local"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "framed:build:local"
+          }
         }
       }
     }
