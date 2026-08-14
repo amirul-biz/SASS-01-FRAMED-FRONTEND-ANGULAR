@@ -15,6 +15,8 @@ export class LoginComponent {
   private readonly router = inject(Router);
 
   readonly showPassword = signal(false);
+  readonly loading = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -32,7 +34,18 @@ export class LoginComponent {
       return;
     }
     const { email, password } = this.form.getRawValue();
-    const user = this.auth.login(email, password);
-    this.router.navigate([user.role === 'admin' ? '/admin' : '/studio']);
+    this.loading.set(true);
+    this.errorMsg.set(null);
+    this.auth
+      .login(email, password)
+      .then((user) => {
+        this.router.navigate([user.role === 'admin' ? '/admin' : '/studio']);
+      })
+      .catch((error: unknown) => {
+        this.errorMsg.set(
+          error instanceof Error ? error.message : 'Login failed',
+        );
+      })
+      .finally(() => this.loading.set(false));
   }
 }

@@ -1,13 +1,43 @@
+import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, RouterStateSnapshot, provideRouter } from '@angular/router';
-import { AuthService } from './auth.service';
+import {
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+  provideRouter,
+} from '@angular/router';
+import { ENVIRONMENT } from '../core/environment.token';
+import { FIREBASE_AUTH } from '../core/firebase';
 import { adminGuard } from './admin.guard';
+import { AuthService } from './auth.service';
+
+vi.mock('firebase/auth', () => ({
+  onAuthStateChanged: (_auth: unknown, handler: (user: unknown) => void) => {
+    handler(null);
+    return () => {};
+  },
+  signInWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+}));
 
 describe('adminGuard', () => {
   let auth: AuthService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: FIREBASE_AUTH, useValue: {} },
+        {
+          provide: ENVIRONMENT,
+          useValue: {
+            apiUrl: 'http://api.test',
+            production: false,
+            firebase: {} as never,
+          },
+        },
+        { provide: HttpClient, useValue: { get: vi.fn() } },
+      ],
+    });
     auth = TestBed.inject(AuthService);
   });
 
@@ -17,17 +47,28 @@ describe('adminGuard', () => {
     );
   }
 
-  it('allows access for an admin', () => {
-    auth.login('admin@example.com', 'x');
-    expect(runGuard()).toBe(true);
+  it('allows access for an admin', async () => {
+    await auth.ready;
+    auth.currentUser.set({
+      name: 'Admin',
+      email: 'admin@example.com',
+      role: 'admin',
+    });
+    expect(await runGuard()).toBe(true);
   });
 
-  it('redirects to /login for a photographer', () => {
-    auth.login('photographer@example.com', 'x');
-    expect(runGuard()).not.toBe(true);
+  it('redirects to /login for a photographer', async () => {
+    await auth.ready;
+    auth.currentUser.set({
+      name: 'Jane',
+      email: 'jane@example.com',
+      role: 'photographer',
+    });
+    expect(await runGuard()).not.toBe(true);
   });
 
-  it('redirects to /login when unauthenticated', () => {
-    expect(runGuard()).not.toBe(true);
+  it('redirects to /login when unauthenticated', async () => {
+    await auth.ready;
+    expect(await runGuard()).not.toBe(true);
   });
 });

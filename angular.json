@@ -44,10 +44,25 @@
               ],
               "outputHashing": "all"
             },
-            "development": {
+            "local": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.local.ts"
+                }
+              ]
+            },
+            "staging": {
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -58,11 +73,14 @@
             "production": {
               "buildTarget": "framed:build:production"
             },
-            "development": {
-              "buildTarget": "framed:build:development"
+            "local": {
+              "buildTarget": "framed:build:local"
+            },
+            "staging": {
+              "buildTarget": "framed:build:staging"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "local"
         },
         "test": {
           "builder": "@angular/build:unit-test"
