@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService, Role } from '../../auth/auth.service';
 import { SelectionService } from '../../pricing/selection.service';
 
 @Component({
@@ -15,10 +15,10 @@ export class HeaderComponent {
 
   readonly profileLink = computed(() => {
     const role = this.auth.currentUser()?.role;
-    if (role === 'photographer') {
+    if (role === Role.Photographer) {
       return '/studio';
     }
-    if (role === 'admin') {
+    if (role === Role.Admin) {
       return '/admin';
     }
     return '/login';

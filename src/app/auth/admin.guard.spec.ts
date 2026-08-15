@@ -8,7 +8,7 @@ import {
 import { ENVIRONMENT } from '../core/environment.token';
 import { FIREBASE_AUTH } from '../core/firebase';
 import { adminGuard } from './admin.guard';
-import { AuthService } from './auth.service';
+import { AuthService, Role } from './auth.service';
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: (_auth: unknown, handler: (user: unknown) => void) => {
@@ -52,7 +52,7 @@ describe('adminGuard', () => {
     auth.currentUser.set({
       name: 'Admin',
       email: 'admin@example.com',
-      role: 'admin',
+      role: Role.Admin,
     });
     expect(await runGuard()).toBe(true);
   });
@@ -62,7 +62,7 @@ describe('adminGuard', () => {
     auth.currentUser.set({
       name: 'Jane',
       email: 'jane@example.com',
-      role: 'photographer',
+      role: Role.Photographer,
     });
     expect(await runGuard()).not.toBe(true);
   });

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../auth.service';
+import { AuthService, Role } from '../auth.service';
 
 @Component({
   selector: 'app-login',
@@ -39,7 +39,7 @@ export class LoginComponent {
     this.auth
       .login(email, password)
       .then((user) => {
-        this.router.navigate([user.role === 'admin' ? '/admin' : '/studio']);
+        this.router.navigate([user.role === Role.Admin ? '/admin' : '/studio']);
       })
       .catch((error: unknown) => {
         this.errorMsg.set(

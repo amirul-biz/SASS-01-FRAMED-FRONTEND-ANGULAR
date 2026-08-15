@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { ENVIRONMENT } from '../core/environment.token';
 import { FIREBASE_AUTH } from '../core/firebase';
-import { AuthService } from './auth.service';
+import { AuthService, Role } from './auth.service';
 import { studioGuard } from './studio.guard';
 
 vi.mock('firebase/auth', () => ({
@@ -52,7 +52,7 @@ describe('studioGuard', () => {
     auth.currentUser.set({
       name: 'Jane',
       email: 'jane@example.com',
-      role: 'photographer',
+      role: Role.Photographer,
     });
     expect(await runGuard()).toBe(true);
   });
@@ -62,7 +62,7 @@ describe('studioGuard', () => {
     auth.currentUser.set({
       name: 'Admin',
       email: 'admin@example.com',
-      role: 'admin',
+      role: Role.Admin,
     });
     expect(await runGuard()).not.toBe(true);
   });

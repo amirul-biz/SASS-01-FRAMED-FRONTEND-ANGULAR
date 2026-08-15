@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ENVIRONMENT } from '../core/environment.token';
 import { FIREBASE_AUTH } from '../core/firebase';
-import { AuthService } from './auth.service';
+import { AuthService, Role } from './auth.service';
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: (_auth: unknown, handler: (user: unknown) => void) => {
@@ -57,8 +57,8 @@ describe('AuthService', () => {
 
     const user = await service.login('admin@example.com', 'secret');
 
-    expect(user.role).toBe('admin');
-    expect(service.currentUser()?.role).toBe('admin');
+    expect(user.role).toBe(Role.Admin);
+    expect(service.currentUser()?.role).toBe(Role.Admin);
   });
 
   it('resolves the photographer role when roles do not include admin', async () => {
@@ -71,7 +71,7 @@ describe('AuthService', () => {
 
     const user = await service.login('jane@example.com', 'secret');
 
-    expect(user.role).toBe('photographer');
+    expect(user.role).toBe(Role.Photographer);
   });
 
   it('logout clears the current user', async () => {

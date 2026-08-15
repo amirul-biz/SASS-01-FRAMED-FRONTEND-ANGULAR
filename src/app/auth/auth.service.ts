@@ -11,7 +11,10 @@ import { firstValueFrom } from 'rxjs';
 import { ENVIRONMENT } from '../core/environment.token';
 import { FIREBASE_AUTH } from '../core/firebase';
 
-export type Role = 'photographer' | 'admin';
+export enum Role {
+  Photographer = 'photographer',
+  Admin = 'admin',
+}
 
 export interface IAppUser {
   name: string;
@@ -78,7 +81,7 @@ export class AuthService {
     const user: IAppUser = {
       name: this.nameFromEmail(firebaseUser.email ?? response.email),
       email: response.email,
-      role: response.roles.includes('admin') ? 'admin' : 'photographer',
+      role: response.roles.includes(Role.Admin) ? Role.Admin : Role.Photographer,
     };
     this.currentUser.set(user);
     return user;
