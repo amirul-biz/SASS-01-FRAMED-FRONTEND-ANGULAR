@@ -59,6 +59,10 @@ export const routes: Routes = [
         loadComponent: () => import('./studio/create-event/create-event.component').then((m) => m.CreateEventComponent),
       },
       {
+        path: 'events/:id/edit',
+        loadComponent: () => import('./studio/create-event/create-event.component').then((m) => m.CreateEventComponent),
+      },
+      {
         path: 'events/:id/upload',
         loadComponent: () =>
           import('./studio/upload-photos/upload-photos.component').then((m) => m.UploadPhotosComponent),

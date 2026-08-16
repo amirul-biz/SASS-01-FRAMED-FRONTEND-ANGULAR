@@ -1,7 +1,8 @@
-import { HttpBackend, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ENVIRONMENT } from '../core/environment.token';
+import { PresignedUploadService } from '../core/presigned-upload.service';
 
 export interface PhotographerProfile {
   id: string;
@@ -36,9 +37,7 @@ export interface PresignProfileImageUploadResponse {
 export class StudioProfileService {
   private readonly http = inject(HttpClient);
   private readonly env = inject(ENVIRONMENT);
-  // Bypasses interceptors (e.g. the Firebase auth interceptor) since this
-  // client is only ever used for direct PUTs to presigned R2 URLs.
-  private readonly rawHttp = new HttpClient(inject(HttpBackend));
+  private readonly presignedUpload = inject(PresignedUploadService);
 
   getMyProfile(): Observable<PhotographerProfile> {
     return this.http.get<PhotographerProfile>(
@@ -66,8 +65,6 @@ export class StudioProfileService {
   }
 
   uploadToPresignedUrl(uploadUrl: string, file: File): Observable<unknown> {
-    return this.rawHttp.put(uploadUrl, file, {
-      headers: { 'Content-Type': file.type },
-    });
+    return this.presignedUpload.uploadToPresignedUrl(uploadUrl, file);
   }
 }

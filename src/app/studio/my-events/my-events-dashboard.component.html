@@ -13,95 +13,146 @@
     </a>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Events</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalEvents() }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Photos Uploaded</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalPhotos() }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Revenue</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ formatCurrency(totalRevenue()) }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Published</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ publishedCount() }}</span>
-    </div>
-  </div>
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
 
   <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
     <div class="p-md flex items-center justify-between gap-md border-b border-outline-variant">
       <div class="flex items-center gap-sm">
         <h2 class="font-headline-md text-headline-md text-on-surface">Event Roster</h2>
-        <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ totalEvents() }} total</span>
+        @if (response()) {
+          <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ response()!.totalItemCount }} total</span>
+        }
       </div>
-      <input
-        class="h-10 px-md border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-64"
-        placeholder="Filter events..."
-        type="text"
-        (input)="onFilterChange($event)"
-      />
     </div>
     <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
-            <th class="p-md">Event Name</th>
-            <th class="p-md">Photos</th>
-            <th class="p-md">Status</th>
-            <th class="p-md text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (event of events(); track event.id) {
-            <tr class="border-b border-outline-variant last:border-0">
-              <td class="p-md">
-                <div class="flex items-center gap-sm">
-                  <img [src]="event.coverImageUrl" [alt]="event.title" class="w-12 h-12 rounded-lg object-cover" />
-                  <div class="flex flex-col">
-                    <span class="font-label-md text-label-md text-on-surface">{{ event.title }}</span>
-                    <span class="font-caption text-caption text-on-surface-variant">{{ event.category }} &middot; {{ event.location }}</span>
-                  </div>
-                </div>
-              </td>
-              <td class="p-md font-body-md text-body-md text-on-surface tabular-nums">{{ event.photoCount }}</td>
-              <td class="p-md">
-                @if (event.status === 'published') {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
-                } @else if (event.status === 'flagged') {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-error-container text-on-error-container">Flagged</span>
-                } @else {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
-                }
-              </td>
-              <td class="p-md">
-                <div class="flex items-center justify-end gap-xs">
-                  <a
-                    [routerLink]="['/studio/events', event.id, 'upload']"
-                    class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                    title="Upload More"
-                  >
-                    <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
-                  </a>
-                  <a
-                    [routerLink]="['/studio/events', event.id, 'pricing']"
-                    class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                    title="Set Pricing"
-                  >
-                    <span class="material-symbols-outlined text-[20px]">sell</span>
-                  </a>
-                </div>
-              </td>
+      @if (isLoading()) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading your events...</p>
+      } @else {
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Event Name</th>
+              <th class="p-md">Dates</th>
+              <th class="p-md">Status</th>
+              <th class="p-md text-right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
-      @if (events().length === 0) {
-        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No events match this filter.</p>
+          </thead>
+          <tbody>
+            @for (event of response()?.items ?? []; track event.id) {
+              <tr class="border-b border-outline-variant last:border-0">
+                <td class="p-md">
+                  <div class="flex items-center gap-sm">
+                    @if (event.coverPhotoUrl) {
+                      <img [src]="event.coverPhotoUrl" [alt]="event.title" class="w-12 h-12 rounded-lg object-cover" />
+                    } @else {
+                      <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[20px]">image</span>
+                      </div>
+                    }
+                    <div class="flex flex-col">
+                      <span class="font-label-md text-label-md text-on-surface">{{ event.title }}</span>
+                      <span class="font-caption text-caption text-on-surface-variant">{{ formatCategory(event.category) }} &middot; {{ event.location || 'No location set' }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ event.eventStartDate | date: 'mediumDate' }} &ndash; {{ event.eventEndDate | date: 'mediumDate' }}</td>
+                <td class="p-md">
+                  @if (event.isPublished) {
+                    <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
+                  } @else {
+                    <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
+                  }
+                </td>
+                <td class="p-md">
+                  <div class="flex items-center justify-end gap-xs">
+                    <a
+                      [routerLink]="['/studio/events', event.id, 'edit']"
+                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                      title="Edit"
+                    >
+                      <span class="material-symbols-outlined text-[20px]">edit</span>
+                    </a>
+                    <button
+                      type="button"
+                      (click)="togglePublish(event)"
+                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                      [title]="event.isPublished ? 'Unpublish' : 'Publish'"
+                    >
+                      <span class="material-symbols-outlined text-[20px]">{{ event.isPublished ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="deleteEvent(event)"
+                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-error transition-colors"
+                      title="Delete"
+                    >
+                      <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if ((response()?.items?.length ?? 0) === 0) {
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">You haven't created any events yet.</p>
+        }
       }
     </div>
+
+    @if (response() && response()!.totalPageCount > 1) {
+      <div class="p-md flex flex-col sm:flex-row items-center justify-between gap-md border-t border-outline-variant">
+        <div class="flex items-center gap-sm">
+          <label class="text-caption font-label-md text-on-surface-variant" for="page-size">Per page</label>
+          <select
+            id="page-size"
+            class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            (change)="onPageSizeChange($event)"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex items-center gap-xs">
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            [disabled]="pageNumber() === 1"
+            (click)="onPageNumberChange(pageNumber() - 1)"
+          >
+            <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+          </button>
+
+          @for (page of response()!.totalPageCount | range; track page) {
+            <button
+              type="button"
+              class="w-9 h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
+              [class.bg-primary]="page === pageNumber()"
+              [class.text-on-primary]="page === pageNumber()"
+              [class.text-on-surface-variant]="page !== pageNumber()"
+              [class.hover:bg-surface-container-low]="page !== pageNumber()"
+              (click)="onPageNumberChange(page)"
+            >
+              {{ page }}
+            </button>
+          }
+
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            [disabled]="pageNumber() === response()!.totalPageCount"
+            (click)="onPageNumberChange(pageNumber() + 1)"
+          >
+            <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+          </button>
+        </div>
+
+        <span class="text-caption font-label-md text-on-surface-variant">Page {{ pageNumber() }} of {{ response()!.totalPageCount }}</span>
+      </div>
+    }
   </div>
 </div>

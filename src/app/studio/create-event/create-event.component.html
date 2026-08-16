@@ -2,38 +2,52 @@
   <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
     <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
     <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-    <span class="text-on-surface">New Event</span>
+    <span class="text-on-surface">{{ isEditMode ? 'Edit Event' : 'New Event' }}</span>
   </nav>
 
   <div class="mb-xl">
-    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Create New Event</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">It'll be saved as a draft — publish it once you've uploaded photos and set pricing.</p>
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">{{ isEditMode ? 'Edit Event' : 'Create New Event' }}</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">It'll be saved as a draft — publish it once you're ready.</p>
   </div>
 
-  @if (availableBundles.length === 0 || availableOptions.length === 0) {
-    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md max-w-[36rem]">
-      <span class="material-symbols-outlined text-outline text-[48px]">sell</span>
-      <p class="font-body-md text-body-md text-on-surface-variant">You need at least one pricing bundle and one pricing option before you can create an event.</p>
-      @if (availableBundles.length === 0) {
-        <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
-          Create a Pricing Bundle
-        </a>
-      }
-      @if (availableOptions.length === 0) {
-        <a routerLink="/studio/pricing-options/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
-          Create a Pricing Option
-        </a>
-      }
-    </div>
+  @if (isLoading()) {
+    <p class="text-body-md font-body-md text-on-surface-variant">Loading event...</p>
   } @else {
-  <form [formGroup]="form" (ngSubmit)="create()" class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
+  <form [formGroup]="form" (ngSubmit)="save()" class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
+    <div class="flex items-center gap-md">
+      @if (coverPhotoUrl()) {
+        <img [src]="coverPhotoUrl()" alt="Cover" class="w-24 h-16 rounded-lg object-cover" />
+      } @else {
+        <div class="w-24 h-16 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[24px]">image</span>
+        </div>
+      }
+      <div>
+        <span class="block font-label-md text-label-md text-on-surface mb-xs">Cover Photo</span>
+        <label
+          class="text-caption font-label-md text-primary cursor-pointer hover:underline"
+          [class.opacity-60]="isUploadingCover()"
+          [class.pointer-events-none]="isUploadingCover()"
+        >
+          {{ isUploadingCover() ? 'Uploading...' : 'Change Photo' }}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            [disabled]="isUploadingCover()"
+            (change)="onCoverFileSelected($event)"
+          />
+        </label>
+      </div>
+    </div>
+
     <div>
       <label class="block font-label-md text-label-md text-on-surface mb-xs" for="title">Event Title</label>
       <input
         id="title"
         formControlName="title"
         type="text"
-        placeholder="e.g. Bukit Kiara MTB Challenge 2024"
+        placeholder="e.g. Bukit Kiara MTB Challenge 2026"
         class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
       />
       @if (form.controls.title.invalid && form.controls.title.touched) {
@@ -43,13 +57,16 @@
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface mb-xs" for="category">Category</label>
-      <input
+      <select
         id="category"
         formControlName="category"
-        type="text"
-        placeholder="e.g. Mountain Biking"
         class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-      />
+      >
+        <option value="" disabled>Select a category</option>
+        @for (category of categories; track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
       @if (form.controls.category.invalid && form.controls.category.touched) {
         <p class="text-caption text-error mt-xs">Category is required.</p>
       }
@@ -64,79 +81,108 @@
         placeholder="e.g. Kuala Lumpur"
         class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
       />
-      @if (form.controls.location.invalid && form.controls.location.touched) {
-        <p class="text-caption text-error mt-xs">Location is required.</p>
-      }
     </div>
 
-    <div>
-      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="date-range">Date</label>
-      <input
-        id="date-range"
-        formControlName="dateRange"
-        type="text"
-        placeholder="e.g. November 4, 2024"
-        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-      />
-      @if (form.controls.dateRange.invalid && form.controls.dateRange.touched) {
-        <p class="text-caption text-error mt-xs">Date is required.</p>
-      }
-    </div>
-
-    <div>
-      <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
-      <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>
-      <div class="flex flex-col gap-sm">
-        @for (bundle of availableBundles; track bundle.id) {
-          <label class="flex items-center gap-sm cursor-pointer">
-            <input
-              type="checkbox"
-              class="accent-primary w-4 h-4 rounded border-outline-variant"
-              [checked]="isBundleChecked(bundle.id)"
-              (change)="toggleBundle(bundle.id)"
-            />
-            <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</span>
-          </label>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-start-date">Start Date</label>
+        <input
+          id="event-start-date"
+          formControlName="eventStartDate"
+          type="date"
+          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        />
+        @if (form.controls.eventStartDate.invalid && form.controls.eventStartDate.touched) {
+          <p class="text-caption text-error mt-xs">Start date is required.</p>
         }
       </div>
-      @if (submitted() && selectedBundleIds().size === 0) {
-        <p class="text-caption text-error mt-xs">Choose at least one pricing bundle.</p>
-      }
-      <p class="text-caption text-on-surface-variant mt-xs">
-        <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit.
-      </p>
-    </div>
-
-    <div>
-      <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Options</span>
-      <p class="text-caption text-on-surface-variant mb-sm">Check which delivery formats/resolutions riders can choose for this event.</p>
-      <div class="flex flex-col gap-sm">
-        @for (option of availableOptions; track option.id) {
-          <label class="flex items-center gap-sm cursor-pointer">
-            <input
-              type="checkbox"
-              class="accent-primary w-4 h-4 rounded border-outline-variant"
-              [checked]="isOptionChecked(option.id)"
-              (change)="toggleOption(option.id)"
-            />
-            <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — RM{{ option.price }}</span>
-          </label>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-end-date">End Date</label>
+        <input
+          id="event-end-date"
+          formControlName="eventEndDate"
+          type="date"
+          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        />
+        @if (form.controls.eventEndDate.invalid && form.controls.eventEndDate.touched) {
+          <p class="text-caption text-error mt-xs">End date is required.</p>
         }
       </div>
-      @if (submitted() && selectedOptionIds().size === 0) {
-        <p class="text-caption text-error mt-xs">Choose at least one pricing option.</p>
-      }
-      <p class="text-caption text-on-surface-variant mt-xs">
-        <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create a new option</a> if none of these fit.
-      </p>
     </div>
+    @if (form.errors?.['dateRangeInvalid'] && form.controls.eventEndDate.touched) {
+      <p class="text-caption text-error -mt-sm">End date must be on or after the start date.</p>
+    }
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="description">Description</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        rows="4"
+        class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+      ></textarea>
+    </div>
+
+    @if (availableBundles.length > 0) {
+      <div>
+        <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
+        <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>
+        <div class="flex flex-col gap-sm">
+          @for (bundle of availableBundles; track bundle.id) {
+            <label class="flex items-center gap-sm cursor-pointer">
+              <input
+                type="checkbox"
+                class="accent-primary w-4 h-4 rounded border-outline-variant"
+                [checked]="isBundleChecked(bundle.id)"
+                (change)="toggleBundle(bundle.id)"
+              />
+              <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</span>
+            </label>
+          }
+        </div>
+        <p class="text-caption text-on-surface-variant mt-xs">
+          <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit. Pricing isn't wired up yet — this is a preview of what's coming.
+        </p>
+      </div>
+    }
+
+    @if (availableOptions.length > 0) {
+      <div>
+        <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Options</span>
+        <p class="text-caption text-on-surface-variant mb-sm">Check which delivery formats/resolutions riders can choose for this event.</p>
+        <div class="flex flex-col gap-sm">
+          @for (option of availableOptions; track option.id) {
+            <label class="flex items-center gap-sm cursor-pointer">
+              <input
+                type="checkbox"
+                class="accent-primary w-4 h-4 rounded border-outline-variant"
+                [checked]="isOptionChecked(option.id)"
+                (change)="toggleOption(option.id)"
+              />
+              <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — RM{{ option.price }}</span>
+            </label>
+          }
+        </div>
+        <p class="text-caption text-on-surface-variant mt-xs">
+          <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create a new option</a> if none of these fit. Pricing isn't wired up yet — this is a preview of what's coming.
+        </p>
+      </div>
+    }
+
+    @if (errorMsg()) {
+      <p class="text-caption text-error">{{ errorMsg() }}</p>
+    }
 
     <div class="flex items-center gap-md pt-sm">
       <a routerLink="/studio/events" class="px-lg py-sm border-2 border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
         Cancel
       </a>
-      <button type="submit" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
-        Create Event
+      <button
+        type="submit"
+        [disabled]="isSaving()"
+        class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+      >
+        {{ isSaving() ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Event' }}
       </button>
     </div>
   </form>
