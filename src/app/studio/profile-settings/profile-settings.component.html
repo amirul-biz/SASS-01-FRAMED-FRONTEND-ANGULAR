@@ -6,10 +6,23 @@
 
   <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
     <div class="flex items-center gap-md mb-lg">
-      <img [src]="avatarUrl" alt="Your avatar" class="w-16 h-16 rounded-full object-cover" />
+      <img [src]="avatarUrl()" alt="Your avatar" class="w-16 h-16 rounded-full object-cover" />
       <div>
         <span class="font-label-md text-label-md text-on-surface block">Profile Photo</span>
-        <span class="text-caption text-on-surface-variant">Avatar uploads aren't available in this demo.</span>
+        <label
+          class="text-caption font-label-md text-primary cursor-pointer hover:underline"
+          [class.opacity-60]="isUploadingImage()"
+          [class.pointer-events-none]="isUploadingImage()"
+        >
+          {{ isUploadingImage() ? 'Uploading...' : 'Change Photo' }}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            [disabled]="isUploadingImage()"
+            (change)="onAvatarFileSelected($event)"
+          />
+        </label>
       </div>
     </div>
 
