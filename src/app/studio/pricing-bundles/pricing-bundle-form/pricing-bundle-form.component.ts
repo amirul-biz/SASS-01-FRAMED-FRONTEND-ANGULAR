@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
 import { BundleModel, IBundleTier, calculatePricing } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
-type DraftBundle = Omit<IPricingBundle, 'id'>;
+type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount'>;
 
 @Component({
   selector: 'app-pricing-bundle-form',
@@ -20,6 +20,10 @@ export class PricingBundleFormComponent {
 
   id = input<string>();
 
+  // Flips once after the initial fetch resolves, so the draft below can re-derive itself from a
+  // freshly-populated cache without also reacting to unrelated data mutations later in the session.
+  private readonly loaded = signal(false);
+
   readonly formatCurrency = formatCurrency;
   readonly isEditMode = computed(() => !!this.id());
   readonly existingBundle = computed(() => {
@@ -27,10 +31,12 @@ export class PricingBundleFormComponent {
     return id ? this.pricingBundlesService.getBundle(id) : undefined;
   });
 
-  // Resets whenever `id` changes, but not on unrelated data mutations elsewhere in the app —
-  // the bundle lookup itself is read untracked for that reason (same pattern as event pricing assignment).
+  // Resets whenever `id` changes or the initial fetch completes, but not on unrelated data mutations
+  // elsewhere in the app — the bundle lookup itself is read untracked for that reason (same pattern as
+  // event pricing assignment).
   readonly draft = linkedSignal<DraftBundle>(() => {
     this.id();
+    this.loaded();
     const blank: DraftBundle = {
       photographerId: this.auth.demoPhotographerId,
       name: '',
@@ -42,6 +48,15 @@ export class PricingBundleFormComponent {
     };
     return structuredClone(untracked(() => this.existingBundle()) ?? blank);
   });
+
+  constructor() {
+    const id = this.id();
+    if (id) {
+      this.pricingBundlesService.fetchBundle(this.auth.demoPhotographerId, id).then(() => this.loaded.set(true));
+    } else {
+      this.loaded.set(true);
+    }
+  }
 
   readonly previewTiers = computed(() =>
     this.draft().bundleTiers.map((tier) => ({
@@ -102,11 +117,9 @@ export class PricingBundleFormComponent {
       return;
     }
     const id = this.id();
-    if (id) {
-      this.pricingBundlesService.updateBundle(id, this.draft());
-    } else {
-      this.pricingBundlesService.createBundle(this.draft());
-    }
-    this.router.navigate(['/studio/pricing-bundles']);
+    const save = id
+      ? this.pricingBundlesService.updateBundle(id, this.draft())
+      : this.pricingBundlesService.createBundle(this.draft());
+    save.then(() => this.router.navigate(['/studio/pricing-bundles']));
   }
 }

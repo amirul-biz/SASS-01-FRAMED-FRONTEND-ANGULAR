@@ -1,4 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { ENVIRONMENT } from '../core/environment.token';
 import { EventsService, IPhoto } from '../events/events.service';
 import { SelectionService } from './selection.service';
 
@@ -7,7 +10,13 @@ describe('SelectionService', () => {
   let eventsService: EventsService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ENVIRONMENT, useValue: { apiUrl: 'http://test-api' } },
+      ],
+    });
     service = TestBed.inject(SelectionService);
     eventsService = TestBed.inject(EventsService);
   });

@@ -28,6 +28,10 @@ interface CurrentUserResponse {
   roles: string[];
 }
 
+interface PhotographerProfileResponse {
+  id: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
@@ -37,8 +41,8 @@ export class AuthService {
 
   readonly currentUser = signal<IAppUser | null>(null);
 
-  /** No per-user photographer accounts exist without a backend — every photographer session represents this seeded demo photographer. */
-  readonly demoPhotographerId = 'alex-rivers';
+  /** The logged-in user's real photographer profile id (BE-derived), null for non-photographer sessions. */
+  readonly photographerId = signal<string | null>(null);
 
   /** Resolves once the initial Firebase session (if any) has been restored and the app profile fetched, so guards can await it on page refresh. */
   readonly ready: Promise<void>;
@@ -50,11 +54,15 @@ export class AuthService {
     onAuthStateChanged(this.auth, (firebaseUser) => {
       if (!firebaseUser) {
         this.currentUser.set(null);
+        this.photographerId.set(null);
         resolveReady();
         return;
       }
       this.loadCurrentUser(firebaseUser)
-        .catch(() => this.currentUser.set(null))
+        .catch(() => {
+          this.currentUser.set(null);
+          this.photographerId.set(null);
+        })
         .finally(resolveReady);
     });
   }
@@ -71,6 +79,7 @@ export class AuthService {
   async logout(): Promise<void> {
     await signOut(this.auth);
     this.currentUser.set(null);
+    this.photographerId.set(null);
     this.router.navigate(['/']);
   }
 
@@ -78,12 +87,23 @@ export class AuthService {
     const response = await firstValueFrom(
       this.http.get<CurrentUserResponse>(`${this.env.apiUrl}/users/current-user`),
     );
+    const role = response.roles.includes(Role.Admin) ? Role.Admin : Role.Photographer;
     const user: IAppUser = {
       name: this.nameFromEmail(firebaseUser.email ?? response.email),
       email: response.email,
-      role: response.roles.includes(Role.Admin) ? Role.Admin : Role.Photographer,
+      role,
     };
     this.currentUser.set(user);
+
+    if (role === Role.Photographer) {
+      const profile = await firstValueFrom(
+        this.http.get<PhotographerProfileResponse>(`${this.env.apiUrl}/photographer/profile`),
+      );
+      this.photographerId.set(profile.id);
+    } else {
+      this.photographerId.set(null);
+    }
+
     return user;
   }
 

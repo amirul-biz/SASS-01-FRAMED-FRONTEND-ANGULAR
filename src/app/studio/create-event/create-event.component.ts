@@ -4,8 +4,8 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, switchMap } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
-import { PricingOptionsService } from '../../pricing/pricing-options.service';
+import { IPricingBundle, PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
 import { EventCategory, StudioEventsService } from '../studio-events.service';
 
 const EVENT_CATEGORIES: EventCategory[] = [
@@ -42,14 +42,12 @@ export class CreateEventComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
   private readonly eventsService = inject(StudioEventsService);
-  // Pricing bundles/options are still mock-only (no pricing/voucher backend yet) —
-  // this picker stays cosmetic and is not included in the submitted event payload.
   private readonly pricingBundlesService = inject(PricingBundlesService);
   private readonly pricingOptionsService = inject(PricingOptionsService);
 
   readonly categories = EVENT_CATEGORIES;
-  readonly availableBundles = this.pricingBundlesService.getBundles(this.auth.demoPhotographerId);
-  readonly availableOptions = this.pricingOptionsService.getOptions(this.auth.demoPhotographerId);
+  readonly availableBundles = signal<IPricingBundle[]>([]);
+  readonly availableOptions = signal<IPhotoFormatOption[]>([]);
 
   readonly eventId = this.route.snapshot.paramMap.get('id');
   readonly isEditMode = this.eventId !== null;
@@ -75,6 +73,9 @@ export class CreateEventComponent {
   readonly errorMsg = signal<string | null>(null);
 
   constructor() {
+    this.pricingBundlesService.getBundles(this.auth.demoPhotographerId).then((bundles) => this.availableBundles.set(bundles));
+    this.pricingOptionsService.getOptions(this.auth.demoPhotographerId).then((options) => this.availableOptions.set(options));
+
     if (this.eventId) {
       this.isLoading.set(true);
       this.eventsService

@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { EventsService } from '../../events/events.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
-import { PricingOptionsService } from '../../pricing/pricing-options.service';
+import { IPricingBundle, PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
 import { calculatePricing } from '../../pricing/pricing.util';
 import { formatCurrency } from '../../pricing/currency.util';
 
@@ -24,8 +24,13 @@ export class PricingSettingsComponent {
 
   readonly formatCurrency = formatCurrency;
   readonly event = computed(() => this.eventsService.getEvent(this.id()));
-  readonly availableBundles = computed(() => this.pricingBundlesService.getBundles(this.auth.demoPhotographerId));
-  readonly availableOptions = computed(() => this.pricingOptionsService.getOptions(this.auth.demoPhotographerId));
+  readonly availableBundles = signal<IPricingBundle[]>([]);
+  readonly availableOptions = signal<IPhotoFormatOption[]>([]);
+
+  constructor() {
+    this.pricingBundlesService.getBundles(this.auth.demoPhotographerId).then((bundles) => this.availableBundles.set(bundles));
+    this.pricingOptionsService.getOptions(this.auth.demoPhotographerId).then((options) => this.availableOptions.set(options));
+  }
 
   // Reset whenever `id` changes (new event navigated to), but not on unrelated data mutations
   // elsewhere in the app — the event lookup itself is read untracked for that reason.

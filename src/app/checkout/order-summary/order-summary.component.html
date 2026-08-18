@@ -1,6 +1,5 @@
 <aside
   class="w-full bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]"
-  [class.lg:w-5/12]="!fullWidth()"
   [class.sticky]="!fullWidth()"
   [class.top-24]="!fullWidth()"
 >
@@ -75,7 +74,11 @@
             />
             <span class="font-label-md text-label-md text-on-surface">{{ offer.bundle.name }}: {{ offer.tier.minQuantity }}+ photos</span>
           </span>
-          <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(offer.tier)) }}/photo</span>
+          @if (offer.bundle.bundleModel === 'percent-tier') {
+            <span class="font-label-md text-label-md text-on-surface-variant">{{ offer.tier.value }}% off each</span>
+          } @else {
+            <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(offer.tier)) }}/photo</span>
+          }
         </label>
       }
     </div>
