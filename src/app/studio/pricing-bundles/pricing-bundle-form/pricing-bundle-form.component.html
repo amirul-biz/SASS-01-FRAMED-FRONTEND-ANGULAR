@@ -53,114 +53,27 @@
 
       <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
         <h2 class="font-headline-md text-headline-md text-primary mb-md">Vouchers</h2>
-        <p class="text-caption text-on-surface-variant mb-md bg-surface-container-low rounded-lg p-sm">
-          Only one bundle model can be active at a time.
-        </p>
+        <p class="text-caption text-on-surface-variant mb-md">Attach any vouchers you've already set up — riders get whichever gives the best discount.</p>
 
-        <div class="flex flex-col gap-md" [class.opacity-50]="draft().bundleModel !== 'flat-tier' && draft().bundleModel !== 'none'">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-label-md text-label-md text-on-surface block">Bundled Price (All-in)</span>
-              <span class="text-caption text-on-surface-variant">Set a flat total price for a quantity of photos.</span>
-            </div>
-            <button
-              type="button"
-              (click)="setBundleModel(draft().bundleModel === 'flat-tier' ? 'none' : 'flat-tier')"
-              class="w-11 h-6 rounded-full transition-colors relative shrink-0"
-              [class.bg-secondary]="draft().bundleModel === 'flat-tier'"
-              [class.bg-outline-variant]="draft().bundleModel !== 'flat-tier'"
-            >
-              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="draft().bundleModel === 'flat-tier'"></span>
-            </button>
+        @if (availableVouchers().length === 0) {
+          <p class="text-caption text-on-surface-variant">
+            No vouchers yet. <a routerLink="/studio/vouchers/new" class="underline hover:text-primary">Create one</a> to attach it here.
+          </p>
+        } @else {
+          <div class="flex flex-col gap-sm">
+            @for (voucher of availableVouchers(); track voucher.id) {
+              <label class="flex items-center gap-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="accent-primary w-4 h-4 rounded border-outline-variant"
+                  [checked]="isVoucherChecked(voucher.id)"
+                  (change)="toggleVoucher(voucher.id)"
+                />
+                <span class="font-body-md text-body-md text-on-surface">{{ voucher.name }}</span>
+              </label>
+            }
           </div>
-
-          @if (draft().bundleModel === 'flat-tier') {
-            <div class="flex flex-col gap-sm">
-              @for (tier of draft().bundleTiers; track $index) {
-                <div class="flex items-center gap-sm">
-                  <span class="text-caption text-on-surface-variant">Buy</span>
-                  <input
-                    type="number"
-                    min="1"
-                    class="w-16 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
-                    [value]="tier.minQuantity"
-                    (input)="updateTierMinQuantity($index, $any($event.target).value)"
-                  />
-                  <span class="text-caption text-on-surface-variant">+ photos</span>
-                  <span class="material-symbols-outlined text-[18px] text-outline">arrow_forward</span>
-                  <span class="text-caption text-on-surface-variant">For RM</span>
-                  <input
-                    type="number"
-                    min="0"
-                    class="w-20 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
-                    [value]="tier.value"
-                    (input)="updateTierValue($index, $any($event.target).value)"
-                  />
-                  <span class="text-caption text-on-surface-variant">flat rate</span>
-                  <button type="button" (click)="removeTier($index)" class="ml-auto text-on-surface-variant hover:text-error">
-                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                  </button>
-                </div>
-              }
-              <button type="button" (click)="addTier()" class="w-full mt-xs py-sm border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:border-primary hover:text-primary transition-colors font-label-md text-label-md">
-                + Add Tier
-              </button>
-            </div>
-          }
-        </div>
-
-        <div class="border-t border-outline-variant my-md"></div>
-
-        <div class="flex flex-col gap-md" [class.opacity-50]="draft().bundleModel !== 'percent-tier' && draft().bundleModel !== 'none'">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-label-md text-label-md text-on-surface block">Bundle Discount (%)</span>
-              <span class="text-caption text-on-surface-variant">Apply a percentage off per photo once a threshold is met.</span>
-            </div>
-            <button
-              type="button"
-              (click)="setBundleModel(draft().bundleModel === 'percent-tier' ? 'none' : 'percent-tier')"
-              class="w-11 h-6 rounded-full transition-colors relative shrink-0"
-              [class.bg-secondary]="draft().bundleModel === 'percent-tier'"
-              [class.bg-outline-variant]="draft().bundleModel !== 'percent-tier'"
-            >
-              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="draft().bundleModel === 'percent-tier'"></span>
-            </button>
-          </div>
-
-          @if (draft().bundleModel === 'percent-tier') {
-            <div class="flex flex-col gap-sm">
-              @for (tier of draft().bundleTiers; track $index) {
-                <div class="flex items-center gap-sm">
-                  <span class="text-caption text-on-surface-variant">Buy</span>
-                  <input
-                    type="number"
-                    min="1"
-                    class="w-16 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
-                    [value]="tier.minQuantity"
-                    (input)="updateTierMinQuantity($index, $any($event.target).value)"
-                  />
-                  <span class="text-caption text-on-surface-variant">+ photos, get</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    class="w-16 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
-                    [value]="tier.value"
-                    (input)="updateTierValue($index, $any($event.target).value)"
-                  />
-                  <span class="text-caption text-on-surface-variant">% off each</span>
-                  <button type="button" (click)="removeTier($index)" class="ml-auto text-on-surface-variant hover:text-error">
-                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                  </button>
-                </div>
-              }
-              <button type="button" (click)="addTier()" class="w-full mt-xs py-sm border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:border-primary hover:text-primary transition-colors font-label-md text-label-md">
-                + Add Tier
-              </button>
-            </div>
-          }
-        </div>
+        }
       </section>
 
       <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
@@ -201,12 +114,12 @@
           <span class="font-body-md text-body-md text-on-surface-variant">Single Photo</span>
           <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(draft().basePrice) }}</span>
         </div>
-        @if (draft().bundleModel !== 'none' && previewTiers().length > 0) {
+        @if (previewMatches().length > 0) {
           <div class="border-t border-outline-variant mt-sm pt-sm flex flex-col gap-sm">
-            <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Bundle Deals</span>
-            @for (row of previewTiers(); track row.tier.minQuantity) {
+            <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Voucher Deals</span>
+            @for (row of previewMatches(); track row.voucher.id + ':' + row.condition.minPhotos) {
               <div class="flex justify-between items-center">
-                <span class="font-body-md text-body-md text-on-surface-variant">{{ row.tier.minQuantity }}+ Photos</span>
+                <span class="font-body-md text-body-md text-on-surface-variant">{{ row.voucher.name }}: {{ row.condition.minPhotos }}{{ row.condition.maxPhotos === null ? '+' : '-' + row.condition.maxPhotos }} Photos</span>
                 <span class="font-label-md text-label-md text-on-surface">
                   {{ formatCurrency(row.preview.subtotal) }} Total / {{ formatCurrency(row.preview.pricePerPhoto) }} / photo
                 </span>

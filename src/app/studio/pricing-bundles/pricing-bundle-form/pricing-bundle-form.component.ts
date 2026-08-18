@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
-import { BundleModel, IBundleTier, calculatePricing } from '../../../pricing/pricing.util';
+import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
+import { calculatePricing } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
-type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount'>;
+type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers'> & { voucherIds: string[] };
 
 @Component({
   selector: 'app-pricing-bundle-form',
@@ -16,6 +17,7 @@ type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount'>;
 export class PricingBundleFormComponent {
   private readonly auth = inject(AuthService);
   private readonly pricingBundlesService = inject(PricingBundlesService);
+  private readonly vouchersService = inject(VouchersService);
   private readonly router = inject(Router);
 
   id = input<string>();
@@ -31,6 +33,8 @@ export class PricingBundleFormComponent {
     return id ? this.pricingBundlesService.getBundle(id) : undefined;
   });
 
+  readonly availableVouchers = signal<IVoucher[]>([]);
+
   // Resets whenever `id` changes or the initial fetch completes, but not on unrelated data mutations
   // elsewhere in the app — the bundle lookup itself is read untracked for that reason (same pattern as
   // event pricing assignment).
@@ -41,29 +45,52 @@ export class PricingBundleFormComponent {
       photographerId: this.auth.photographerId()!,
       name: '',
       basePrice: 15,
-      bundleModel: 'none',
-      bundleTiers: [],
+      voucherIds: [],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     };
-    return structuredClone(untracked(() => this.existingBundle()) ?? blank);
+    const existing = untracked(() => this.existingBundle());
+    if (!existing) {
+      return blank;
+    }
+    return {
+      photographerId: existing.photographerId,
+      name: existing.name,
+      basePrice: existing.basePrice,
+      voucherIds: existing.vouchers.map((v) => v.id),
+      fullGalleryEnabled: existing.fullGalleryEnabled,
+      fullGalleryPrice: existing.fullGalleryPrice,
+    };
+  });
+
+  readonly previewMatches = computed(() => {
+    const selected = new Set(this.draft().voucherIds);
+    const vouchers = this.availableVouchers().filter((v) => selected.has(v.id));
+    return vouchers.flatMap((voucher) =>
+      voucher.conditions.map((condition) => ({
+        voucher,
+        condition,
+        preview: calculatePricing(condition.minPhotos * this.draft().basePrice, condition.minPhotos, {
+          basePrice: this.draft().basePrice,
+          vouchers: [voucher],
+          fullGalleryEnabled: false,
+          fullGalleryPrice: 0,
+        }),
+      })),
+    );
   });
 
   constructor() {
+    const photographerId = this.auth.photographerId()!;
+    this.vouchersService.getVouchers(photographerId).then((vouchers) => this.availableVouchers.set(vouchers));
+
     const id = this.id();
     if (id) {
-      this.pricingBundlesService.fetchBundle(this.auth.photographerId()!, id).then(() => this.loaded.set(true));
+      this.pricingBundlesService.fetchBundle(photographerId, id).then(() => this.loaded.set(true));
     } else {
       this.loaded.set(true);
     }
   }
-
-  readonly previewTiers = computed(() =>
-    this.draft().bundleTiers.map((tier) => ({
-      tier,
-      preview: calculatePricing(tier.minQuantity * this.draft().basePrice, tier.minQuantity, this.draft()),
-    })),
-  );
 
   setName(value: string): void {
     this.draft.update((d) => ({ ...d, name: value }));
@@ -74,32 +101,14 @@ export class PricingBundleFormComponent {
     this.draft.update((d) => ({ ...d, basePrice }));
   }
 
-  setBundleModel(model: BundleModel): void {
-    this.draft.update((d) => ({ ...d, bundleModel: model }));
+  isVoucherChecked(id: string): boolean {
+    return this.draft().voucherIds.includes(id);
   }
 
-  addTier(): void {
-    const newTier: IBundleTier = { minQuantity: 5, value: this.draft().bundleModel === 'percent-tier' ? 10 : 30 };
-    this.draft.update((d) => ({ ...d, bundleTiers: [...d.bundleTiers, newTier] }));
-  }
-
-  removeTier(index: number): void {
-    this.draft.update((d) => ({ ...d, bundleTiers: d.bundleTiers.filter((_, i) => i !== index) }));
-  }
-
-  updateTierMinQuantity(index: number, value: string): void {
-    const minQuantity = Number(value) || 0;
+  toggleVoucher(id: string): void {
     this.draft.update((d) => ({
       ...d,
-      bundleTiers: d.bundleTiers.map((t, i) => (i === index ? { ...t, minQuantity } : t)),
-    }));
-  }
-
-  updateTierValue(index: number, value: string): void {
-    const tierValue = Number(value) || 0;
-    this.draft.update((d) => ({
-      ...d,
-      bundleTiers: d.bundleTiers.map((t, i) => (i === index ? { ...t, value: tierValue } : t)),
+      voucherIds: d.voucherIds.includes(id) ? d.voucherIds.filter((v) => v !== id) : [...d.voucherIds, id],
     }));
   }
 

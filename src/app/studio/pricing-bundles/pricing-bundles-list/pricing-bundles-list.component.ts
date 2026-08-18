@@ -25,14 +25,11 @@ export class PricingBundlesListComponent {
     this.reload();
   }
 
-  ruleSummary(bundle: { bundleModel: string; bundleTiers: { minQuantity: number; value: number }[] }): string {
-    if (bundle.bundleModel === 'none' || bundle.bundleTiers.length === 0) {
+  ruleSummary(bundle: IPricingBundle): string {
+    if (bundle.vouchers.length === 0) {
       return 'Per-photo pricing only';
     }
-    const [tier] = bundle.bundleTiers;
-    return bundle.bundleModel === 'flat-tier'
-      ? `${tier.minQuantity}+ photos for RM${tier.value} flat`
-      : `${tier.minQuantity}+ photos, ${tier.value}% off each`;
+    return bundle.vouchers.map((v) => v.name).join(', ');
   }
 
   deleteBundle(id: string): void {
