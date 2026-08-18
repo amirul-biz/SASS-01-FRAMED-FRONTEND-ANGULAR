@@ -21,30 +21,41 @@
       <span class="material-symbols-outlined mr-md">calendar_today</span>
       <span class="font-label-md text-label-md">My Events</span>
     </a>
-    <a
-      routerLink="/studio/pricing-bundles"
-      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
-      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+    <button
+      type="button"
+      (click)="togglePricing()"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all w-full text-left"
     >
       <span class="material-symbols-outlined mr-md">sell</span>
-      <span class="font-label-md text-label-md">Pricing Bundles</span>
-    </a>
-    <a
-      routerLink="/studio/pricing-options"
-      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
-      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
-    >
-      <span class="material-symbols-outlined mr-md">tune</span>
-      <span class="font-label-md text-label-md">Pricing Options</span>
-    </a>
-    <a
-      routerLink="/studio/earnings"
-      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
-      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
-    >
-      <span class="material-symbols-outlined mr-md">account_balance_wallet</span>
-      <span class="font-label-md text-label-md">Earnings</span>
-    </a>
+      <span class="font-label-md text-label-md flex-1">Pricing</span>
+      <span class="material-symbols-outlined transition-transform" [class.rotate-180]="pricingExpanded()">expand_more</span>
+    </button>
+
+    @if (pricingExpanded()) {
+      <div class="flex flex-col gap-xs pl-xl">
+        <a
+          routerLink="/studio/pricing-bundles"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+        >
+          <span class="font-label-md text-label-md">Bundles</span>
+        </a>
+        <a
+          routerLink="/studio/pricing-options"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+        >
+          <span class="font-label-md text-label-md">Options</span>
+        </a>
+        <a
+          routerLink="/studio/vouchers"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+        >
+          <span class="font-label-md text-label-md">Vouchers</span>
+        </a>
+      </div>
+    }
     <a
       routerLink="/studio/profile-settings"
       routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
