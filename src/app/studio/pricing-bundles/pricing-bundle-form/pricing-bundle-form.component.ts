@@ -38,7 +38,7 @@ export class PricingBundleFormComponent {
     this.id();
     this.loaded();
     const blank: DraftBundle = {
-      photographerId: this.auth.demoPhotographerId,
+      photographerId: this.auth.photographerId()!,
       name: '',
       basePrice: 15,
       bundleModel: 'none',
@@ -52,7 +52,7 @@ export class PricingBundleFormComponent {
   constructor() {
     const id = this.id();
     if (id) {
-      this.pricingBundlesService.fetchBundle(this.auth.demoPhotographerId, id).then(() => this.loaded.set(true));
+      this.pricingBundlesService.fetchBundle(this.auth.photographerId()!, id).then(() => this.loaded.set(true));
     } else {
       this.loaded.set(true);
     }

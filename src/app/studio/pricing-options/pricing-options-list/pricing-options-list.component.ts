@@ -26,6 +26,6 @@ export class PricingOptionsListComponent {
   }
 
   private reload(): void {
-    this.pricingOptionsService.getOptions(this.auth.demoPhotographerId).then((options) => this.options.set(options));
+    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then((options) => this.options.set(options));
   }
 }

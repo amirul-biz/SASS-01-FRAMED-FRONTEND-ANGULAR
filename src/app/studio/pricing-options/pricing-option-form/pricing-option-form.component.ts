@@ -43,7 +43,7 @@ export class PricingOptionFormComponent {
   });
 
   constructor() {
-    this.pricingOptionsService.getOptions(this.auth.demoPhotographerId).then(() => this.loaded.set(true));
+    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then(() => this.loaded.set(true));
   }
 
   setLabel(value: string): void {
@@ -62,7 +62,7 @@ export class PricingOptionFormComponent {
     const id = this.id();
     const save = id
       ? this.pricingOptionsService.updateOption(id, this.draft())
-      : this.pricingOptionsService.createOption({ ...this.draft(), photographerId: this.auth.demoPhotographerId });
+      : this.pricingOptionsService.createOption({ ...this.draft(), photographerId: this.auth.photographerId()! });
     save.then(() => this.router.navigate(['/studio/pricing-options']));
   }
 }

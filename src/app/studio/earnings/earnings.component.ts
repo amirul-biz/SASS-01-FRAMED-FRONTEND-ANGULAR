@@ -16,7 +16,7 @@ export class EarningsComponent {
 
   readonly formatCurrency = formatCurrency;
 
-  readonly events = computed(() => this.eventsService.getEventsByPhotographer(this.auth.demoPhotographerId));
+  readonly events = computed(() => this.eventsService.getEventsByPhotographer(this.auth.photographerId()!));
 
   readonly rows = computed(() =>
     this.events().map((event) => {

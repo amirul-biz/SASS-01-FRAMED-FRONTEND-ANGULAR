@@ -46,6 +46,6 @@ export class PricingBundlesListComponent {
   }
 
   private reload(): void {
-    this.pricingBundlesService.getBundles(this.auth.demoPhotographerId).then((bundles) => this.rawBundles.set(bundles));
+    this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.rawBundles.set(bundles));
   }
 }

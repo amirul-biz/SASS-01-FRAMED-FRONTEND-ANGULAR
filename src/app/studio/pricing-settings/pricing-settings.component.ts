@@ -28,8 +28,8 @@ export class PricingSettingsComponent {
   readonly availableOptions = signal<IPhotoFormatOption[]>([]);
 
   constructor() {
-    this.pricingBundlesService.getBundles(this.auth.demoPhotographerId).then((bundles) => this.availableBundles.set(bundles));
-    this.pricingOptionsService.getOptions(this.auth.demoPhotographerId).then((options) => this.availableOptions.set(options));
+    this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.availableBundles.set(bundles));
+    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then((options) => this.availableOptions.set(options));
   }
 
   // Reset whenever `id` changes (new event navigated to), but not on unrelated data mutations
