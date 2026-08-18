@@ -1,0 +1,44 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Vouchers</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Reusable discounts you can attach to any pricing bundle.</p>
+    </div>
+    <a routerLink="/studio/vouchers/new" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+      + New Voucher
+    </a>
+  </div>
+
+  @if (vouchers().length === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">No vouchers yet.</p>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-md">
+      @for (voucher of vouchers(); track voucher.id) {
+        <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex items-center justify-between gap-md">
+          <div>
+            <span class="font-label-md text-label-md text-on-surface block">{{ voucher.name }}</span>
+            <span class="text-caption text-on-surface-variant">{{ conditionsSummary(voucher) }}</span>
+            @if (voucher.bundlesUsingCount > 0) {
+              <span class="text-caption text-on-surface-variant block mt-xs">Used by {{ voucher.bundlesUsingCount }} bundle(s)</span>
+            }
+          </div>
+          <div class="flex items-center gap-sm shrink-0">
+            <a [routerLink]="['/studio/vouchers', voucher.id, 'edit']" class="px-md py-xs border-2 border-outline-variant text-on-surface-variant rounded-lg font-label-md hover:bg-surface-container-low transition-colors">
+              Edit
+            </a>
+            <button
+              type="button"
+              (click)="deleteVoucher(voucher.id)"
+              [disabled]="voucher.bundlesUsingCount > 0"
+              class="px-md py-xs border-2 border-error text-error rounded-lg font-label-md hover:bg-error-container transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

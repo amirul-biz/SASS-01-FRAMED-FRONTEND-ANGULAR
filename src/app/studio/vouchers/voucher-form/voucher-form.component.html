@@ -1,0 +1,106 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
+    <a routerLink="/studio/vouchers" class="hover:text-primary transition-colors">Vouchers</a>
+    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+    <span class="text-on-surface">{{ isEditMode() ? 'Edit Voucher' : 'New Voucher' }}</span>
+  </nav>
+
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+      {{ isEditMode() ? 'Edit Voucher' : 'New Voucher' }}
+    </h1>
+    <div class="flex items-center gap-sm">
+      <a routerLink="/studio/vouchers" class="px-lg py-sm border-2 border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
+        Cancel
+      </a>
+      <button type="button" (click)="save()" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+        {{ isEditMode() ? 'Save Voucher' : 'Create Voucher' }}
+      </button>
+    </div>
+  </div>
+
+  <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="voucher-name">Voucher Name</label>
+      <input
+        id="voucher-name"
+        type="text"
+        placeholder="e.g. Group Discount"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+        [value]="draft().name"
+        (input)="setName($any($event.target).value)"
+      />
+    </div>
+
+    <div>
+      <span class="block font-label-md text-label-md text-on-surface mb-xs">Discount Type</span>
+      <div class="flex gap-sm">
+        <button
+          type="button"
+          (click)="setDiscountType('percent-tier')"
+          class="px-md py-sm rounded-xl font-label-md border-2 transition-colors"
+          [class.border-primary]="draft().discountType === 'percent-tier'"
+          [class.bg-primary]="draft().discountType === 'percent-tier'"
+          [class.text-on-primary]="draft().discountType === 'percent-tier'"
+          [class.border-outline-variant]="draft().discountType !== 'percent-tier'"
+        >
+          Discounted Rate (%)
+        </button>
+        <button
+          type="button"
+          (click)="setDiscountType('flat-tier')"
+          class="px-md py-sm rounded-xl font-label-md border-2 transition-colors"
+          [class.border-primary]="draft().discountType === 'flat-tier'"
+          [class.bg-primary]="draft().discountType === 'flat-tier'"
+          [class.text-on-primary]="draft().discountType === 'flat-tier'"
+          [class.border-outline-variant]="draft().discountType !== 'flat-tier'"
+        >
+          All-in Flat Rate
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <span class="block font-label-md text-label-md text-on-surface mb-xs">Conditions</span>
+      <p class="text-caption text-on-surface-variant mb-sm">Leave "up to" blank for an unbounded top range (e.g. "10+ photos").</p>
+      <div class="flex flex-col gap-sm">
+        @for (condition of draft().conditions; track $index) {
+          <div class="flex items-center gap-sm flex-wrap">
+            <span class="text-caption text-on-surface-variant">From</span>
+            <input
+              type="number"
+              min="1"
+              class="w-16 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
+              [value]="condition.minPhotos"
+              (input)="updateConditionMin($index, $any($event.target).value)"
+            />
+            <span class="text-caption text-on-surface-variant">up to</span>
+            <input
+              type="number"
+              min="1"
+              placeholder="&infin;"
+              class="w-16 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
+              [value]="condition.maxPhotos ?? ''"
+              (input)="updateConditionMax($index, $any($event.target).value)"
+            />
+            <span class="text-caption text-on-surface-variant">photos:</span>
+            <input
+              type="number"
+              min="0"
+              class="w-20 h-10 px-sm border border-outline-variant rounded-lg text-center bg-surface"
+              [value]="condition.value"
+              (input)="updateConditionValue($index, $any($event.target).value)"
+            />
+            <span class="text-caption text-on-surface-variant">{{ draft().discountType === 'percent-tier' ? '% off' : 'RM flat' }}</span>
+            <button type="button" (click)="removeCondition($index)" class="ml-auto text-on-surface-variant hover:text-error">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        }
+        <button type="button" (click)="addCondition()" class="w-full mt-xs py-sm border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:border-primary hover:text-primary transition-colors font-label-md text-label-md">
+          + Add Condition
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
