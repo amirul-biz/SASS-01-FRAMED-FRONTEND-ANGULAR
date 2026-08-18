@@ -49,10 +49,13 @@ export class PricingSettingsComponent {
   readonly previewByBundle = computed(() =>
     this.selectedBundles().map((bundle) => ({
       bundle,
-      tiers: bundle.bundleTiers.map((tier) => ({
-        tier,
-        preview: calculatePricing(tier.minQuantity * bundle.basePrice, tier.minQuantity, bundle),
-      })),
+      matches: bundle.vouchers.flatMap((voucher) =>
+        voucher.conditions.map((condition) => ({
+          voucher,
+          condition,
+          preview: calculatePricing(condition.minPhotos * bundle.basePrice, condition.minPhotos, bundle),
+        })),
+      ),
     })),
   );
 

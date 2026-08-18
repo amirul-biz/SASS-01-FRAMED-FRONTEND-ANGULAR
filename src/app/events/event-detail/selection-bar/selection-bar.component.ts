@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router } from '@angular/router';
 import { SelectionService } from '../../../pricing/selection.service';
 import { EventsService } from '../../events.service';
-import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
-import { IBundleTier } from '../../../pricing/pricing.util';
+import { IBundleVoucherSummary, IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
+import { IVoucherCondition } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -20,7 +20,7 @@ export class SelectionBarComponent {
   readonly formatCurrency = formatCurrency;
 
   // The nearest upcoming voucher milestone across every voucher assigned to this event —
-  // whichever qualifying tier requires the fewest additional photos to unlock.
+  // whichever qualifying condition requires the fewest additional photos to unlock.
   readonly nextTierHint = computed(() => {
     const event = this.eventsService.getEvent(this.selection.eventId() ?? '');
     if (!event) {
@@ -30,28 +30,27 @@ export class SelectionBarComponent {
       .map((id) => this.pricingBundlesService.getBundle(id))
       .filter((b): b is IPricingBundle => !!b);
 
-    const candidates = bundles.flatMap((bundle) => {
-      if (bundle.bundleModel === 'none') {
-        return [];
-      }
-      const nextTier = [...bundle.bundleTiers]
-        .sort((a, b) => a.minQuantity - b.minQuantity)
-        .find((t) => this.selection.selectedCount() < t.minQuantity);
-      return nextTier ? [{ bundle, tier: nextTier }] : [];
-    });
+    const candidates = bundles.flatMap((bundle) =>
+      bundle.vouchers.flatMap((voucher) => {
+        const nextCondition = [...voucher.conditions]
+          .sort((a, b) => a.minPhotos - b.minPhotos)
+          .find((c) => this.selection.selectedCount() < c.minPhotos);
+        return nextCondition ? [{ voucher, condition: nextCondition }] : [];
+      }),
+    );
 
     if (candidates.length === 0) {
       return null;
     }
 
-    const nearest = candidates.reduce((best, cur) => (cur.tier.minQuantity < best.tier.minQuantity ? cur : best));
-    return this.hintFor(nearest.bundle, nearest.tier);
+    const nearest = candidates.reduce((best, cur) => (cur.condition.minPhotos < best.condition.minPhotos ? cur : best));
+    return this.hintFor(nearest.voucher, nearest.condition);
   });
 
-  private hintFor(bundle: IPricingBundle, tier: IBundleTier): string {
-    return bundle.bundleModel === 'flat-tier'
-      ? `Buy ${tier.minQuantity}+ for ${formatCurrency(tier.value / tier.minQuantity)}/photo`
-      : `Buy ${tier.minQuantity}+ and get ${tier.value}% off each`;
+  private hintFor(voucher: IBundleVoucherSummary, condition: IVoucherCondition): string {
+    return voucher.discountType === 'flat-tier'
+      ? `Buy ${condition.minPhotos}+ for ${formatCurrency(condition.value / condition.minPhotos)}/photo`
+      : `Buy ${condition.minPhotos}+ and get ${condition.value}% off each`;
   }
 
   viewCart(): void {

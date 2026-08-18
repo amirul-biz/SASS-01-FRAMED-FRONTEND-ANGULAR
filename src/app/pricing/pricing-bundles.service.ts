@@ -2,12 +2,18 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ENVIRONMENT } from '../core/environment.token';
-import { IEventPricing } from './pricing.util';
+import { IEventPricing, IVoucherLike } from './pricing.util';
 
-export interface IPricingBundle extends IEventPricing {
+export interface IBundleVoucherSummary extends IVoucherLike {
+  id: string;
+  name: string;
+}
+
+export interface IPricingBundle extends Omit<IEventPricing, 'vouchers'> {
   id: string;
   photographerId: string;
   name: string;
+  vouchers: IBundleVoucherSummary[];
   eventsUsingCount: number;
 }
 
@@ -22,10 +28,16 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'alex-rivers',
     name: 'Standard Bundle',
     basePrice: 15,
-    bundleModel: 'flat-tier',
-    bundleTiers: [
-      { minQuantity: 5, value: 30 },
-      { minQuantity: 10, value: 50 },
+    vouchers: [
+      {
+        id: 'alex-standard-voucher',
+        name: 'Standard Voucher',
+        discountType: 'flat-tier',
+        conditions: [
+          { minPhotos: 5, maxPhotos: 9, value: 30 },
+          { minPhotos: 10, maxPhotos: null, value: 50 },
+        ],
+      },
     ],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -36,8 +48,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'alex-rivers',
     name: 'Budget MTB Bundle',
     basePrice: 12,
-    bundleModel: 'flat-tier',
-    bundleTiers: [{ minQuantity: 5, value: 25 }],
+    vouchers: [{ id: 'alex-budget-voucher', name: 'Budget Voucher', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 25 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -47,8 +58,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'alex-rivers',
     name: 'Premium Percent Bundle',
     basePrice: 18,
-    bundleModel: 'percent-tier',
-    bundleTiers: [{ minQuantity: 5, value: 15 }],
+    vouchers: [{ id: 'alex-premium-voucher', name: 'Premium Voucher', discountType: 'percent-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 15 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -58,8 +68,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'alex-rivers',
     name: 'Per-Photo Only',
     basePrice: 15,
-    bundleModel: 'none',
-    bundleTiers: [],
+    vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -69,8 +78,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'marcus-chen',
     name: 'Standard Bundle',
     basePrice: 15,
-    bundleModel: 'flat-tier',
-    bundleTiers: [{ minQuantity: 5, value: 30 }],
+    vouchers: [{ id: 'marcus-standard-voucher', name: 'Standard Voucher', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -80,8 +88,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'sarah-jenkins',
     name: 'Per-Photo Only',
     basePrice: 15,
-    bundleModel: 'none',
-    bundleTiers: [],
+    vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -91,16 +98,15 @@ const SEED_BUNDLES: IPricingBundle[] = [
     photographerId: 'unknown-uploader',
     name: 'Per-Photo Only',
     basePrice: 15,
-    bundleModel: 'none',
-    bundleTiers: [],
+    vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
   },
 ];
 
-export type PricingBundleInput = Omit<IPricingBundle, 'id' | 'eventsUsingCount'>;
-export type PricingBundleChanges = Partial<Omit<IPricingBundle, 'id' | 'photographerId' | 'eventsUsingCount'>>;
+export type PricingBundleInput = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers'> & { voucherIds: string[] };
+export type PricingBundleChanges = Partial<Omit<IPricingBundle, 'id' | 'photographerId' | 'eventsUsingCount' | 'vouchers'>> & { voucherIds?: string[] };
 
 @Injectable({ providedIn: 'root' })
 export class PricingBundlesService {
@@ -144,8 +150,7 @@ export class PricingBundlesService {
         {
           name: input.name,
           basePrice: input.basePrice,
-          bundleModel: input.bundleModel,
-          bundleTiers: input.bundleTiers,
+          voucherIds: input.voucherIds,
           fullGalleryEnabled: input.fullGalleryEnabled,
           fullGalleryPrice: input.fullGalleryPrice,
         },

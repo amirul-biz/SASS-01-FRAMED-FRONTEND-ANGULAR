@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SelectionService } from '../pricing/selection.service';
+import { IBundleVoucherSummary } from '../pricing/pricing-bundles.service';
 import { PAYMENT_METHODS, PaymentMethod } from './payment-method.constants';
 import { PaymentMethodOptionComponent } from './payment-method-option/payment-method-option.component';
 import { OrderSummaryComponent } from './order-summary/order-summary.component';
@@ -60,8 +61,8 @@ export class CheckoutComponent {
     const { email, countryCode, phone } = this.contactForm.getRawValue();
     const entries = this.selection.selectedEntries();
     const pricing = this.selection.pricing();
-    const tier = this.selection.selectedTier();
-    const bundle = this.selection.selectedBundle();
+    const match = this.selection.selectedTier();
+    const voucher = match?.voucher as IBundleVoucherSummary | undefined;
 
     const lines: string[] = ['New PICSWEEP Order', '', `Contact: ${email} (${countryCode} ${phone})`, '', `Photos (${entries.length}):`];
 
@@ -74,8 +75,8 @@ export class CheckoutComponent {
 
     lines.push('');
     lines.push(
-      tier && bundle
-        ? `Voucher Applied: ${bundle.name} (${tier.minQuantity}+ photos) — Saved ${formatCurrency(pricing.bundleDiscount)}`
+      match && voucher
+        ? `Voucher Applied: ${voucher.name} (${match.condition.minPhotos}${match.condition.maxPhotos === null ? '+' : '-' + match.condition.maxPhotos} photos) — Saved ${formatCurrency(pricing.bundleDiscount)}`
         : 'Voucher Applied: None',
     );
     lines.push('');

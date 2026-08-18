@@ -59,8 +59,8 @@ describe('SelectionService', () => {
 
   it('recomputes pricing reactively using the selected event own pricing config', () => {
     // crankworx-whistler-2024 is photographed by alex-rivers; quick-select defaults to their
-    // cheapest pricing option (30MP JPEG, RM12/photo). Bundle: flat-tier 5+ -> RM30 (RM6/photo),
-    // a flat bulk rate independent of which pricing option was chosen.
+    // cheapest pricing option (30MP JPEG, RM12/photo). Voucher: flat-tier 5-9 photos -> RM30
+    // (RM6/photo), a flat bulk rate independent of which pricing option was chosen.
     const photos = photosFor('crankworx-whistler-2024');
 
     for (let i = 0; i < 4; i++) {
@@ -74,7 +74,7 @@ describe('SelectionService', () => {
 
     expect(service.pricing().bundleApplied).toBe(true);
     expect(service.pricing().pricePerPhoto).toBe(6);
-    expect(service.pricing().total).toBe(32);
+    expect(service.pricing().total).toBe(30);
   });
 
   it('clear empties the selection', () => {

@@ -14,8 +14,7 @@ describe('PricingBundlesService', () => {
     photographerId: 'alex-rivers',
     name: 'Standard Bundle',
     basePrice: 15,
-    bundleModel: 'flat-tier',
-    bundleTiers: [{ minQuantity: 5, value: 30 }],
+    vouchers: [{ id: 'voucher-1', name: 'Group Discount', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
     eventsUsingCount: 0,
@@ -70,8 +69,7 @@ describe('PricingBundlesService', () => {
       photographerId: 'alex-rivers',
       name: 'Budget Bundle',
       basePrice: 12,
-      bundleModel: 'none',
-      bundleTiers: [],
+      voucherIds: [],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     });
@@ -79,7 +77,7 @@ describe('PricingBundlesService', () => {
     const req = httpMock.expectOne(`${apiUrl}/pricing-bundles`);
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('x-photographer-id')).toBe('alex-rivers');
-    const created = { ...bundle, id: 'bundle-2', name: 'Budget Bundle', basePrice: 12, bundleModel: 'none' as const, bundleTiers: [] };
+    const created = { ...bundle, id: 'bundle-2', name: 'Budget Bundle', basePrice: 12, vouchers: [] };
     req.flush(created);
 
     expect(await promise).toEqual(created);
