@@ -1,28 +1,35 @@
-import { IEventPricing, calculatePricing, qualifyingTiers } from './pricing.util';
+import { IEventPricing, calculatePricing, qualifyingConditions } from './pricing.util';
+
+const flatVoucher = {
+  discountType: 'flat-tier' as const,
+  conditions: [
+    { minPhotos: 5, maxPhotos: 9, value: 30 },
+    { minPhotos: 10, maxPhotos: null, value: 50 },
+  ],
+};
+
+const percentVoucher = {
+  discountType: 'percent-tier' as const,
+  conditions: [{ minPhotos: 5, maxPhotos: null, value: 15 }],
+};
 
 const flatTierPricing: IEventPricing = {
   basePrice: 15,
-  bundleModel: 'flat-tier',
-  bundleTiers: [
-    { minQuantity: 5, value: 30 },
-    { minQuantity: 10, value: 50 },
-  ],
+  vouchers: [flatVoucher],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
 };
 
 const percentTierPricing: IEventPricing = {
   basePrice: 15,
-  bundleModel: 'percent-tier',
-  bundleTiers: [{ minQuantity: 5, value: 15 }],
+  vouchers: [percentVoucher],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
 };
 
-const noBundlePricing: IEventPricing = {
+const noVoucherPricing: IEventPricing = {
   basePrice: 15,
-  bundleModel: 'none',
-  bundleTiers: [],
+  vouchers: [],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
 };
@@ -50,8 +57,7 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('charges the real photos total below the lowest tier threshold', () => {
-    // 4 photos totalling RM60 (e.g. RM15/photo)
+  it('charges the real photos total below the lowest range', () => {
     expect(calculatePricing(60, 4, flatTierPricing)).toEqual({
       photoCount: 4,
       pricePerPhoto: 15,
@@ -62,8 +68,21 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('applies a flat-tier rate once its threshold is met', () => {
-    // tier: 5+ -> RM30 flat => RM6/photo, independent of the real photos total (RM75 here)
+  it('charges the real photos total when the count falls in a gap between ranges', () => {
+    const gapped: IEventPricing = {
+      basePrice: 15,
+      vouchers: [{ discountType: 'percent-tier', conditions: [{ minPhotos: 3, maxPhotos: 5, value: 50 }, { minPhotos: 10, maxPhotos: null, value: 40 }] }],
+      fullGalleryEnabled: false,
+      fullGalleryPrice: 0,
+    };
+    // 7 photos: matches neither 3-5 nor 10+
+    const result = calculatePricing(105, 7, gapped);
+    expect(result.bundleApplied).toBe(false);
+    expect(result.total).toBe(105);
+  });
+
+  it('applies a flat-tier rate once its range is met', () => {
+    // range: 5-9 -> RM30 flat => RM6/photo, independent of the real photos total (RM75 here)
     expect(calculatePricing(75, 5, flatTierPricing)).toEqual({
       photoCount: 5,
       pricePerPhoto: 6,
@@ -74,8 +93,8 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('selects the best (highest-threshold) qualifying flat tier', () => {
-    // tier: 10+ -> RM50 flat => RM5/photo
+  it('applies the unbounded top range', () => {
+    // range: 10+ -> RM50 flat => RM5/photo
     expect(calculatePricing(150, 10, flatTierPricing)).toEqual({
       photoCount: 10,
       pricePerPhoto: 5,
@@ -86,8 +105,7 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('applies a percent-tier discount off the real photos total once its threshold is met', () => {
-    // tier: 5+ -> 15% off a RM75 total => RM63.75
+  it('applies a percent-tier discount off the real photos total once its range is met', () => {
     const result = calculatePricing(75, 5, percentTierPricing);
     expect(result.bundleApplied).toBe(true);
     expect(result.pricePerPhoto).toBeCloseTo(12.75);
@@ -96,8 +114,8 @@ describe('calculatePricing', () => {
     expect(result.total).toBeCloseTo(63.75);
   });
 
-  it('never applies a bundle when bundleModel is none', () => {
-    expect(calculatePricing(300, 20, noBundlePricing)).toEqual({
+  it('never applies a discount when there are no attached vouchers', () => {
+    expect(calculatePricing(300, 20, noVoucherPricing)).toEqual({
       photoCount: 20,
       pricePerPhoto: 15,
       bundleApplied: false,
@@ -107,46 +125,66 @@ describe('calculatePricing', () => {
     });
   });
 
-  it('applies a caller-forced tier instead of auto-picking the best one', () => {
-    // forced to the 5+ tier (RM6/photo) even though 10 photos also qualify for the better 10+ tier
-    const result = calculatePricing(150, 10, flatTierPricing, flatTierPricing.bundleTiers[0]);
+  it('picks whichever attached voucher condition gives the lowest total when several match', () => {
+    const twoVouchers: IEventPricing = {
+      basePrice: 15,
+      vouchers: [
+        { discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 40 }] }, // RM8/photo
+        { discountType: 'percent-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 50 }] }, // 50% off RM75 = RM37.50
+      ],
+      fullGalleryEnabled: false,
+      fullGalleryPrice: 0,
+    };
+    const result = calculatePricing(75, 5, twoVouchers);
+    expect(result.total).toBe(37.5);
+  });
+
+  it('applies a caller-forced condition instead of auto-picking the best one', () => {
+    const forced = { voucher: flatVoucher, condition: flatVoucher.conditions[0] };
+    const result = calculatePricing(150, 10, flatTierPricing, forced);
     expect(result.pricePerPhoto).toBe(6);
     expect(result.subtotal).toBe(60);
     expect(result.bundleApplied).toBe(true);
-    expect(result.total).toBe(60);
   });
 
-  it('forces no discount at all when forcedTier is explicitly null, even if tiers would qualify', () => {
+  it('forces no discount at all when forcedCondition is explicitly null', () => {
     const result = calculatePricing(150, 10, flatTierPricing, null);
     expect(result.pricePerPhoto).toBe(15);
     expect(result.bundleApplied).toBe(false);
     expect(result.subtotal).toBe(150);
-    expect(result.bundleDiscount).toBe(0);
     expect(result.total).toBe(150);
   });
 });
 
-describe('qualifyingTiers', () => {
-  it('returns an empty list when bundleModel is none', () => {
-    expect(qualifyingTiers(20, noBundlePricing)).toEqual([]);
+describe('qualifyingConditions', () => {
+  it('returns an empty list when there are no attached vouchers', () => {
+    expect(qualifyingConditions(20, noVoucherPricing)).toEqual([]);
   });
 
   it('returns an empty list when pricing is undefined', () => {
-    expect(qualifyingTiers(20, undefined)).toEqual([]);
+    expect(qualifyingConditions(20, undefined)).toEqual([]);
   });
 
-  it('returns an empty list when the count is below every tier threshold', () => {
-    expect(qualifyingTiers(4, flatTierPricing)).toEqual([]);
+  it('returns an empty list when the count matches no range', () => {
+    expect(qualifyingConditions(4, flatTierPricing)).toEqual([]);
   });
 
-  it('returns every qualifying tier sorted ascending by threshold', () => {
-    expect(qualifyingTiers(10, flatTierPricing)).toEqual([
-      { minQuantity: 5, value: 30 },
-      { minQuantity: 10, value: 50 },
+  it('returns the one matching range per voucher', () => {
+    expect(qualifyingConditions(7, flatTierPricing)).toEqual([
+      { voucher: flatVoucher, condition: flatVoucher.conditions[0] },
     ]);
   });
 
-  it('returns only the tiers actually met when count is between thresholds', () => {
-    expect(qualifyingTiers(7, flatTierPricing)).toEqual([{ minQuantity: 5, value: 30 }]);
+  it('returns matches across every attached voucher', () => {
+    const twoVouchers: IEventPricing = {
+      basePrice: 15,
+      vouchers: [flatVoucher, percentVoucher],
+      fullGalleryEnabled: false,
+      fullGalleryPrice: 0,
+    };
+    expect(qualifyingConditions(7, twoVouchers)).toEqual([
+      { voucher: flatVoucher, condition: flatVoucher.conditions[0] },
+      { voucher: percentVoucher, condition: percentVoucher.conditions[0] },
+    ]);
   });
 });
