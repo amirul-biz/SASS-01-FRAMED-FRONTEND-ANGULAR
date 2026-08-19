@@ -1,6 +1,7 @@
-# Pricing Bundle Form: Pricing Options Card — Scoped, In Progress
+# Pricing Bundle Form: Pricing Options Card — Done
 
-Status: **Scoped and approved 2026-08-19. Executing inline.**
+Status: **Implemented and verified live in browser, 2026-08-19.** BE committed on
+`aidid-be-dev` (`d3e3111`), FE committed on `aidid-pricing-module-FE` (`fb80e47`). Not pushed.
 
 ## Confirmed decisions
 
