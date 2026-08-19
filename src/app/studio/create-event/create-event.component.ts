@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, switchMap } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
-import { IPricingBundle, PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
 import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
 import { EventCategory, StudioEventsService } from '../studio-events.service';
 
@@ -48,6 +48,7 @@ export class CreateEventComponent {
   readonly categories = EVENT_CATEGORIES;
   readonly availableBundles = signal<IPricingBundle[]>([]);
   readonly availableOptions = signal<IPhotoFormatOption[]>([]);
+  readonly lowestOptionPrice = lowestOptionPrice;
 
   readonly eventId = this.route.snapshot.paramMap.get('id');
   readonly isEditMode = this.eventId !== null;

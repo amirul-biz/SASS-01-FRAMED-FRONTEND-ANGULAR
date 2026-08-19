@@ -14,21 +14,18 @@ const percentVoucher = {
 };
 
 const flatTierPricing: IEventPricing = {
-  basePrice: 15,
   vouchers: [flatVoucher],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
 };
 
 const percentTierPricing: IEventPricing = {
-  basePrice: 15,
   vouchers: [percentVoucher],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
 };
 
 const noVoucherPricing: IEventPricing = {
-  basePrice: 15,
   vouchers: [],
   fullGalleryEnabled: false,
   fullGalleryPrice: 0,
@@ -70,7 +67,6 @@ describe('calculatePricing', () => {
 
   it('charges the real photos total when the count falls in a gap between ranges', () => {
     const gapped: IEventPricing = {
-      basePrice: 15,
       vouchers: [{ discountType: 'percent-tier', conditions: [{ minPhotos: 3, maxPhotos: 5, value: 50 }, { minPhotos: 10, maxPhotos: null, value: 40 }] }],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
@@ -127,7 +123,6 @@ describe('calculatePricing', () => {
 
   it('picks whichever attached voucher condition gives the lowest total when several match', () => {
     const twoVouchers: IEventPricing = {
-      basePrice: 15,
       vouchers: [
         { discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 40 }] }, // RM8/photo
         { discountType: 'percent-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 50 }] }, // 50% off RM75 = RM37.50
@@ -177,7 +172,6 @@ describe('qualifyingConditions', () => {
 
   it('returns matches across every attached voucher', () => {
     const twoVouchers: IEventPricing = {
-      basePrice: 15,
       vouchers: [flatVoucher, percentVoucher],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,

@@ -13,7 +13,7 @@ describe('PricingBundlesService', () => {
     id: 'bundle-1',
     photographerId: 'alex-rivers',
     name: 'Standard Bundle',
-    basePrice: 15,
+    pricingOptions: [{ id: 'option-1', label: 'HEIC', price: 15 }],
     vouchers: [{ id: 'voucher-1', name: 'Group Discount', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -68,8 +68,8 @@ describe('PricingBundlesService', () => {
     const promise = service.createBundle({
       photographerId: 'alex-rivers',
       name: 'Budget Bundle',
-      basePrice: 12,
       voucherIds: [],
+      pricingOptionIds: ['option-1'],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     });
@@ -77,7 +77,7 @@ describe('PricingBundlesService', () => {
     const req = httpMock.expectOne(`${apiUrl}/pricing-bundles`);
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('x-photographer-id')).toBe('alex-rivers');
-    const created = { ...bundle, id: 'bundle-2', name: 'Budget Bundle', basePrice: 12, vouchers: [] };
+    const created = { ...bundle, id: 'bundle-2', name: 'Budget Bundle', vouchers: [] };
     req.flush(created);
 
     expect(await promise).toEqual(created);
@@ -89,15 +89,15 @@ describe('PricingBundlesService', () => {
     httpMock.expectOne(`${apiUrl}/pricing-bundles`).flush([bundle]);
     await getReq0;
 
-    const promise = service.updateBundle('bundle-1', { basePrice: 99 });
+    const promise = service.updateBundle('bundle-1', { name: 'Renamed Bundle' });
 
     const req = httpMock.expectOne(`${apiUrl}/pricing-bundles/bundle-1`);
     expect(req.request.method).toBe('PATCH');
-    const updated = { ...bundle, basePrice: 99 };
+    const updated = { ...bundle, name: 'Renamed Bundle' };
     req.flush(updated);
 
     expect(await promise).toEqual(updated);
-    expect(service.getBundle('bundle-1')?.basePrice).toBe(99);
+    expect(service.getBundle('bundle-1')?.name).toBe('Renamed Bundle');
   });
 
   it('deleteBundle removes the bundle from the cache once the API confirms', async () => {

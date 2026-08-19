@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { EventsService, EventStatus } from '../../events/events.service';
 import { PhotographersService, PhotographerStatus } from '../../photographers/photographers.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
 import { formatCurrency } from '../../pricing/currency.util';
 
 @Component({
@@ -23,7 +23,10 @@ export class AdminDashboardOverviewComponent {
   readonly totalEvents = computed(() => this.events().length);
   readonly totalPhotos = computed(() => this.events().reduce((sum, e) => sum + e.photoCount, 0));
   readonly totalRevenue = computed(() =>
-    this.events().reduce((sum, e) => sum + e.photoCount * (this.pricingBundlesService.getBundle(e.pricingBundleIds[0])?.basePrice ?? 0), 0),
+    this.events().reduce((sum, e) => {
+      const bundle = this.pricingBundlesService.getBundle(e.pricingBundleIds[0]);
+      return sum + e.photoCount * (bundle ? lowestOptionPrice(bundle) : 0);
+    }, 0),
   );
 
   togglePhotographerStatus(id: string, current: PhotographerStatus): void {

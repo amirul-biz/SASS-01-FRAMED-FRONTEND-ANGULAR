@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { EventsService } from '../../events/events.service';
-import { IPricingBundle, PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
 import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
 import { calculatePricing } from '../../pricing/pricing.util';
 import { formatCurrency } from '../../pricing/currency.util';
@@ -23,6 +23,7 @@ export class PricingSettingsComponent {
   id = input.required<string>();
 
   readonly formatCurrency = formatCurrency;
+  readonly lowestOptionPrice = lowestOptionPrice;
   readonly event = computed(() => this.eventsService.getEvent(this.id()));
   readonly availableBundles = signal<IPricingBundle[]>([]);
   readonly availableOptions = signal<IPhotoFormatOption[]>([]);
@@ -53,7 +54,7 @@ export class PricingSettingsComponent {
         voucher.conditions.map((condition) => ({
           voucher,
           condition,
-          preview: calculatePricing(condition.minPhotos * bundle.basePrice, condition.minPhotos, bundle),
+          preview: calculatePricing(condition.minPhotos * lowestOptionPrice(bundle), condition.minPhotos, bundle),
         })),
       ),
     })),

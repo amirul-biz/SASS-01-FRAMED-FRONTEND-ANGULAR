@@ -35,20 +35,6 @@
           [value]="draft().name"
           (input)="setName($any($event.target).value)"
         />
-
-        <label class="block font-label-md text-label-md text-on-surface mb-xs mt-lg" for="base-price">Single Photo Price (RM)</label>
-        <div class="relative max-w-[20rem]">
-          <span class="absolute left-md top-1/2 -translate-y-1/2 font-label-md text-label-md text-on-surface-variant">RM</span>
-          <input
-            id="base-price"
-            type="number"
-            min="0"
-            class="w-full h-12 pl-xl pr-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            [value]="draft().basePrice"
-            (input)="setBasePrice($any($event.target).value)"
-          />
-        </div>
-        <p class="text-caption text-on-surface-variant mt-xs">This is the default price for any single photo purchase.</p>
       </section>
 
       <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
@@ -77,31 +63,26 @@
       </section>
 
       <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="font-label-md text-label-md text-on-surface block">Enable Full Gallery Download</span>
-            <span class="text-caption text-on-surface-variant">Allow riders to buy all their tagged photos at once.</span>
-          </div>
-          <button
-            type="button"
-            (click)="toggleFullGallery()"
-            class="w-11 h-6 rounded-full transition-colors relative shrink-0"
-            [class.bg-secondary]="draft().fullGalleryEnabled"
-            [class.bg-outline-variant]="!draft().fullGalleryEnabled"
-          >
-            <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="draft().fullGalleryEnabled"></span>
-          </button>
-        </div>
-        @if (draft().fullGalleryEnabled) {
-          <div class="relative max-w-[20rem] mt-md">
-            <span class="absolute left-md top-1/2 -translate-y-1/2 font-label-md text-label-md text-on-surface-variant">RM</span>
-            <input
-              type="number"
-              min="0"
-              class="w-full h-12 pl-xl pr-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-              [value]="draft().fullGalleryPrice"
-              (input)="setFullGalleryPrice($any($event.target).value)"
-            />
+        <h2 class="font-headline-md text-headline-md text-primary mb-md">Pricing Options</h2>
+        <p class="text-caption text-on-surface-variant mb-md">Tick which of your saved pricing options riders can choose for photos in this bundle.</p>
+
+        @if (availablePricingOptions().length === 0) {
+          <p class="text-caption text-on-surface-variant">
+            No pricing options yet. <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create one</a> to attach it here.
+          </p>
+        } @else {
+          <div class="flex flex-col gap-sm">
+            @for (option of availablePricingOptions(); track option.id) {
+              <label class="flex items-center gap-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="accent-primary w-4 h-4 rounded border-outline-variant"
+                  [checked]="isOptionChecked(option.id)"
+                  (change)="toggleOption(option.id)"
+                />
+                <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — {{ formatCurrency(option.price) }}/photo</span>
+              </label>
+            }
           </div>
         }
       </section>
@@ -110,19 +91,25 @@
     <aside class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] sticky top-24">
       <h2 class="font-headline-md text-headline-md text-primary mb-md">Live Preview</h2>
       <div class="flex flex-col gap-sm">
-        <div class="flex justify-between items-center">
-          <span class="font-body-md text-body-md text-on-surface-variant">Single Photo</span>
-          <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(draft().basePrice) }}</span>
-        </div>
-        @if (previewMatches().length > 0) {
-          <div class="border-t border-outline-variant mt-sm pt-sm flex flex-col gap-sm">
-            <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Voucher Deals</span>
-            @for (row of previewMatches(); track row.voucher.id + ':' + row.condition.minPhotos) {
-              <div class="flex justify-between items-center">
-                <span class="font-body-md text-body-md text-on-surface-variant">{{ row.voucher.name }}: {{ row.condition.minPhotos }}{{ row.condition.maxPhotos === null ? '+' : '-' + row.condition.maxPhotos }} Photos</span>
-                <span class="font-label-md text-label-md text-on-surface">
-                  {{ formatCurrency(row.preview.subtotal) }} Total / {{ formatCurrency(row.preview.pricePerPhoto) }} / photo
-                </span>
+        @if (checkedPricingOptions().length === 0) {
+          <p class="text-caption text-on-surface-variant">Tick a pricing option to preview its price.</p>
+        }
+        @for (row of previewByOption(); track row.option.id) {
+          <div [class]="$first ? 'flex flex-col gap-sm' : 'flex flex-col gap-sm border-t border-outline-variant mt-sm pt-sm'">
+            <div class="flex justify-between items-center">
+              <span class="font-body-md text-body-md text-on-surface-variant">{{ row.option.label }}</span>
+              <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(row.option.price) }}/photo</span>
+            </div>
+            @if (row.matches.length > 0) {
+              <div class="flex flex-col gap-sm pl-md">
+                @for (match of row.matches; track match.voucher.id + ':' + match.condition.minPhotos) {
+                  <div class="flex justify-between items-center">
+                    <span class="font-caption text-caption text-on-surface-variant">{{ match.voucher.name }}: {{ match.condition.minPhotos }}{{ match.condition.maxPhotos === null ? '+' : '-' + match.condition.maxPhotos }} Photos</span>
+                    <span class="font-label-md text-label-md text-on-surface">
+                      {{ formatCurrency(match.preview.subtotal) }} Total / {{ formatCurrency(match.preview.pricePerPhoto) }} / photo
+                    </span>
+                  </div>
+                }
               </div>
             }
           </div>

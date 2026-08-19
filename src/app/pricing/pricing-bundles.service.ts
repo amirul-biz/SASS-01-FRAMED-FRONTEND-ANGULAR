@@ -9,12 +9,28 @@ export interface IBundleVoucherSummary extends IVoucherLike {
   name: string;
 }
 
+export interface IBundlePricingOptionSummary {
+  id: string;
+  label: string;
+  price: number;
+}
+
 export interface IPricingBundle extends Omit<IEventPricing, 'vouchers'> {
   id: string;
   photographerId: string;
   name: string;
   vouchers: IBundleVoucherSummary[];
+  pricingOptions: IBundlePricingOptionSummary[];
   eventsUsingCount: number;
+}
+
+/** "From RM X/photo" display price for screens that show a single number per bundle — the cheapest
+ *  of its attached pricing options. 0 if none attached. */
+export function lowestOptionPrice(bundle: IPricingBundle): number {
+  if (bundle.pricingOptions.length === 0) {
+    return 0;
+  }
+  return Math.min(...bundle.pricingOptions.map((o) => o.price));
 }
 
 /** Seed data for consumers that read the cache without ever calling getBundles() themselves (checkout's
@@ -27,7 +43,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'alex-standard-bundle',
     photographerId: 'alex-rivers',
     name: 'Standard Bundle',
-    basePrice: 15,
+    pricingOptions: [{ id: 'alex-rivers-heic', label: 'HEIC', price: 15 }],
     vouchers: [
       {
         id: 'alex-standard-voucher',
@@ -47,7 +63,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'alex-budget-mtb-bundle',
     photographerId: 'alex-rivers',
     name: 'Budget MTB Bundle',
-    basePrice: 12,
+    pricingOptions: [{ id: 'alex-rivers-jpeg-30mp', label: '30MP JPEG', price: 12 }],
     vouchers: [{ id: 'alex-budget-voucher', name: 'Budget Voucher', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 25 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -57,7 +73,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'alex-premium-percent-bundle',
     photographerId: 'alex-rivers',
     name: 'Premium Percent Bundle',
-    basePrice: 18,
+    pricingOptions: [{ id: 'alex-rivers-jpeg-50mp', label: '50MP JPEG', price: 17 }],
     vouchers: [{ id: 'alex-premium-voucher', name: 'Premium Voucher', discountType: 'percent-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 15 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -67,7 +83,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'alex-per-photo-only',
     photographerId: 'alex-rivers',
     name: 'Per-Photo Only',
-    basePrice: 15,
+    pricingOptions: [{ id: 'alex-rivers-heic', label: 'HEIC', price: 15 }],
     vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -77,7 +93,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'marcus-standard-bundle',
     photographerId: 'marcus-chen',
     name: 'Standard Bundle',
-    basePrice: 15,
+    pricingOptions: [{ id: 'marcus-chen-heic', label: 'HEIC', price: 15 }],
     vouchers: [{ id: 'marcus-standard-voucher', name: 'Standard Voucher', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] }],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -87,7 +103,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'sarah-per-photo-only',
     photographerId: 'sarah-jenkins',
     name: 'Per-Photo Only',
-    basePrice: 15,
+    pricingOptions: [{ id: 'sarah-jenkins-heic', label: 'HEIC', price: 15 }],
     vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -97,7 +113,7 @@ const SEED_BUNDLES: IPricingBundle[] = [
     id: 'unknown-per-photo-only',
     photographerId: 'unknown-uploader',
     name: 'Per-Photo Only',
-    basePrice: 15,
+    pricingOptions: [{ id: 'unknown-uploader-heic', label: 'HEIC', price: 15 }],
     vouchers: [],
     fullGalleryEnabled: false,
     fullGalleryPrice: 0,
@@ -105,8 +121,13 @@ const SEED_BUNDLES: IPricingBundle[] = [
   },
 ];
 
-export type PricingBundleInput = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers'> & { voucherIds: string[] };
-export type PricingBundleChanges = Partial<Omit<IPricingBundle, 'id' | 'photographerId' | 'eventsUsingCount' | 'vouchers'>> & { voucherIds?: string[] };
+export type PricingBundleInput = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'> & {
+  voucherIds: string[];
+  pricingOptionIds: string[];
+};
+export type PricingBundleChanges = Partial<
+  Omit<IPricingBundle, 'id' | 'photographerId' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'>
+> & { voucherIds?: string[]; pricingOptionIds?: string[] };
 
 @Injectable({ providedIn: 'root' })
 export class PricingBundlesService {
@@ -149,8 +170,8 @@ export class PricingBundlesService {
         `${this.env.apiUrl}/pricing-bundles`,
         {
           name: input.name,
-          basePrice: input.basePrice,
           voucherIds: input.voucherIds,
+          pricingOptionIds: input.pricingOptionIds,
           fullGalleryEnabled: input.fullGalleryEnabled,
           fullGalleryPrice: input.fullGalleryPrice,
         },

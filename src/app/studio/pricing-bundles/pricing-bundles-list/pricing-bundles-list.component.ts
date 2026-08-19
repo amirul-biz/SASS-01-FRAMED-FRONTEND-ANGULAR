@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
-import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
+import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../../pricing/pricing-bundles.service';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -15,6 +15,7 @@ export class PricingBundlesListComponent {
   private readonly pricingBundlesService = inject(PricingBundlesService);
 
   readonly formatCurrency = formatCurrency;
+  readonly lowestOptionPrice = lowestOptionPrice;
   private readonly rawBundles = signal<IPricingBundle[]>([]);
 
   readonly bundles = computed(() =>

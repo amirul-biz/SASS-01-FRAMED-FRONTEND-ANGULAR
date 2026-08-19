@@ -2,11 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
+import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
 import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
 import { calculatePricing } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
-type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers'> & { voucherIds: string[] };
+type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'> & {
+  voucherIds: string[];
+  pricingOptionIds: string[];
+};
 
 @Component({
   selector: 'app-pricing-bundle-form',
@@ -17,6 +21,7 @@ type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers'> 
 export class PricingBundleFormComponent {
   private readonly auth = inject(AuthService);
   private readonly pricingBundlesService = inject(PricingBundlesService);
+  private readonly pricingOptionsService = inject(PricingOptionsService);
   private readonly vouchersService = inject(VouchersService);
   private readonly router = inject(Router);
 
@@ -34,6 +39,7 @@ export class PricingBundleFormComponent {
   });
 
   readonly availableVouchers = signal<IVoucher[]>([]);
+  readonly availablePricingOptions = signal<IPhotoFormatOption[]>([]);
 
   // Resets whenever `id` changes or the initial fetch completes, but not on unrelated data mutations
   // elsewhere in the app — the bundle lookup itself is read untracked for that reason (same pattern as
@@ -44,8 +50,8 @@ export class PricingBundleFormComponent {
     const blank: DraftBundle = {
       photographerId: this.auth.photographerId()!,
       name: '',
-      basePrice: 15,
       voucherIds: [],
+      pricingOptionIds: [],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     };
@@ -56,33 +62,45 @@ export class PricingBundleFormComponent {
     return {
       photographerId: existing.photographerId,
       name: existing.name,
-      basePrice: existing.basePrice,
       voucherIds: existing.vouchers.map((v) => v.id),
+      pricingOptionIds: existing.pricingOptions.map((o) => o.id),
       fullGalleryEnabled: existing.fullGalleryEnabled,
       fullGalleryPrice: existing.fullGalleryPrice,
     };
   });
 
-  readonly previewMatches = computed(() => {
+  // The pricing options the photographer has ticked for this bundle — each shown with its own price
+  // in the Live Preview (no single "the" price once a bundle can carry several formats).
+  readonly checkedPricingOptions = computed(() => {
+    const selected = new Set(this.draft().pricingOptionIds);
+    return this.availablePricingOptions().filter((o) => selected.has(o.id));
+  });
+
+  // For every checked pricing option, show how each checked voucher's conditions discount it —
+  // grouped by option so the preview reads as "this format costs X, or Y with a voucher applied".
+  readonly previewByOption = computed(() => {
     const selected = new Set(this.draft().voucherIds);
     const vouchers = this.availableVouchers().filter((v) => selected.has(v.id));
-    return vouchers.flatMap((voucher) =>
-      voucher.conditions.map((condition) => ({
-        voucher,
-        condition,
-        preview: calculatePricing(condition.minPhotos * this.draft().basePrice, condition.minPhotos, {
-          basePrice: this.draft().basePrice,
-          vouchers: [voucher],
-          fullGalleryEnabled: false,
-          fullGalleryPrice: 0,
-        }),
-      })),
-    );
+    return this.checkedPricingOptions().map((option) => ({
+      option,
+      matches: vouchers.flatMap((voucher) =>
+        voucher.conditions.map((condition) => ({
+          voucher,
+          condition,
+          preview: calculatePricing(condition.minPhotos * option.price, condition.minPhotos, {
+            vouchers: [voucher],
+            fullGalleryEnabled: false,
+            fullGalleryPrice: 0,
+          }),
+        })),
+      ),
+    }));
   });
 
   constructor() {
     const photographerId = this.auth.photographerId()!;
     this.vouchersService.getVouchers(photographerId).then((vouchers) => this.availableVouchers.set(vouchers));
+    this.pricingOptionsService.getOptions(photographerId).then((options) => this.availablePricingOptions.set(options));
 
     const id = this.id();
     if (id) {
@@ -96,11 +114,6 @@ export class PricingBundleFormComponent {
     this.draft.update((d) => ({ ...d, name: value }));
   }
 
-  setBasePrice(value: string): void {
-    const basePrice = Number(value) || 0;
-    this.draft.update((d) => ({ ...d, basePrice }));
-  }
-
   isVoucherChecked(id: string): boolean {
     return this.draft().voucherIds.includes(id);
   }
@@ -112,13 +125,17 @@ export class PricingBundleFormComponent {
     }));
   }
 
-  toggleFullGallery(): void {
-    this.draft.update((d) => ({ ...d, fullGalleryEnabled: !d.fullGalleryEnabled }));
+  isOptionChecked(id: string): boolean {
+    return this.draft().pricingOptionIds.includes(id);
   }
 
-  setFullGalleryPrice(value: string): void {
-    const fullGalleryPrice = Number(value) || 0;
-    this.draft.update((d) => ({ ...d, fullGalleryPrice }));
+  toggleOption(id: string): void {
+    this.draft.update((d) => ({
+      ...d,
+      pricingOptionIds: d.pricingOptionIds.includes(id)
+        ? d.pricingOptionIds.filter((o) => o !== id)
+        : [...d.pricingOptionIds, id],
+    }));
   }
 
   save(): void {

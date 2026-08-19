@@ -137,7 +137,7 @@
               [checked]="isBundleChecked(bundle.id)"
               (change)="toggleBundle(bundle.id)"
             />
-            <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</span>
+            <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ lowestOptionPrice(bundle) }}/photo</span>
           </label>
         }
       </div>

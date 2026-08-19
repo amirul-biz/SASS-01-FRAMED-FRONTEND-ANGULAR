@@ -12,7 +12,6 @@ export interface IVoucherLike {
 }
 
 export interface IEventPricing {
-  basePrice: number;
   vouchers: IVoucherLike[];
   fullGalleryEnabled: boolean;
   fullGalleryPrice: number;
