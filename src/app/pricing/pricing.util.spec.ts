@@ -1,4 +1,4 @@
-import { IEventPricing, calculatePricing, qualifyingConditions } from './pricing.util';
+import { IEventPricing, calculatePricing, findVoucherRangeClashes, qualifyingConditions } from './pricing.util';
 
 const flatVoucher = {
   discountType: 'flat-tier' as const,
@@ -179,6 +179,52 @@ describe('qualifyingConditions', () => {
     expect(qualifyingConditions(7, twoVouchers)).toEqual([
       { voucher: flatVoucher, condition: flatVoucher.conditions[0] },
       { voucher: percentVoucher, condition: percentVoucher.conditions[0] },
+    ]);
+  });
+});
+
+describe('findVoucherRangeClashes', () => {
+  it('returns no clashes for a single voucher', () => {
+    const vouchers = [{ id: 'v1', name: 'Group Discount', conditions: flatVoucher.conditions }];
+    expect(findVoucherRangeClashes(vouchers)).toEqual([]);
+  });
+
+  it('returns no clashes when ranges across vouchers do not overlap', () => {
+    const vouchers = [
+      { id: 'v1', name: 'Early Bundle', conditions: [{ minPhotos: 1, maxPhotos: 4, value: 10 }] },
+      { id: 'v2', name: 'Late Bundle', conditions: [{ minPhotos: 5, maxPhotos: 9, value: 20 }] },
+    ];
+    expect(findVoucherRangeClashes(vouchers)).toEqual([]);
+  });
+
+  it('detects a clash between a bounded range and an overlapping unbounded range', () => {
+    const vouchers = [
+      { id: 'v1', name: 'Group Discount', conditions: [{ minPhotos: 5, maxPhotos: 10, value: 20 }] },
+      { id: 'v2', name: 'Early Bird Flat Rate', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] },
+    ];
+    const clashes = findVoucherRangeClashes(vouchers);
+    expect(clashes).toEqual([
+      {
+        a: { id: 'v1', name: 'Group Discount', condition: vouchers[0].conditions[0] },
+        b: { id: 'v2', name: 'Early Bird Flat Rate', condition: vouchers[1].conditions[0] },
+      },
+    ]);
+  });
+
+  it('does not compare a voucher against its own conditions', () => {
+    const vouchers = [{ id: 'v1', name: 'Tiered', conditions: flatVoucher.conditions }]; // 5-9 and 10+, adjacent not overlapping
+    expect(findVoucherRangeClashes(vouchers)).toEqual([]);
+  });
+
+  it('detects every overlapping pair across three or more vouchers', () => {
+    const vouchers = [
+      { id: 'v1', name: 'A', conditions: [{ minPhotos: 5, maxPhotos: 10, value: 20 }] },
+      { id: 'v2', name: 'B', conditions: [{ minPhotos: 8, maxPhotos: 12, value: 25 }] },
+      { id: 'v3', name: 'C', conditions: [{ minPhotos: 20, maxPhotos: null, value: 40 }] },
+    ];
+    const clashes = findVoucherRangeClashes(vouchers);
+    expect(clashes).toEqual([
+      { a: { id: 'v1', name: 'A', condition: vouchers[0].conditions[0] }, b: { id: 'v2', name: 'B', condition: vouchers[1].conditions[0] } },
     ]);
   });
 });

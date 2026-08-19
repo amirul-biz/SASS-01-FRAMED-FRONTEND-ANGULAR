@@ -4,7 +4,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
 import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
 import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
-import { calculatePricing } from '../../../pricing/pricing.util';
+import { calculatePricing, findVoucherRangeClashes } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'> & {
@@ -76,11 +76,20 @@ export class PricingBundleFormComponent {
     return this.availablePricingOptions().filter((o) => selected.has(o.id));
   });
 
+  readonly checkedVouchers = computed(() => {
+    const selected = new Set(this.draft().voucherIds);
+    return this.availableVouchers().filter((v) => selected.has(v.id));
+  });
+
+  // Two checked vouchers whose ranges overlap create an ambiguous bundle (a rider in that range
+  // would qualify for both). Hard-blocks save — see toggleVoucher/save.
+  readonly voucherClashes = computed(() => findVoucherRangeClashes(this.checkedVouchers()));
+  readonly hasVoucherClash = computed(() => this.voucherClashes().length > 0);
+
   // For every checked pricing option, show how each checked voucher's conditions discount it —
   // grouped by option so the preview reads as "this format costs X, or Y with a voucher applied".
   readonly previewByOption = computed(() => {
-    const selected = new Set(this.draft().voucherIds);
-    const vouchers = this.availableVouchers().filter((v) => selected.has(v.id));
+    const vouchers = this.checkedVouchers();
     return this.checkedPricingOptions().map((option) => ({
       option,
       matches: vouchers.flatMap((voucher) =>
@@ -139,7 +148,7 @@ export class PricingBundleFormComponent {
   }
 
   save(): void {
-    if (!this.draft().name.trim()) {
+    if (!this.draft().name.trim() || this.hasVoucherClash()) {
       return;
     }
     const id = this.id();

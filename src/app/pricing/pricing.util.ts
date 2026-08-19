@@ -47,6 +47,50 @@ function matches(photoCount: number, condition: IVoucherCondition): boolean {
   return condition.maxPhotos === null || photoCount <= condition.maxPhotos;
 }
 
+function rangesOverlap(a: IVoucherCondition, b: IVoucherCondition): boolean {
+  const aStartsBeforeBEnds = b.maxPhotos === null || a.minPhotos <= b.maxPhotos;
+  const bStartsBeforeAEnds = a.maxPhotos === null || b.minPhotos <= a.maxPhotos;
+  return aStartsBeforeBEnds && bStartsBeforeAEnds;
+}
+
+export interface VoucherClashParty {
+  id: string;
+  name: string;
+  condition: IVoucherCondition;
+}
+
+export interface VoucherClash {
+  a: VoucherClashParty;
+  b: VoucherClashParty;
+}
+
+/**
+ * Two *different* checked vouchers whose photo-count ranges overlap create an ambiguous bundle —
+ * a rider in that range would qualify for both, with no clear rule for which one wins. Conditions
+ * within a single voucher never clash with each other (they're built non-overlapping), so only
+ * cross-voucher pairs are compared.
+ */
+export function findVoucherRangeClashes(
+  vouchers: { id: string; name: string; conditions: IVoucherCondition[] }[],
+): VoucherClash[] {
+  const clashes: VoucherClash[] = [];
+  for (let i = 0; i < vouchers.length; i++) {
+    for (let j = i + 1; j < vouchers.length; j++) {
+      for (const conditionA of vouchers[i].conditions) {
+        for (const conditionB of vouchers[j].conditions) {
+          if (rangesOverlap(conditionA, conditionB)) {
+            clashes.push({
+              a: { id: vouchers[i].id, name: vouchers[i].name, condition: conditionA },
+              b: { id: vouchers[j].id, name: vouchers[j].name, condition: conditionB },
+            });
+          }
+        }
+      }
+    }
+  }
+  return clashes;
+}
+
 /** At most one matching condition per voucher (ranges within a voucher don't overlap by construction). */
 export function qualifyingConditions(photoCount: number, pricing: IEventPricing | undefined): QualifyingMatch[] {
   if (!pricing) {

@@ -16,7 +16,13 @@
       <a routerLink="/studio/pricing-bundles" class="px-lg py-sm border-2 border-outline-variant text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors">
         Cancel
       </a>
-      <button type="button" (click)="save()" class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="hasVoucherClash()"
+        [title]="hasVoucherClash() ? 'Resolve the voucher range clash below before saving' : ''"
+        class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
+      >
         {{ isEditMode() ? 'Save Bundle' : 'Create Bundle' }}
       </button>
     </div>
@@ -57,6 +63,19 @@
                 />
                 <span class="font-body-md text-body-md text-on-surface">{{ voucher.name }}</span>
               </label>
+            }
+          </div>
+        }
+
+        @if (voucherClashes().length > 0) {
+          <div class="mt-md p-sm rounded-lg bg-error-container flex flex-col gap-xs">
+            @for (clash of voucherClashes(); track clash.a.id + ':' + clash.b.id) {
+              <p class="text-caption text-on-error-container">
+                <span class="font-label-md">{{ clash.a.name }}</span> ({{ clash.a.condition.minPhotos }}{{ clash.a.condition.maxPhotos === null ? '+' : '-' + clash.a.condition.maxPhotos }} photos)
+                clashes with
+                <span class="font-label-md">{{ clash.b.name }}</span> ({{ clash.b.condition.minPhotos }}{{ clash.b.condition.maxPhotos === null ? '+' : '-' + clash.b.condition.maxPhotos }} photos)
+                — uncheck one to continue.
+              </p>
             }
           </div>
         }
