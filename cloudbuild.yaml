@@ -54,10 +54,10 @@ substitutions:
   # environment — not committed here. Not a secret: Firebase's client-side web config is
   # meant to ship in the public bundle (see write-environment.js).
   _ENV_CONFIG_JSON: ''
-  _AR_HOSTNAME: 'LOCATION-docker.pkg.dev'
+  _AR_HOSTNAME: 'asia-southeast1-docker.pkg.dev'
   # PROJECT_ID is NOT listed here — it's a Cloud Build built-in variable (auto-filled from
   # whichever project the trigger runs in), referenced directly as $PROJECT_ID above.
-  _AR_REPOSITORY: 'REPOSITORY_NAME'
+  _AR_REPOSITORY: 'picsweep-repository'
   _SERVICE_NAME: 'framed-frontend'
-  _DEPLOY_REGION: 'REGION'
+  _DEPLOY_REGION: 'asia-southeast1'
   _PLATFORM: 'managed'
