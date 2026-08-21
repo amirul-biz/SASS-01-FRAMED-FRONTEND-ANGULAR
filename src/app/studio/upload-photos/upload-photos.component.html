@@ -1,92 +1,304 @@
-@if (event(); as ev) {
+@if (isLoading()) {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Loading event...</p>
+  </div>
+} @else if (event(); as ev) {
   <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
-    <nav class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant mb-md">
-      <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
-      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-      <span class="text-on-surface">{{ ev.title }}</span>
-      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-      <span class="text-on-surface">Upload</span>
-    </nav>
+    <div
+      class="relative rounded-xl overflow-hidden mb-xl bg-cover bg-center"
+      [style.backgroundImage]="ev.coverPhotoUrl ? 'url(' + ev.coverPhotoUrl + ')' : null"
+      [class.bg-surface-container-lowest]="!ev.coverPhotoUrl"
+    >
+      @if (ev.coverPhotoUrl) {
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
+      }
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
-      <div>
-        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Upload Photos</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant">{{ ev.title }}</p>
-      </div>
-      <label class="flex items-center gap-sm cursor-pointer">
-        <span class="font-label-md text-label-md text-on-surface-variant">Publish Gallery</span>
-        <button
-          type="button"
-          (click)="togglePublish()"
-          class="w-11 h-6 rounded-full transition-colors relative"
-          [class.bg-secondary]="publishGallery()"
-          [class.bg-outline-variant]="!publishGallery()"
+      <div class="relative p-lg md:p-xl">
+        <nav
+          class="flex items-center gap-xs text-caption font-label-md mb-md"
+          [class.text-white]="ev.coverPhotoUrl"
+          [class.text-on-surface-variant]="!ev.coverPhotoUrl"
         >
-          <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="publishGallery()"></span>
-        </button>
-      </label>
+          <a routerLink="/studio/events" class="hover:text-primary transition-colors">My Events</a>
+          <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+          <span [class.text-white]="ev.coverPhotoUrl" [class.text-on-surface]="!ev.coverPhotoUrl">{{ ev.title }}</span>
+          <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+          <span [class.text-white]="ev.coverPhotoUrl" [class.text-on-surface]="!ev.coverPhotoUrl">Upload</span>
+        </nav>
+
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
+          <div>
+            <p
+              class="text-caption font-label-md uppercase tracking-wider mb-xs"
+              [class.text-white]="ev.coverPhotoUrl"
+              [class.text-on-surface-variant]="!ev.coverPhotoUrl"
+            >
+              Upload Photos
+            </p>
+            <h1
+              class="font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-sm"
+              [class.text-white]="ev.coverPhotoUrl"
+              [class.text-on-background]="!ev.coverPhotoUrl"
+            >
+              {{ ev.title }}
+            </h1>
+            <div
+              class="flex flex-wrap items-center gap-sm text-caption font-label-md"
+              [class.text-white]="ev.coverPhotoUrl"
+              [class.text-on-surface-variant]="!ev.coverPhotoUrl"
+            >
+              <span class="px-sm py-0.5 rounded-full bg-white/20" [class.bg-surface-container]="!ev.coverPhotoUrl">{{ formatCategory(ev.category) }}</span>
+              @if (ev.location) {
+                <span class="flex items-center gap-2xs">
+                  <span class="material-symbols-outlined text-[16px]">location_on</span>
+                  {{ ev.location }}
+                </span>
+              }
+              <span class="flex items-center gap-2xs">
+                <span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                {{ eventDateRangeLabel(ev) }}
+              </span>
+            </div>
+          </div>
+          <label class="flex items-center gap-sm cursor-pointer">
+            <span class="font-label-md text-label-md" [class.text-white]="ev.coverPhotoUrl" [class.text-on-surface-variant]="!ev.coverPhotoUrl">Publish Gallery</span>
+            <button
+              type="button"
+              (click)="togglePublish()"
+              [disabled]="isTogglingPublish()"
+              class="w-11 h-6 rounded-full transition-colors relative disabled:opacity-60"
+              [class.bg-secondary]="ev.isPublished"
+              [class.bg-outline-variant]="!ev.isPublished"
+            >
+              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="ev.isPublished"></span>
+            </button>
+          </label>
+        </div>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
-      <div class="lg:col-span-2 flex flex-col gap-lg">
-        <div
-          class="border-2 border-dashed rounded-xl p-xl flex flex-col items-center justify-center bg-surface-container-lowest cursor-pointer transition-all"
-          [class.border-primary]="isDragging()"
-          [class.bg-surface-container-low]="isDragging()"
-          [class.border-outline-variant]="!isDragging()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave()"
-          (drop)="onDrop($event)"
-          (click)="fileInput.click()"
-        >
-          <span class="material-symbols-outlined text-outline text-[48px] mb-md">cloud_upload</span>
-          <span class="font-label-md text-label-md text-on-surface text-center">Drag &amp; Drop high-res photos here</span>
-          <span class="text-caption text-on-surface-variant mt-xs text-center">Or click to browse. Supports JPG, PNG up to 50MB each.</span>
-          <button type="button" class="mt-lg px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md">Select Files</button>
-          <input #fileInput type="file" multiple accept="image/*" class="hidden" (change)="onFileInputChange($event)" (click)="$event.stopPropagation()" />
-        </div>
+    @if (errorMsg()) {
+      <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+    }
 
-        @if (uploading().length > 0) {
-          <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-            <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-md">Uploading ({{ uploading().length }})</h3>
-            <div class="flex flex-col gap-md">
-              @for (item of uploading(); track item.id) {
-                <div class="flex items-center gap-md">
-                  <img [src]="item.previewUrl" class="w-10 h-10 rounded-md object-cover" alt="Upload preview" />
-                  <div class="flex-1">
-                    <div class="flex justify-between text-caption font-label-md text-on-surface-variant mb-xs">
-                      <span>{{ item.fileName }}</span>
-                      <span>{{ item.progress }}%</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
-                      <div class="h-full bg-secondary transition-all" [style.width.%]="item.progress"></div>
-                    </div>
-                  </div>
-                  <button type="button" (click)="cancelUpload(item.id)" class="text-on-surface-variant hover:text-error">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
+      <div
+        class="lg:col-span-2 border-2 border-dashed rounded-xl p-xl flex flex-col items-center justify-center bg-surface-container-lowest cursor-pointer transition-all"
+        [class.border-primary]="isDragging()"
+        [class.bg-surface-container-low]="isDragging()"
+        [class.border-outline-variant]="!isDragging()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+      >
+        <span class="material-symbols-outlined text-outline text-[48px] mb-md">cloud_upload</span>
+        <span class="font-label-md text-label-md text-on-surface text-center">Drag &amp; Drop high-res photos here</span>
+        <span class="text-caption text-on-surface-variant mt-xs text-center">Or click to browse. Supports JPG, PNG, WebP, HEIC up to 50MB each.</span>
+        <button type="button" class="mt-lg px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md">Select Files</button>
+        <input #fileInput type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" class="hidden" (change)="onFileInputChange($event)" (click)="$event.stopPropagation()" />
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-md">Uploading</h3>
+        @if (uploadTotalCount() === 0) {
+          <p class="text-caption text-on-surface-variant">Nothing uploading right now.</p>
+        } @else {
+          <div class="flex items-center gap-md">
+            @if (currentUploadPreview(); as preview) {
+              <img [src]="preview" class="w-10 h-10 rounded-md object-cover" alt="Uploading" />
+            } @else {
+              <span class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+              </span>
+            }
+            <div class="flex-1">
+              <div class="flex justify-between text-caption font-label-md text-on-surface-variant mb-xs">
+                <span>Uploading photos</span>
+                <span>{{ uploadCompletedCount() }} / {{ uploadTotalCount() }}</span>
+              </div>
+              <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                <div class="h-full bg-secondary transition-all" [style.width.%]="uploadOverallProgress()"></div>
+              </div>
+            </div>
+          </div>
+
+          @if (failedUploads().length > 0) {
+            <div class="flex flex-col gap-sm mt-md pt-md border-t border-outline-variant">
+              <p class="text-caption font-label-md text-error">{{ failedUploads().length }} failed</p>
+              @for (item of failedUploads(); track item.photoId) {
+                <div class="flex items-center gap-sm">
+                  <span class="text-caption text-on-surface-variant truncate flex-1">{{ item.fileName }}</span>
+                  <button type="button" (click)="retryUpload(item)" class="text-on-surface-variant hover:text-primary" title="Retry">
+                    <span class="material-symbols-outlined text-[18px]">refresh</span>
+                  </button>
+                  <button type="button" (click)="cancelUpload(item.photoId)" class="text-on-surface-variant hover:text-error" title="Cancel">
                     <span class="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
               }
             </div>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] mt-xl">
+      <div class="p-md flex items-center justify-between border-b border-outline-variant">
+        <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Recently Uploaded</h3>
+        <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ photosTotalItemCount() }} total</span>
+      </div>
+
+      @if (photosTotalPageCount() > 1) {
+        <div class="p-md flex flex-col sm:flex-row items-center justify-between gap-md border-b border-outline-variant">
+          <div class="flex items-center gap-sm">
+            <label class="text-caption font-label-md text-on-surface-variant" for="photos-page-size">Per page</label>
+            <select
+              id="photos-page-size"
+              class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+              (change)="onPhotosPageSizeChange($event)"
+            >
+              @for (size of photosPageSizeOptions; track size) {
+                <option [value]="size" [selected]="size === photosPageSize()">{{ size }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex items-center gap-xs">
+            <button
+              type="button"
+              class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              [disabled]="photosPageNumber() === 1"
+              (click)="onPhotosPageNumberChange(photosPageNumber() - 1)"
+            >
+              <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+            </button>
+
+            @for (page of photosTotalPageCount() | range; track page) {
+              <button
+                type="button"
+                class="w-9 h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
+                [class.bg-primary]="page === photosPageNumber()"
+                [class.text-on-primary]="page === photosPageNumber()"
+                [class.text-on-surface-variant]="page !== photosPageNumber()"
+                [class.hover:bg-surface-container-low]="page !== photosPageNumber()"
+                (click)="onPhotosPageNumberChange(page)"
+              >
+                {{ page }}
+              </button>
+            }
+
+            <button
+              type="button"
+              class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              [disabled]="photosPageNumber() === photosTotalPageCount()"
+              (click)="onPhotosPageNumberChange(photosPageNumber() + 1)"
+            >
+              <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            </button>
+          </div>
+
+          <span class="text-caption font-label-md text-on-surface-variant">Page {{ photosPageNumber() }} of {{ photosTotalPageCount() }}</span>
+        </div>
+      }
+
+      <div class="p-md">
+        @if (isLoadingPhotos()) {
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading photos...</p>
+        } @else if (uploadedPhotos().length === 0) {
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No photos uploaded yet.</p>
+        } @else {
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-md">
+            @for (photo of uploadedPhotos(); track photo.id; let i = $index) {
+              <div class="group relative aspect-square rounded-lg overflow-hidden bg-surface-container">
+                <button
+                  type="button"
+                  (click)="openPreview(i)"
+                  class="absolute inset-0 w-full h-full text-left"
+                  [attr.aria-label]="'Open ' + photo.originalName"
+                >
+                  <img [src]="photo.url" [alt]="photo.originalName" class="w-full h-full object-cover" />
+                </button>
+                <button
+                  type="button"
+                  (click)="deletePhoto(photo)"
+                  class="absolute top-xs right-xs z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-error transition-opacity"
+                  title="Delete"
+                >
+                  <span class="material-symbols-outlined text-[16px]">delete</span>
+                </button>
+                @if (photoTimestamp(photo); as timestamp) {
+                  <span class="absolute bottom-0 left-0 right-0 px-xs py-0.5 bg-black/60 text-white text-[10px] leading-tight">
+                    {{ photoTimestampLabel(photo) }} {{ formatDisplayDate(timestamp) }}
+                  </span>
+                }
+              </div>
+            }
           </div>
         }
       </div>
+    </div>
+  </div>
 
-      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-        <div class="flex items-center justify-between mb-md">
-          <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Recently Uploaded</h3>
-          <span class="text-caption text-on-surface-variant">{{ recentPhotos().length }} items</span>
-        </div>
-        <div class="grid grid-cols-2 gap-sm max-h-[500px] overflow-y-auto pr-xs">
-          @for (photo of recentPhotos(); track photo.id) {
-            <div class="relative aspect-square rounded-lg overflow-hidden bg-surface-container">
-              <img [src]="photo.imageUrl" [alt]="photo.label" class="w-full h-full object-cover" />
-            </div>
+  @if (selectedPhoto(); as photo) {
+    <div
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Preview of ' + photo.originalName"
+      tabindex="0"
+      (click)="closePreview()"
+      (keydown.escape)="closePreview()"
+      (keydown.arrowLeft)="previewPrevious()"
+      (keydown.arrowRight)="previewNext()"
+    >
+      <button
+        type="button"
+        (click)="deletePhoto(photo); $event.stopPropagation()"
+        class="absolute top-lg right-[4.5rem] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-error transition-colors"
+        title="Delete"
+      >
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="closePreview()"
+        class="absolute top-lg right-lg w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+      >
+        <span class="material-symbols-outlined">close</span>
+      </button>
+
+      @if (selectedPhotoIndex()! > 0) {
+        <button
+          type="button"
+          (click)="previewPrevious(); $event.stopPropagation()"
+          class="absolute left-lg top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+      }
+      @if (selectedPhotoIndex()! < uploadedPhotos().length - 1) {
+        <button
+          type="button"
+          (click)="previewNext(); $event.stopPropagation()"
+          class="absolute right-lg top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      }
+
+      <div class="max-w-[90vw] max-h-[85vh] flex flex-col items-center gap-sm" (click)="$event.stopPropagation()">
+        <img [src]="photo.url" [alt]="photo.originalName" class="max-w-full max-h-[75vh] object-contain rounded-lg" />
+        <div class="text-center">
+          <p class="text-body-md font-body-md text-white">{{ photo.originalName }}</p>
+          @if (photoTimestamp(photo); as timestamp) {
+            <p class="text-caption text-white/70">{{ photoTimestampLabel(photo) }} {{ formatDisplayDate(timestamp) }}</p>
           }
         </div>
       </div>
     </div>
-  </div>
+  }
 } @else {
   <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
     <p class="text-body-lg font-body-lg text-on-surface-variant">Event not found.</p>

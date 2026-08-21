@@ -68,6 +68,13 @@
                 <td class="p-md">
                   <div class="flex items-center justify-end gap-xs">
                     <a
+                      [routerLink]="['/studio/events', event.id, 'upload']"
+                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                      title="Upload Photos"
+                    >
+                      <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+                    </a>
+                    <a
                       [routerLink]="['/studio/events', event.id, 'edit']"
                       class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
                       title="Edit"

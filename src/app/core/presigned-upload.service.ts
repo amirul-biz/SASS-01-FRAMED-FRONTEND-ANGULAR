@@ -1,4 +1,4 @@
-import { HttpBackend, HttpClient } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpEvent, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -12,5 +12,14 @@ export class PresignedUploadService {
     return this.rawHttp.put(uploadUrl, file, {
       headers: { 'Content-Type': file.type },
     });
+  }
+
+  /** Same PUT, but emits HttpEvents (including UploadProgress) for per-file progress bars. */
+  uploadWithProgress(uploadUrl: string, file: File): Observable<HttpEvent<unknown>> {
+    const request = new HttpRequest('PUT', uploadUrl, file, {
+      headers: new HttpHeaders({ 'Content-Type': file.type }),
+      reportProgress: true,
+    });
+    return this.rawHttp.request(request);
   }
 }
