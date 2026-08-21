@@ -1,0 +1,62 @@
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+
+steps:
+  # Build Docker image with environment-specific configuration
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'NG_BUILD_CONFIG=$_NG_BUILD_CONFIG'
+      - '--build-arg'
+      - 'ENV_CONFIG_JSON=$_ENV_CONFIG_JSON'
+      - '-t'
+      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '-t'
+      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+      - '.'
+    id: Build
+
+  # Push image (commit SHA tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+    id: Push
+
+  # Push image (latest tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+    id: PushLatest
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - '$_SERVICE_NAME'
+      - '--image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--region=$_DEPLOY_REGION'
+      - '--platform=$_PLATFORM'
+    id: Deploy
+
+images:
+  - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+  - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+
+substitutions:
+  _NG_BUILD_CONFIG: 'production'  # 'production' | 'staging' | 'local' — selects the Angular fileReplacements/environment (see angular.json)
+  # Full environment.ts JSON (apiUrl + firebase config) for the target above. Empty by
+  # default = build uses whatever's committed for that config. Set per-trigger per
+  # environment — not committed here. Not a secret: Firebase's client-side web config is
+  # meant to ship in the public bundle (see write-environment.js).
+  _ENV_CONFIG_JSON: ''
+  _AR_HOSTNAME: 'LOCATION-docker.pkg.dev'
+  _AR_PROJECT_ID: 'PROJECT_ID'
+  _AR_REPOSITORY: 'REPOSITORY_NAME'
+  _SERVICE_NAME: 'framed-frontend'
+  _DEPLOY_REGION: 'REGION'
+  _PLATFORM: 'managed'
