@@ -11,9 +11,9 @@ steps:
       - '--build-arg'
       - 'ENV_CONFIG_JSON=$_ENV_CONFIG_JSON'
       - '-t'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
       - '-t'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
       - '.'
     id: Build
 
@@ -21,14 +21,14 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
     id: Push
 
   # Push image (latest tag)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
     id: PushLatest
 
   # Deploy to Cloud Run
@@ -38,14 +38,14 @@ steps:
       - 'run'
       - 'deploy'
       - '$_SERVICE_NAME'
-      - '--image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--image=$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
       - '--region=$_DEPLOY_REGION'
       - '--platform=$_PLATFORM'
     id: Deploy
 
 images:
-  - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
-  - '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
 
 substitutions:
   _NG_BUILD_CONFIG: 'production'  # 'production' | 'staging' | 'local' — selects the Angular fileReplacements/environment (see angular.json)
@@ -55,7 +55,8 @@ substitutions:
   # meant to ship in the public bundle (see write-environment.js).
   _ENV_CONFIG_JSON: ''
   _AR_HOSTNAME: 'LOCATION-docker.pkg.dev'
-  _AR_PROJECT_ID: 'PROJECT_ID'
+  # PROJECT_ID is NOT listed here — it's a Cloud Build built-in variable (auto-filled from
+  # whichever project the trigger runs in), referenced directly as $PROJECT_ID above.
   _AR_REPOSITORY: 'REPOSITORY_NAME'
   _SERVICE_NAME: 'framed-frontend'
   _DEPLOY_REGION: 'REGION'
