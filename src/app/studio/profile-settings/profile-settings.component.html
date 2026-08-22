@@ -5,6 +5,29 @@
   </div>
 
   <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
+    <div class="mb-lg">
+      <div
+        class="w-full h-32 rounded-xl bg-surface-container bg-cover bg-center mb-xs"
+        [style.backgroundImage]="bannerUrl() ? 'url(' + bannerUrl() + ')' : null"
+      ></div>
+      <span class="font-label-md text-label-md text-on-surface block">Banner Image</span>
+      <label
+        class="text-caption font-label-md text-primary cursor-pointer hover:underline"
+        [class.opacity-60]="isUploadingBanner()"
+        [class.pointer-events-none]="isUploadingBanner()"
+      >
+        {{ isUploadingBanner() ? 'Uploading...' : 'Change Banner' }}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          class="hidden"
+          [disabled]="isUploadingBanner()"
+          (change)="onBannerFileSelected($event)"
+        />
+      </label>
+      <p class="text-caption text-on-surface-variant mt-xs">Shown as the background on your public photographer profile.</p>
+    </div>
+
     <div class="flex items-center gap-md mb-lg">
       <img [src]="avatarUrl()" alt="Your avatar" class="w-16 h-16 rounded-full object-cover" />
       <div>

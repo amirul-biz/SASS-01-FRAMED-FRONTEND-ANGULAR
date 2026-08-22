@@ -13,6 +13,7 @@ export interface PhotographerProfile {
   phone: string | null;
   contactNo: string | null;
   profileImageUrl: string | null;
+  bannerUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +25,7 @@ export interface UpdatePhotographerProfileDto {
   phone?: string;
   contactNo?: string;
   profileImageUrl?: string;
+  bannerUrl?: string;
 }
 
 export interface PresignProfileImageUploadResponse {
@@ -60,6 +62,16 @@ export class StudioProfileService {
   ): Observable<PresignProfileImageUploadResponse> {
     return this.http.post<PresignProfileImageUploadResponse>(
       `${this.env.apiUrl}/photographer/profile/image/presign`,
+      { fileName, mimeType },
+    );
+  }
+
+  presignProfileBanner(
+    fileName: string,
+    mimeType: string,
+  ): Observable<PresignProfileImageUploadResponse> {
+    return this.http.post<PresignProfileImageUploadResponse>(
+      `${this.env.apiUrl}/photographer/profile/banner/presign`,
       { fileName, mimeType },
     );
   }
