@@ -4,9 +4,13 @@
     <span class="font-headline-md text-headline-md text-primary tracking-tight">PICSWEEP</span>
   </div>
   <div class="px-lg mb-xl flex items-center gap-md">
-    <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center shadow-sm">
-      <span class="material-symbols-outlined text-on-surface-variant">person</span>
-    </div>
+    @if (profileImageUrl(); as avatarUrl) {
+      <img [src]="avatarUrl" alt="Your avatar" class="w-12 h-12 rounded-full object-cover shadow-sm" />
+    } @else {
+      <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center shadow-sm">
+        <span class="material-symbols-outlined text-on-surface-variant">person</span>
+      </div>
+    }
     <div class="flex flex-col">
       <span class="font-label-md text-label-md text-on-surface font-bold">{{ auth.currentUser()?.name }}</span>
       <span class="font-caption text-caption text-on-surface-variant">Photographer</span>

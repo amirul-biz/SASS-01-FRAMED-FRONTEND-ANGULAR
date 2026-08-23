@@ -1,8 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { EventsService } from '../events.service';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { toEventCard } from '../../client/client-event.util';
+import { ClientService } from '../../client/client.service';
+import { SEARCH_DEBOUNCE_MS } from '../../shared/constants/search.constants';
+import { IEvent } from '../events.service';
 import { EventCardComponent } from '../../shared/event-card/event-card.component';
 
-type SortOption = 'latest' | 'photographer';
+const EVENTS_PAGE_SIZE = 30;
 
 @Component({
   selector: 'app-events-list',
@@ -11,33 +16,84 @@ type SortOption = 'latest' | 'photographer';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EventsListComponent {
-  private readonly eventsService = inject(EventsService);
-  private readonly allEvents = this.eventsService.getPublishedEvents();
+  private readonly clientService = inject(ClientService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly searchInput$ = new Subject<string>();
 
-  readonly locations = Array.from(new Set(this.allEvents.map((e) => e.location))).sort();
+  readonly search = signal('');
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
+  readonly events = signal<IEvent[]>([]);
+  readonly pageNumber = signal(1);
+  readonly totalPageCount = signal(1);
+  readonly totalItemCount = signal(0);
+  readonly isLoading = signal(true);
+  readonly isLoadingMore = signal(false);
 
-  readonly selectedLocation = signal<string>('');
-  readonly sortBy = signal<SortOption>('latest');
+  constructor() {
+    this.searchInput$
+      .pipe(
+        debounceTime(SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((value) => {
+        this.search.set(value);
+        this.loadPage(1, false);
+      });
 
-  readonly events = computed(() => {
-    const location = this.selectedLocation();
-    const filtered = location ? this.allEvents.filter((e) => e.location === location) : this.allEvents;
-
-    if (this.sortBy() === 'photographer') {
-      return [...filtered].sort((a, b) => a.photographerName.localeCompare(b.photographerName));
-    }
-    return filtered;
-  });
-
-  onLocationChange(event: Event): void {
-    this.selectedLocation.set((event.target as HTMLSelectElement).value);
+    this.loadPage(1, false);
   }
 
-  onSortChange(event: Event): void {
-    this.sortBy.set((event.target as HTMLSelectElement).value as SortOption);
+  onSearchInput(event: Event): void {
+    this.searchInput$.next((event.target as HTMLInputElement).value);
   }
 
-  clearLocationFilter(): void {
-    this.selectedLocation.set('');
+  onDateFromChange(event: Event): void {
+    this.dateFrom.set((event.target as HTMLInputElement).value);
+    this.loadPage(1, false);
+  }
+
+  onDateToChange(event: Event): void {
+    this.dateTo.set((event.target as HTMLInputElement).value);
+    this.loadPage(1, false);
+  }
+
+  clearDateFilter(): void {
+    this.dateFrom.set('');
+    this.dateTo.set('');
+    this.loadPage(1, false);
+  }
+
+  loadMore(): void {
+    this.loadPage(this.pageNumber() + 1, true);
+  }
+
+  private loadPage(pageNumber: number, append: boolean): void {
+    append ? this.isLoadingMore.set(true) : this.isLoading.set(true);
+    this.clientService
+      .getEvents({
+        search: this.search() || undefined,
+        dateFrom: this.dateFrom() || undefined,
+        dateTo: this.dateTo() || undefined,
+        pageNumber,
+        pageSize: EVENTS_PAGE_SIZE,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          const mapped = response.items.map(toEventCard);
+          this.events.set(append ? [...this.events(), ...mapped] : mapped);
+          this.pageNumber.set(response.pageNumber);
+          this.totalPageCount.set(response.totalPageCount);
+          this.totalItemCount.set(response.totalItemCount);
+          this.isLoading.set(false);
+          this.isLoadingMore.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.isLoadingMore.set(false);
+        },
+      });
   }
 }
