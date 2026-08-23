@@ -125,7 +125,16 @@
 
           @if (failedUploads().length > 0) {
             <div class="flex flex-col gap-sm mt-md pt-md border-t border-outline-variant">
-              <p class="text-caption font-label-md text-error">{{ failedUploads().length }} failed</p>
+              <div class="flex items-center justify-between gap-sm">
+                <p class="text-caption font-label-md text-error">{{ failedUploads().length }} failed</p>
+                <button
+                  type="button"
+                  (click)="reuploadAllFailed()"
+                  class="text-caption font-label-md text-primary hover:underline"
+                >
+                  Reupload All
+                </button>
+              </div>
               @for (item of failedUploads(); track item.photoId) {
                 <div class="flex items-center gap-sm">
                   <span class="text-caption text-on-surface-variant truncate flex-1">{{ item.fileName }}</span>
