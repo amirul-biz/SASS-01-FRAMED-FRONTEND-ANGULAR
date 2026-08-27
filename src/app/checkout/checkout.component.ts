@@ -8,6 +8,7 @@ import { PaymentMethodOptionComponent } from './payment-method-option/payment-me
 import { OrderSummaryComponent } from './order-summary/order-summary.component';
 import { CreateOrderPayload, OrderService } from './order.service';
 import { formatCurrency } from '../pricing/currency.util';
+import { COUNTRY_DIAL_CODE, CountryCode } from './country-code.constants';
 
 // No payment gateway is integrated yet — orders are simulated by handing the details off to
 // WhatsApp so the photographer/platform can confirm payment manually in the meantime.
@@ -30,7 +31,7 @@ export class CheckoutComponent {
 
   readonly contactForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    countryCode: ['+60'],
+    countryCode: ['MALAYSIA' as CountryCode],
     phone: ['', Validators.required],
   });
 
@@ -83,6 +84,7 @@ export class CheckoutComponent {
       subtotal: this.selection.photosTotal(),
       discountAmount: pricing.bundleDiscount,
       total: pricing.total,
+      voucherId: voucher?.id,
       voucherName: voucher?.name,
     };
   }
@@ -94,7 +96,8 @@ export class CheckoutComponent {
     const match = this.selection.selectedTier();
     const voucher = match?.voucher as IBundleVoucherSummary | undefined;
 
-    const lines: string[] = ['New PICSWEEP Order', '', `Contact: ${email} (${countryCode} ${phone})`, '', `Photos (${entries.length}):`];
+    const dialCode = COUNTRY_DIAL_CODE[countryCode];
+    const lines: string[] = ['New PICSWEEP Order', '', `Contact: ${email} (${dialCode} ${phone})`, '', `Photos (${entries.length}):`];
 
     entries.forEach((entry, index) => {
       lines.push(
