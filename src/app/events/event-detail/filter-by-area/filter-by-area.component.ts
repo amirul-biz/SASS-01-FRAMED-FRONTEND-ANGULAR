@@ -8,6 +8,7 @@ import { AreaCount } from '../../events.service';
 })
 export class FilterByAreaComponent {
   areaCounts = input.required<AreaCount[]>();
+  disabled = input(false);
   selectionChange = output<Set<string>>();
 
   private readonly selected = signal<Set<string>>(new Set());

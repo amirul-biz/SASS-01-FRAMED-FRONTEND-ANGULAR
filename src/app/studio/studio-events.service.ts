@@ -26,6 +26,7 @@ export interface Event {
   coverPhotoUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  pricingBundleIds: string[];
 }
 
 export interface CreateEventDto {
@@ -36,6 +37,7 @@ export interface CreateEventDto {
   eventStartDate: string;
   eventEndDate: string;
   coverPhotoUrl?: string;
+  pricingBundleIds?: string[];
 }
 
 export interface UpdateEventDto {
@@ -47,6 +49,7 @@ export interface UpdateEventDto {
   eventEndDate?: string;
   coverPhotoUrl?: string;
   isPublished?: boolean;
+  pricingBundleIds?: string[];
 }
 
 export interface PaginatedResponse<T> {

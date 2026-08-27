@@ -42,6 +42,56 @@ export interface ClientHomeResponse {
   topPhotographers: ClientTopPhotographer[];
 }
 
+export interface ClientEventPricingOption {
+  id: string;
+  label: string;
+  price: number;
+}
+
+export interface ClientEventVoucherCondition {
+  minPhotos: number;
+  maxPhotos: number | null;
+  value: number;
+}
+
+export interface ClientEventVoucher {
+  id: string;
+  name: string;
+  discountType: 'flat-tier' | 'percent-tier';
+  conditions: ClientEventVoucherCondition[];
+}
+
+export interface ClientEventPricingBundle {
+  id: string;
+  name: string;
+  fullGalleryEnabled: boolean;
+  fullGalleryPrice: number;
+  pricingOptions: ClientEventPricingOption[];
+  vouchers: ClientEventVoucher[];
+}
+
+export interface ClientEventDetail extends ClientLatestEvent {
+  description: string | null;
+  pricingBundles: ClientEventPricingBundle[];
+}
+
+export interface ClientEventPhoto {
+  id: string;
+  originalName: string;
+  url: string | null;
+  width: number | null;
+  height: number | null;
+  capturedAt: string | null;
+}
+
+export interface PaginatedClientEventPhotoList {
+  items: ClientEventPhoto[];
+  totalItemCount: number;
+  totalPageCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
 export interface ClientEventListParams {
   search?: string;
   dateFrom?: string;
@@ -79,6 +129,25 @@ export class ClientService {
         pageSize: params.pageSize ?? 30,
       },
     });
+  }
+
+  getEvent(id: string): Observable<ClientEventDetail> {
+    return this.http.get<ClientEventDetail>(`${this.env.apiUrl}/client/events/${id}`);
+  }
+
+  getEventPhotos(
+    id: string,
+    params: { pageNumber?: number; pageSize?: number } = {},
+  ): Observable<PaginatedClientEventPhotoList> {
+    return this.http.get<PaginatedClientEventPhotoList>(
+      `${this.env.apiUrl}/client/events/${id}/photos`,
+      {
+        params: {
+          pageNumber: params.pageNumber ?? 1,
+          pageSize: params.pageSize ?? 100,
+        },
+      },
+    );
   }
 
   getPhotographers(search?: string): Observable<ClientTopPhotographer[]> {

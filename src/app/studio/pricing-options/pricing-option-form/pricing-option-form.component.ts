@@ -19,6 +19,8 @@ export class PricingOptionFormComponent {
   private readonly pricingOptionsService = inject(PricingOptionsService);
   private readonly router = inject(Router);
 
+  readonly formatOptions = ['Full Resolution'];
+
   id = input<string>();
 
   // Flips once after the initial fetch resolves, so the draft below can re-derive itself from a

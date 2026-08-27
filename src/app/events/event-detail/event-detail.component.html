@@ -1,4 +1,13 @@
-@if (event(); as ev) {
+@if (isLoading()) {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Loading event…</p>
+  </div>
+} @else if (notFound() || !event()) {
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+    <p class="text-body-lg font-body-lg text-on-surface-variant">Event not found.</p>
+  </div>
+} @else {
+  @let ev = event()!;
   <div class="flex flex-col w-full relative">
     <div
       class="-mt-20 w-full h-[480px] md:h-[614px] relative pt-20 bg-cover bg-center"
@@ -36,8 +45,8 @@
 
     <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full -mt-xl relative z-20 flex flex-col lg:flex-row gap-xl pb-[100px]">
       <aside class="w-full lg:w-1/3 flex flex-col gap-lg sticky top-24 h-fit z-10">
-        <app-find-your-photos (plateSearch)="onPlateSearch($event)" (timeRangeChange)="onTimeRangeChange($event)" />
-        <app-filter-by-area [areaCounts]="areaCounts()" (selectionChange)="onAreaFilterChange($event)" />
+        <app-find-your-photos [disabledSearch]="true" (timeRangeChange)="onTimeRangeChange($event)" />
+        <app-filter-by-area [areaCounts]="areaCounts()" [disabled]="true" />
       </aside>
 
       <div class="w-full lg:w-2/3">
@@ -73,9 +82,5 @@
         (addToCart)="onAddToCartFromModal($event)"
       />
     }
-  </div>
-} @else {
-  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
-    <p class="text-body-lg font-body-lg text-on-surface-variant">Event not found.</p>
   </div>
 }
