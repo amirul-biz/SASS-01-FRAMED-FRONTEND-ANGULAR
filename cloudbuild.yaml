@@ -59,6 +59,9 @@ substitutions:
   # PROJECT_ID is NOT listed here — it's a Cloud Build built-in variable (auto-filled from
   # whichever project the trigger runs in), referenced directly as $PROJECT_ID above.
   _AR_REPOSITORY: 'picsweep-repository'
-  _SERVICE_NAME: 'framed-frontend'
+  # _SERVICE_NAME is empty by default (build fails fast rather than silently deploying
+  # under the wrong name if you forget to set it). Set the real value per-trigger/
+  # per-environment via --substitutions or the trigger's UI; never commit it here.
+  _SERVICE_NAME: ''
   _DEPLOY_REGION: 'asia-southeast1'
   _PLATFORM: 'managed'
