@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 
 type SearchTab = 'plate' | 'ai';
 
@@ -13,6 +13,7 @@ export interface TimeRange {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FindYourPhotosComponent {
+  readonly disabledSearch = input(false);
   readonly activeTab = signal<SearchTab>('plate');
   readonly plateSearch = output<string>();
 

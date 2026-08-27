@@ -1,8 +1,8 @@
-import { Injectable, computed, inject, linkedSignal, signal } from '@angular/core';
-import { EventsService, IPhoto } from '../events/events.service';
-import { IPricingBundle, PricingBundlesService } from './pricing-bundles.service';
+import { Injectable, computed, linkedSignal, signal } from '@angular/core';
+import { IPhoto } from '../events/events.service';
+import { IBundlePricingOptionSummary, IPricingBundle } from './pricing-bundles.service';
 import { IVoucherLike, QualifyingMatch, calculatePricing, qualifyingConditions } from './pricing.util';
-import { PricingOptionsService, STANDARD_FORMAT_OPTION } from './pricing-options.service';
+import { STANDARD_FORMAT_OPTION } from './pricing-options.service';
 
 export interface SelectedEntry {
   photo: IPhoto;
@@ -11,15 +11,22 @@ export interface SelectedEntry {
 
 @Injectable({ providedIn: 'root' })
 export class SelectionService {
-  private readonly eventsService = inject(EventsService);
-  private readonly pricingBundlesService = inject(PricingBundlesService);
-  private readonly pricingOptionsService = inject(PricingOptionsService);
   private readonly items = signal<Map<string, SelectedEntry>>(new Map());
+
+  // Real pricing-bundle data for each event the rider has viewed, keyed by event id — set by
+  // whoever displays that event (currently event-detail.component.ts) via setBundlesForEvent().
+  // Replaces the old mock-EventsService/PricingBundlesService lookup, which only knew about
+  // hardcoded demo events and always resolved real DB-backed events to "no bundle".
+  private readonly eventBundles = signal<Map<string, IPricingBundle[]>>(new Map());
+
+  setBundlesForEvent(eventId: string, bundles: IPricingBundle[]): void {
+    this.eventBundles.update((map) => new Map(map).set(eventId, bundles));
+  }
 
   readonly selectedEntries = computed(() =>
     Array.from(this.items().values()).map((entry) => ({
       ...entry,
-      formatOption: this.pricingOptionsService.getOption(entry.formatId) ?? STANDARD_FORMAT_OPTION,
+      formatOption: this.optionsForEvent(entry.photo.eventId).find((o) => o.id === entry.formatId) ?? STANDARD_FORMAT_OPTION,
     })),
   );
   readonly selectedPhotos = computed(() => Array.from(this.items().values()).map((entry) => entry.photo));
@@ -28,10 +35,7 @@ export class SelectionService {
   readonly eventId = computed(() => this.selectedPhotos()[0]?.eventId);
   readonly photosTotal = computed(() => this.selectedEntries().reduce((sum, entry) => sum + entry.formatOption.price, 0));
 
-  readonly bundles = computed(() => {
-    const event = this.eventsService.getEvent(this.eventId() ?? '');
-    return this.bundlesFor(event?.pricingBundleIds ?? []);
-  });
+  readonly bundles = computed(() => this.eventBundles().get(this.eventId() ?? '') ?? []);
 
   // Every qualifying voucher condition across every bundle assigned to this event, flattened for a
   // radio list. Bundle grouping no longer matters here — vouchers are shared across bundles.
@@ -111,14 +115,14 @@ export class SelectionService {
   }
 
   private defaultFormatIdFor(photo: IPhoto): string {
-    const event = this.eventsService.getEvent(photo.eventId);
-    return event?.pricingOptionIds[0] ?? STANDARD_FORMAT_OPTION.id;
+    return this.optionsForEvent(photo.eventId)[0]?.id ?? STANDARD_FORMAT_OPTION.id;
   }
 
-  private bundlesFor(pricingBundleIds: string[]): IPricingBundle[] {
-    return pricingBundleIds
-      .map((id) => this.pricingBundlesService.getBundle(id))
-      .filter((bundle): bundle is IPricingBundle => !!bundle);
+  // Every pricing option across every bundle attached to the event, flattened — the same "first
+  // available option, else Standard" pool the event-detail page's own formatOptions() uses.
+  private optionsForEvent(eventId: string): IBundlePricingOptionSummary[] {
+    const bundles = this.eventBundles().get(eventId) ?? [];
+    return bundles.flatMap((bundle) => bundle.pricingOptions);
   }
 
   private selectedBundleFor(match: QualifyingMatch | null): IPricingBundle | undefined {

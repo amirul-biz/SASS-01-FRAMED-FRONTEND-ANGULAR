@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, switchMap } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
-import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
+import { calculatePricing } from '../../pricing/pricing.util';
+import { formatCurrency } from '../../pricing/currency.util';
 import { EventCategory, StudioEventsService } from '../studio-events.service';
 
 const EVENT_CATEGORIES: EventCategory[] = [
@@ -43,12 +44,11 @@ export class CreateEventComponent {
   private readonly auth = inject(AuthService);
   private readonly eventsService = inject(StudioEventsService);
   private readonly pricingBundlesService = inject(PricingBundlesService);
-  private readonly pricingOptionsService = inject(PricingOptionsService);
 
   readonly categories = EVENT_CATEGORIES;
   readonly availableBundles = signal<IPricingBundle[]>([]);
-  readonly availableOptions = signal<IPhotoFormatOption[]>([]);
   readonly lowestOptionPrice = lowestOptionPrice;
+  readonly formatCurrency = formatCurrency;
 
   readonly eventId = this.route.snapshot.paramMap.get('id');
   readonly isEditMode = this.eventId !== null;
@@ -66,7 +66,6 @@ export class CreateEventComponent {
   );
 
   readonly selectedBundleIds = signal<Set<string>>(new Set());
-  readonly selectedOptionIds = signal<Set<string>>(new Set());
   readonly coverPhotoUrl = signal<string | null>(null);
   readonly isUploadingCover = signal(false);
   readonly isSaving = signal(false);
@@ -75,7 +74,6 @@ export class CreateEventComponent {
 
   constructor() {
     this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.availableBundles.set(bundles));
-    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then((options) => this.availableOptions.set(options));
 
     if (this.eventId) {
       this.isLoading.set(true);
@@ -96,6 +94,7 @@ export class CreateEventComponent {
               eventEndDate: event.eventEndDate.slice(0, 10),
             });
             this.coverPhotoUrl.set(event.coverPhotoUrl);
+            this.selectedBundleIds.set(new Set(event.pricingBundleIds));
           },
           error: () => this.errorMsg.set('Failed to load this event. Please try again.'),
         });
@@ -116,19 +115,37 @@ export class CreateEventComponent {
     this.selectedBundleIds.set(next);
   }
 
-  isOptionChecked(id: string): boolean {
-    return this.selectedOptionIds().has(id);
+  bundleFormatLabels(bundle: IPricingBundle): string {
+    return bundle.pricingOptions.map((option) => option.label).join(', ');
   }
 
-  toggleOption(id: string): void {
-    const next = new Set(this.selectedOptionIds());
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    this.selectedOptionIds.set(next);
-  }
+  // Bundles ticked in the checkbox list above, in the order they appear in availableBundles().
+  readonly selectedBundles = computed(() => {
+    const selected = this.selectedBundleIds();
+    return this.availableBundles().filter((bundle) => selected.has(bundle.id));
+  });
+
+  // Mirrors PricingBundleFormComponent.previewByOption (pricing-bundle-form.component.ts), one level
+  // deeper — grouped by bundle, since this page can have several bundles ticked at once.
+  readonly previewByBundle = computed(() =>
+    this.selectedBundles().map((bundle) => ({
+      bundle,
+      options: bundle.pricingOptions.map((option) => ({
+        option,
+        matches: bundle.vouchers.flatMap((voucher) =>
+          voucher.conditions.map((condition) => ({
+            voucher,
+            condition,
+            preview: calculatePricing(condition.minPhotos * option.price, condition.minPhotos, {
+              vouchers: [voucher],
+              fullGalleryEnabled: false,
+              fullGalleryPrice: 0,
+            }),
+          })),
+        ),
+      })),
+    })),
+  );
 
   onCoverFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -182,6 +199,7 @@ export class CreateEventComponent {
       eventStartDate,
       eventEndDate,
       coverPhotoUrl: this.coverPhotoUrl() ?? undefined,
+      pricingBundleIds: [...this.selectedBundleIds()],
     };
 
     this.errorMsg.set(null);
