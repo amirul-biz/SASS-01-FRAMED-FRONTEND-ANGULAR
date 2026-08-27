@@ -130,6 +130,10 @@ export const routes: Routes = [
           import('./studio/vouchers/voucher-form/voucher-form.component').then((m) => m.VoucherFormComponent),
       },
       {
+        path: 'orders',
+        loadComponent: () => import('./studio/orders/orders-list.component').then((m) => m.OrdersListComponent),
+      },
+      {
         path: 'earnings',
         loadComponent: () => import('./studio/earnings/earnings.component').then((m) => m.EarningsComponent),
       },
