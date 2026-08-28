@@ -10,6 +10,7 @@ export type OrderStatus = 'PENDING_CONFIRMATION' | 'CONFIRMED' | 'CANCELLED';
 export interface StudioOrderItem {
   id: string;
   photoId: string;
+  photoName: string;
   formatLabel: string;
   price: number;
 }

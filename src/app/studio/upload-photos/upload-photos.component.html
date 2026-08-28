@@ -60,19 +60,30 @@
               </span>
             </div>
           </div>
-          <label class="flex items-center gap-sm cursor-pointer">
-            <span class="font-label-md text-label-md" [class.text-white]="ev.coverPhotoUrl" [class.text-on-surface-variant]="!ev.coverPhotoUrl">Publish Gallery</span>
-            <button
-              type="button"
-              (click)="togglePublish()"
-              [disabled]="isTogglingPublish()"
-              class="w-11 h-6 rounded-full transition-colors relative disabled:opacity-60"
-              [class.bg-secondary]="ev.isPublished"
-              [class.bg-outline-variant]="!ev.isPublished"
+          <div class="flex items-center gap-md">
+            <a
+              [routerLink]="['/studio/events', ev.id, 'edit']"
+              class="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              [class.text-white]="ev.coverPhotoUrl"
+              [class.text-on-surface-variant]="!ev.coverPhotoUrl"
+              title="Edit event"
             >
-              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="ev.isPublished"></span>
-            </button>
-          </label>
+              <span class="material-symbols-outlined text-[20px]">edit</span>
+            </a>
+            <label class="flex items-center gap-sm cursor-pointer">
+              <span class="font-label-md text-label-md" [class.text-white]="ev.coverPhotoUrl" [class.text-on-surface-variant]="!ev.coverPhotoUrl">Publish Gallery</span>
+              <button
+                type="button"
+                (click)="togglePublish()"
+                [disabled]="isTogglingPublish()"
+                class="w-11 h-6 rounded-full transition-colors relative disabled:opacity-60"
+                [class.bg-secondary]="ev.isPublished"
+                [class.bg-outline-variant]="!ev.isPublished"
+              >
+                <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform" [class.translate-x-5]="ev.isPublished"></span>
+              </button>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -219,7 +230,11 @@
         } @else {
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-md">
             @for (photo of uploadedPhotos(); track photo.id; let i = $index) {
-              <div class="group relative aspect-square rounded-lg overflow-hidden bg-surface-container">
+              <div
+                class="group relative aspect-square rounded-lg overflow-hidden bg-surface-container"
+                [class.ring-2]="photo.isEventAlbumCover"
+                [class.ring-amber-400]="photo.isEventAlbumCover"
+              >
                 <button
                   type="button"
                   (click)="openPreview(i)"
@@ -227,6 +242,18 @@
                   [attr.aria-label]="'Open ' + photo.originalName"
                 >
                   <img [src]="photo.url" [alt]="photo.originalName" class="w-full h-full object-cover" />
+                </button>
+                <button
+                  type="button"
+                  (click)="toggleAlbumCover(photo); $event.stopPropagation()"
+                  class="absolute top-xs left-xs z-10 w-7 h-7 flex items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-opacity group-hover:opacity-100"
+                  [class.opacity-100]="photo.isEventAlbumCover"
+                  [class.opacity-0]="!photo.isEventAlbumCover"
+                  [title]="photo.isEventAlbumCover ? 'Remove as album cover' : 'Set as album cover'"
+                >
+                  <span class="material-symbols-outlined text-[16px]" [class.text-amber-400]="photo.isEventAlbumCover">
+                    {{ photo.isEventAlbumCover ? 'star' : 'star_border' }}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -261,6 +288,17 @@
       (keydown.arrowLeft)="previewPrevious()"
       (keydown.arrowRight)="previewNext()"
     >
+      <button
+        type="button"
+        (click)="toggleAlbumCover(photo); $event.stopPropagation()"
+        class="absolute top-lg right-[8.5rem] w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        [title]="photo.isEventAlbumCover ? 'Remove as album cover' : 'Set as album cover'"
+      >
+        <span class="material-symbols-outlined" [class.text-amber-400]="photo.isEventAlbumCover">
+          {{ photo.isEventAlbumCover ? 'star' : 'star_border' }}
+        </span>
+      </button>
+
       <button
         type="button"
         (click)="deletePhoto(photo); $event.stopPropagation()"

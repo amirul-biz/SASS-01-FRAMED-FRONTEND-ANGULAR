@@ -55,11 +55,14 @@ export function toEventCard(event: ClientLatestEvent): IEvent {
   };
 }
 
-export function toEventDetail(event: ClientEventDetail): IEvent & { description: string | null; pricingBundles: ClientEventDetail['pricingBundles'] } {
+export function toEventDetail(
+  event: ClientEventDetail,
+): IEvent & { description: string | null; pricingBundles: ClientEventDetail['pricingBundles']; albumCoverPhotoUrls: string[] } {
   return {
     ...toEventCard(event),
     description: event.description,
     pricingBundles: event.pricingBundles,
+    albumCoverPhotoUrls: event.albumCoverPhotoUrls,
   };
 }
 

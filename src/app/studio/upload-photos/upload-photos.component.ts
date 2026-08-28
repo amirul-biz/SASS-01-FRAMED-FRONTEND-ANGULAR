@@ -248,6 +248,17 @@ export class UploadPhotosComponent implements OnInit {
       });
   }
 
+  toggleAlbumCover(photo: Photo): void {
+    this.photosService
+      .setAlbumCover(this.id(), photo.id, !photo.isEventAlbumCover)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) =>
+          this.uploadedPhotos.update((list) => list.map((p) => (p.id === updated.id ? updated : p))),
+        error: () => this.errorMsg.set('Failed to update album cover. Please try again.'),
+      });
+  }
+
   deletePhoto(photo: Photo): void {
     if (!confirm(`Delete "${photo.originalName}"? This can't be undone.`)) {
       return;

@@ -9,10 +9,15 @@
 } @else {
   @let ev = event()!;
   <div class="flex flex-col w-full relative">
-    <div
-      class="-mt-20 w-full h-[480px] md:h-[614px] relative pt-20 bg-cover bg-center"
-      [style.background-image]="'url(' + ev.coverImageUrl + ')'"
-    >
+    <div class="-mt-20 w-full h-[480px] md:h-[614px] relative pt-20">
+      @for (url of heroImageUrls(); track url; let i = $index) {
+        <div
+          class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+          [style.background-image]="'url(' + url + ')'"
+          [class.opacity-100]="i === activeCoverIndex()"
+          [class.opacity-0]="i !== activeCoverIndex()"
+        ></div>
+      }
       <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent"></div>
       <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop h-full flex flex-col justify-end pb-xl relative z-10">
         <div class="flex items-center gap-sm mb-sm">

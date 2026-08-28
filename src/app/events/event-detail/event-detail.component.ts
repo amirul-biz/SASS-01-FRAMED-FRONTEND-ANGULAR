@@ -33,7 +33,9 @@ function parseTimeInputMinutes(value: string): number | null {
   return Number(hourStr) * 60 + Number(minuteStr);
 }
 
-type EventDetail = IEvent & { description: string | null };
+type EventDetail = IEvent & { description: string | null; albumCoverPhotoUrls: string[] };
+
+const ALBUM_COVER_SLIDE_INTERVAL_MS = 3000;
 
 @Component({
   selector: 'app-event-detail',
@@ -61,7 +63,22 @@ export class EventDetailComponent {
   readonly isLoading = signal(true);
   readonly notFound = signal(false);
 
+  readonly activeCoverIndex = signal(0);
+  private coverTimer?: ReturnType<typeof setInterval>;
+
+  // The hero shows the photographer's chosen album-cover photos when any exist; otherwise it
+  // falls back to the event's separately-uploaded coverPhotoUrl, exactly as before this feature.
+  readonly heroImageUrls = computed(() => {
+    const ev = this.event();
+    if (!ev) {
+      return [];
+    }
+    return ev.albumCoverPhotoUrls.length > 0 ? ev.albumCoverPhotoUrls : [ev.coverImageUrl];
+  });
+
   constructor() {
+    this.destroyRef.onDestroy(() => clearInterval(this.coverTimer));
+
     toObservable(this.id)
       .pipe(
         switchMap((id) => {
@@ -83,6 +100,7 @@ export class EventDetailComponent {
         this.isLoading.set(false);
         if (!result) {
           this.event.set(null);
+          this.startCoverSlideshow(0);
           this.allPhotos.set([]);
           this.allPricingOptions.set([]);
           return;
@@ -91,6 +109,7 @@ export class EventDetailComponent {
         const eventId = this.id();
         const detail = toEventDetail(result.event);
         this.event.set(detail);
+        this.startCoverSlideshow(detail.albumCoverPhotoUrls.length);
         this.allPhotos.set(result.photos.items.map((photo) => toGalleryPhoto(eventId, photo)));
 
         const bundles = toSelectionBundles(result.event);
@@ -109,6 +128,17 @@ export class EventDetailComponent {
         }
         this.allPricingOptions.set([...optionsById.values()]);
       });
+  }
+
+  private startCoverSlideshow(count: number): void {
+    clearInterval(this.coverTimer);
+    this.activeCoverIndex.set(0);
+    if (count > 1) {
+      this.coverTimer = setInterval(
+        () => this.activeCoverIndex.update((i) => (i + 1) % count),
+        ALBUM_COVER_SLIDE_INTERVAL_MS,
+      );
+    }
   }
 
   // Falls back to the standard option when the event has no pricing bundle attached yet,

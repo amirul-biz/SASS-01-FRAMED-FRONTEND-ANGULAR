@@ -73,6 +73,7 @@ export interface ClientEventPricingBundle {
 export interface ClientEventDetail extends ClientLatestEvent {
   description: string | null;
   pricingBundles: ClientEventPricingBundle[];
+  albumCoverPhotoUrls: string[];
 }
 
 export interface ClientEventPhoto {
