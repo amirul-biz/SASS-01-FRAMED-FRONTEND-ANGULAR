@@ -33,16 +33,6 @@
           <option [value]="event.id">{{ event.title }}</option>
         }
       </select>
-
-      <select
-        class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
-        (change)="onStatusFilterChange($event)"
-      >
-        <option value="">All statuses</option>
-        @for (option of statusOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
     </div>
 
     <div class="overflow-x-auto">
@@ -57,7 +47,6 @@
               <th class="p-md">Customer</th>
               <th class="p-md">Photos</th>
               <th class="p-md text-right">Total</th>
-              <th class="p-md">Status</th>
               <th class="p-md"></th>
             </tr>
           </thead>
@@ -77,11 +66,6 @@
                 </td>
                 <td class="p-md font-body-md text-body-md text-on-surface">{{ order.items.length }}</td>
                 <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
-                <td class="p-md">
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md" [class]="statusBadgeClass[order.status]">
-                    {{ statusLabel[order.status] }}
-                  </span>
-                </td>
                 <td class="p-md text-right">
                   <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
                     expand_more
@@ -90,7 +74,7 @@
               </tr>
               @if (isExpanded(order.id)) {
                 <tr class="border-b border-outline-variant last:border-0 bg-surface-container-low">
-                  <td colspan="7" class="p-md">
+                  <td colspan="6" class="p-md">
                     <div class="flex flex-col gap-xs">
                       @for (item of order.items; track item.id) {
                         <div class="flex items-center justify-between font-body-md text-body-md text-on-surface">
