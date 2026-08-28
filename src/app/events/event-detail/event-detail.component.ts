@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { EventsService, IPhoto } from '../events.service';
+import { switchMap, catchError, of, forkJoin } from 'rxjs';
+import { ClientService } from '../../client/client.service';
+import { toEventDetail, toGalleryPhoto, toSelectionBundles } from '../../client/client-event.util';
+import { IEvent, IPhoto } from '../events.service';
 import { SelectionService } from '../../pricing/selection.service';
 import { FindYourPhotosComponent, TimeRange } from './find-your-photos/find-your-photos.component';
 import { FilterByAreaComponent } from './filter-by-area/filter-by-area.component';
 import { PhotoCardComponent } from './photo-card/photo-card.component';
 import { SelectionBarComponent } from './selection-bar/selection-bar.component';
 import { PhotoPreviewModalComponent } from './photo-preview-modal/photo-preview-modal.component';
-import { IPhotoFormatOption, PricingOptionsService, STANDARD_FORMAT_OPTION } from '../../pricing/pricing-options.service';
+import { IPhotoFormatOption, STANDARD_FORMAT_OPTION } from '../../pricing/pricing-options.service';
 
 const CAPTURED_AT_PATTERN = /^(\d{1,2}):(\d{2})\s?(AM|PM)$/i;
 
@@ -29,6 +33,10 @@ function parseTimeInputMinutes(value: string): number | null {
   return Number(hourStr) * 60 + Number(minuteStr);
 }
 
+type EventDetail = IEvent & { description: string | null; albumCoverPhotoUrls: string[] };
+
+const ALBUM_COVER_SLIDE_INTERVAL_MS = 3000;
+
 @Component({
   selector: 'app-event-detail',
   imports: [
@@ -43,50 +51,119 @@ function parseTimeInputMinutes(value: string): number | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EventDetailComponent {
-  private readonly eventsService = inject(EventsService);
-  private readonly pricingOptionsService = inject(PricingOptionsService);
+  private readonly clientService = inject(ClientService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly selection = inject(SelectionService);
 
   id = input.required<string>();
 
-  readonly event = computed(() => this.eventsService.getEvent(this.id()));
-  readonly areaCounts = computed(() => this.eventsService.getAreaCounts(this.id()));
-  readonly formatOptions = computed(() =>
-    (this.event()?.pricingOptionIds ?? [])
-      .map((id) => this.pricingOptionsService.getOption(id))
-      .filter((option): option is IPhotoFormatOption => !!option),
-  );
+  private readonly allPricingOptions = signal<IPhotoFormatOption[]>([]);
+  readonly event = signal<EventDetail | null>(null);
+  private readonly allPhotos = signal<IPhoto[]>([]);
+  readonly isLoading = signal(true);
+  readonly notFound = signal(false);
 
-  private readonly plateQuery = signal('');
-  private readonly activeAreaIds = signal<Set<string>>(new Set());
+  readonly activeCoverIndex = signal(0);
+  private coverTimer?: ReturnType<typeof setInterval>;
+
+  // The hero shows the photographer's chosen album-cover photos when any exist; otherwise it
+  // falls back to the event's separately-uploaded coverPhotoUrl, exactly as before this feature.
+  readonly heroImageUrls = computed(() => {
+    const ev = this.event();
+    if (!ev) {
+      return [];
+    }
+    return ev.albumCoverPhotoUrls.length > 0 ? ev.albumCoverPhotoUrls : [ev.coverImageUrl];
+  });
+
+  constructor() {
+    this.destroyRef.onDestroy(() => clearInterval(this.coverTimer));
+
+    toObservable(this.id)
+      .pipe(
+        switchMap((id) => {
+          this.isLoading.set(true);
+          this.notFound.set(false);
+          return forkJoin({
+            event: this.clientService.getEvent(id),
+            photos: this.clientService.getEventPhotos(id, { pageNumber: 1, pageSize: 100 }),
+          }).pipe(
+            catchError(() => {
+              this.notFound.set(true);
+              return of(null);
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        this.isLoading.set(false);
+        if (!result) {
+          this.event.set(null);
+          this.startCoverSlideshow(0);
+          this.allPhotos.set([]);
+          this.allPricingOptions.set([]);
+          return;
+        }
+
+        const eventId = this.id();
+        const detail = toEventDetail(result.event);
+        this.event.set(detail);
+        this.startCoverSlideshow(detail.albumCoverPhotoUrls.length);
+        this.allPhotos.set(result.photos.items.map((photo) => toGalleryPhoto(eventId, photo)));
+
+        const bundles = toSelectionBundles(result.event);
+        this.selection.setBundlesForEvent(eventId, bundles);
+
+        const optionsById = new Map<string, IPhotoFormatOption>();
+        for (const bundle of bundles) {
+          for (const option of bundle.pricingOptions) {
+            optionsById.set(option.id, {
+              id: option.id,
+              photographerId: result.event.photographerId,
+              label: option.label,
+              price: option.price,
+            });
+          }
+        }
+        this.allPricingOptions.set([...optionsById.values()]);
+      });
+  }
+
+  private startCoverSlideshow(count: number): void {
+    clearInterval(this.coverTimer);
+    this.activeCoverIndex.set(0);
+    if (count > 1) {
+      this.coverTimer = setInterval(
+        () => this.activeCoverIndex.update((i) => (i + 1) % count),
+        ALBUM_COVER_SLIDE_INTERVAL_MS,
+      );
+    }
+  }
+
+  // Falls back to the standard option when the event has no pricing bundle attached yet,
+  // so the format picker and price badges are never left with nothing to show.
+  readonly formatOptions = computed(() => {
+    const options = this.allPricingOptions();
+    return options.length > 0 ? options : [STANDARD_FORMAT_OPTION];
+  });
+
   private readonly timeRange = signal<TimeRange>({ from: '', to: '' });
 
   readonly photos = computed(() => {
-    const byPlate = this.plateQuery()
-      ? this.eventsService.searchByPlate(this.id(), this.plateQuery())
-      : this.eventsService.getPhotos(this.id());
-
-    const areas = this.activeAreaIds();
-    const byArea = areas.size === 0 ? byPlate : byPlate.filter((p) => areas.has(p.areaId));
-
+    const all = this.allPhotos();
     const fromMinutes = parseTimeInputMinutes(this.timeRange().from);
     const toMinutes = parseTimeInputMinutes(this.timeRange().to);
     if (fromMinutes === null && toMinutes === null) {
-      return byArea;
+      return all;
     }
-    return byArea.filter((p) => {
+    return all.filter((p) => {
       const minutes = parseCapturedAtMinutes(p.capturedAt);
       return (fromMinutes === null || minutes >= fromMinutes) && (toMinutes === null || minutes <= toMinutes);
     });
   });
 
-  onPlateSearch(plate: string): void {
-    this.plateQuery.set(plate);
-  }
-
-  onAreaFilterChange(areaIds: Set<string>): void {
-    this.activeAreaIds.set(areaIds);
-  }
+  readonly areaCounts = computed(() => []);
 
   onTimeRangeChange(range: TimeRange): void {
     this.timeRange.set(range);
@@ -98,7 +175,7 @@ export class EventDetailComponent {
 
   priceForPhoto(photo: IPhoto): number {
     const formatId = this.selection.formatIdFor(photo.id) ?? this.formatOptions()[0]?.id;
-    return this.pricingOptionsService.getOption(formatId ?? '')?.price ?? STANDARD_FORMAT_OPTION.price;
+    return this.formatOptions().find((o) => o.id === formatId)?.price ?? STANDARD_FORMAT_OPTION.price;
   }
 
   readonly previewPhoto = signal<IPhoto | null>(null);

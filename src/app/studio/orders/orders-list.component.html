@@ -1,0 +1,173 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Orders</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">Orders placed across all of your events.</p>
+    </div>
+    @if (response()) {
+      <div class="flex items-center gap-lg">
+        <div class="flex flex-col items-end">
+          <span class="font-headline-md text-headline-md text-on-surface">{{ response()!.summary.totalOrders }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Orders</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="font-headline-md text-headline-md text-on-surface">{{ formatCurrency(response()!.summary.totalRevenue) }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Revenue</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center gap-sm border-b border-outline-variant">
+      <select
+        class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        (change)="onEventFilterChange($event)"
+      >
+        <option value="">All events</option>
+        @for (event of myEvents(); track event.id) {
+          <option [value]="event.id">{{ event.title }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="overflow-x-auto">
+      @if (isLoading()) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading your orders...</p>
+      } @else {
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Date</th>
+              <th class="p-md">Event</th>
+              <th class="p-md">Customer</th>
+              <th class="p-md">Photos</th>
+              <th class="p-md text-right">Total</th>
+              <th class="p-md"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of response()?.items ?? []; track order.id) {
+              <tr
+                class="border-b border-outline-variant last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors"
+                (click)="toggleExpanded(order.id)"
+              >
+                <td class="p-md font-body-md text-body-md text-on-surface whitespace-nowrap">{{ order.createdAt | date: 'mediumDate' }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
+                <td class="p-md">
+                  <div class="flex flex-col">
+                    <span class="font-label-md text-label-md text-on-surface">{{ order.email }}</span>
+                    <span class="font-caption text-caption text-on-surface-variant">{{ customerPhone(order) }}</span>
+                  </div>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ order.items.length }}</td>
+                <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
+                <td class="p-md text-right">
+                  <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
+                    expand_more
+                  </span>
+                </td>
+              </tr>
+              @if (isExpanded(order.id)) {
+                <tr class="border-b border-outline-variant last:border-0 bg-surface-container-low">
+                  <td colspan="6" class="p-md">
+                    <div class="flex flex-col gap-xs">
+                      @for (item of order.items; track item.id) {
+                        <div class="flex items-center justify-between font-body-md text-body-md text-on-surface">
+                          <span>{{ item.photoName }}</span>
+                          <span>{{ formatCurrency(item.price) }}</span>
+                        </div>
+                      }
+                      <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant pt-xs">
+                        <span>Voucher</span>
+                        <span>{{ order.voucherName || 'No voucher' }}</span>
+                      </div>
+                      <div class="border-t border-outline-variant mt-xs pt-xs flex flex-col gap-xs">
+                        <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                          <span>Subtotal</span>
+                          <span>{{ formatCurrency(order.priceBreakdown.subtotal) }}</span>
+                        </div>
+                        @if (order.priceBreakdown.discountAmount > 0) {
+                          <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                            <span>Discount</span>
+                            <span>-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+                          </div>
+                        }
+                        <div class="flex items-center justify-between font-label-md text-label-md text-on-surface">
+                          <span>Total</span>
+                          <span>{{ formatCurrency(order.priceBreakdown.total) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+        @if ((response()?.items?.length ?? 0) === 0) {
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+            {{ hasActiveFilters() ? 'No orders match these filters.' : "You haven't received any orders yet." }}
+          </p>
+        }
+      }
+    </div>
+
+    @if (response() && response()!.totalPageCount > 1) {
+      <div class="p-md flex flex-col sm:flex-row items-center justify-between gap-md border-t border-outline-variant">
+        <div class="flex items-center gap-sm">
+          <label class="text-caption font-label-md text-on-surface-variant" for="page-size">Per page</label>
+          <select
+            id="page-size"
+            class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            (change)="onPageSizeChange($event)"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex items-center gap-xs">
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            [disabled]="pageNumber() === 1"
+            (click)="onPageNumberChange(pageNumber() - 1)"
+          >
+            <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+          </button>
+
+          @for (page of response()!.totalPageCount | range; track page) {
+            <button
+              type="button"
+              class="w-9 h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
+              [class.bg-primary]="page === pageNumber()"
+              [class.text-on-primary]="page === pageNumber()"
+              [class.text-on-surface-variant]="page !== pageNumber()"
+              [class.hover:bg-surface-container-low]="page !== pageNumber()"
+              (click)="onPageNumberChange(page)"
+            >
+              {{ page }}
+            </button>
+          }
+
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+            [disabled]="pageNumber() === response()!.totalPageCount"
+            (click)="onPageNumberChange(pageNumber() + 1)"
+          >
+            <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+          </button>
+        </div>
+
+        <span class="text-caption font-label-md text-on-surface-variant">Page {{ pageNumber() }} of {{ response()!.totalPageCount }}</span>
+      </div>
+    }
+  </div>
+</div>

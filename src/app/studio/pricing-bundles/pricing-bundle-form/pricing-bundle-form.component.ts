@@ -1,11 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
-import { BundleModel, IBundleTier, calculatePricing } from '../../../pricing/pricing.util';
+import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
+import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
+import { calculatePricing, findVoucherRangeClashes } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
-type DraftBundle = Omit<IPricingBundle, 'id'>;
+type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'> & {
+  voucherIds: string[];
+  pricingOptionIds: string[];
+};
 
 @Component({
   selector: 'app-pricing-bundle-form',
@@ -16,9 +21,15 @@ type DraftBundle = Omit<IPricingBundle, 'id'>;
 export class PricingBundleFormComponent {
   private readonly auth = inject(AuthService);
   private readonly pricingBundlesService = inject(PricingBundlesService);
+  private readonly pricingOptionsService = inject(PricingOptionsService);
+  private readonly vouchersService = inject(VouchersService);
   private readonly router = inject(Router);
 
   id = input<string>();
+
+  // Flips once after the initial fetch resolves, so the draft below can re-derive itself from a
+  // freshly-populated cache without also reacting to unrelated data mutations later in the session.
+  private readonly loaded = signal(false);
 
   readonly formatCurrency = formatCurrency;
   readonly isEditMode = computed(() => !!this.id());
@@ -27,86 +38,123 @@ export class PricingBundleFormComponent {
     return id ? this.pricingBundlesService.getBundle(id) : undefined;
   });
 
-  // Resets whenever `id` changes, but not on unrelated data mutations elsewhere in the app —
-  // the bundle lookup itself is read untracked for that reason (same pattern as event pricing assignment).
+  readonly availableVouchers = signal<IVoucher[]>([]);
+  readonly availablePricingOptions = signal<IPhotoFormatOption[]>([]);
+
+  // Resets whenever `id` changes or the initial fetch completes, but not on unrelated data mutations
+  // elsewhere in the app — the bundle lookup itself is read untracked for that reason (same pattern as
+  // event pricing assignment).
   readonly draft = linkedSignal<DraftBundle>(() => {
     this.id();
+    this.loaded();
     const blank: DraftBundle = {
-      photographerId: this.auth.demoPhotographerId,
+      photographerId: this.auth.photographerId()!,
       name: '',
-      basePrice: 15,
-      bundleModel: 'none',
-      bundleTiers: [],
+      voucherIds: [],
+      pricingOptionIds: [],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     };
-    return structuredClone(untracked(() => this.existingBundle()) ?? blank);
+    const existing = untracked(() => this.existingBundle());
+    if (!existing) {
+      return blank;
+    }
+    return {
+      photographerId: existing.photographerId,
+      name: existing.name,
+      voucherIds: existing.vouchers.map((v) => v.id),
+      pricingOptionIds: existing.pricingOptions.map((o) => o.id),
+      fullGalleryEnabled: existing.fullGalleryEnabled,
+      fullGalleryPrice: existing.fullGalleryPrice,
+    };
   });
 
-  readonly previewTiers = computed(() =>
-    this.draft().bundleTiers.map((tier) => ({
-      tier,
-      preview: calculatePricing(tier.minQuantity * this.draft().basePrice, tier.minQuantity, this.draft()),
-    })),
-  );
+  // The pricing options the photographer has ticked for this bundle — each shown with its own price
+  // in the Live Preview (no single "the" price once a bundle can carry several formats).
+  readonly checkedPricingOptions = computed(() => {
+    const selected = new Set(this.draft().pricingOptionIds);
+    return this.availablePricingOptions().filter((o) => selected.has(o.id));
+  });
+
+  readonly checkedVouchers = computed(() => {
+    const selected = new Set(this.draft().voucherIds);
+    return this.availableVouchers().filter((v) => selected.has(v.id));
+  });
+
+  // Two checked vouchers whose ranges overlap create an ambiguous bundle (a rider in that range
+  // would qualify for both). Hard-blocks save — see toggleVoucher/save.
+  readonly voucherClashes = computed(() => findVoucherRangeClashes(this.checkedVouchers()));
+  readonly hasVoucherClash = computed(() => this.voucherClashes().length > 0);
+
+  // For every checked pricing option, show how each checked voucher's conditions discount it —
+  // grouped by option so the preview reads as "this format costs X, or Y with a voucher applied".
+  readonly previewByOption = computed(() => {
+    const vouchers = this.checkedVouchers();
+    return this.checkedPricingOptions().map((option) => ({
+      option,
+      matches: vouchers.flatMap((voucher) =>
+        voucher.conditions.map((condition) => ({
+          voucher,
+          condition,
+          preview: calculatePricing(condition.minPhotos * option.price, condition.minPhotos, {
+            vouchers: [voucher],
+            fullGalleryEnabled: false,
+            fullGalleryPrice: 0,
+          }),
+        })),
+      ),
+    }));
+  });
+
+  constructor() {
+    const photographerId = this.auth.photographerId()!;
+    this.vouchersService.getVouchers(photographerId).then((vouchers) => this.availableVouchers.set(vouchers));
+    this.pricingOptionsService.getOptions(photographerId).then((options) => this.availablePricingOptions.set(options));
+
+    const id = this.id();
+    if (id) {
+      this.pricingBundlesService.fetchBundle(photographerId, id).then(() => this.loaded.set(true));
+    } else {
+      this.loaded.set(true);
+    }
+  }
 
   setName(value: string): void {
     this.draft.update((d) => ({ ...d, name: value }));
   }
 
-  setBasePrice(value: string): void {
-    const basePrice = Number(value) || 0;
-    this.draft.update((d) => ({ ...d, basePrice }));
+  isVoucherChecked(id: string): boolean {
+    return this.draft().voucherIds.includes(id);
   }
 
-  setBundleModel(model: BundleModel): void {
-    this.draft.update((d) => ({ ...d, bundleModel: model }));
-  }
-
-  addTier(): void {
-    const newTier: IBundleTier = { minQuantity: 5, value: this.draft().bundleModel === 'percent-tier' ? 10 : 30 };
-    this.draft.update((d) => ({ ...d, bundleTiers: [...d.bundleTiers, newTier] }));
-  }
-
-  removeTier(index: number): void {
-    this.draft.update((d) => ({ ...d, bundleTiers: d.bundleTiers.filter((_, i) => i !== index) }));
-  }
-
-  updateTierMinQuantity(index: number, value: string): void {
-    const minQuantity = Number(value) || 0;
+  toggleVoucher(id: string): void {
     this.draft.update((d) => ({
       ...d,
-      bundleTiers: d.bundleTiers.map((t, i) => (i === index ? { ...t, minQuantity } : t)),
+      voucherIds: d.voucherIds.includes(id) ? d.voucherIds.filter((v) => v !== id) : [...d.voucherIds, id],
     }));
   }
 
-  updateTierValue(index: number, value: string): void {
-    const tierValue = Number(value) || 0;
+  isOptionChecked(id: string): boolean {
+    return this.draft().pricingOptionIds.includes(id);
+  }
+
+  toggleOption(id: string): void {
     this.draft.update((d) => ({
       ...d,
-      bundleTiers: d.bundleTiers.map((t, i) => (i === index ? { ...t, value: tierValue } : t)),
+      pricingOptionIds: d.pricingOptionIds.includes(id)
+        ? d.pricingOptionIds.filter((o) => o !== id)
+        : [...d.pricingOptionIds, id],
     }));
-  }
-
-  toggleFullGallery(): void {
-    this.draft.update((d) => ({ ...d, fullGalleryEnabled: !d.fullGalleryEnabled }));
-  }
-
-  setFullGalleryPrice(value: string): void {
-    const fullGalleryPrice = Number(value) || 0;
-    this.draft.update((d) => ({ ...d, fullGalleryPrice }));
   }
 
   save(): void {
-    if (!this.draft().name.trim()) {
+    if (!this.draft().name.trim() || this.hasVoucherClash()) {
       return;
     }
     const id = this.id();
-    if (id) {
-      this.pricingBundlesService.updateBundle(id, this.draft());
-    } else {
-      this.pricingBundlesService.createBundle(this.draft());
-    }
-    this.router.navigate(['/studio/pricing-bundles']);
+    const save = id
+      ? this.pricingBundlesService.updateBundle(id, this.draft())
+      : this.pricingBundlesService.createBundle(this.draft());
+    save.then(() => this.router.navigate(['/studio/pricing-bundles']));
   }
 }

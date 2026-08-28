@@ -5,24 +5,48 @@
   </div>
 
   <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
-    <div class="flex items-center gap-md mb-lg">
-      <img [src]="avatarUrl()" alt="Your avatar" class="w-16 h-16 rounded-full object-cover" />
-      <div>
-        <span class="font-label-md text-label-md text-on-surface block">Profile Photo</span>
-        <label
-          class="text-caption font-label-md text-primary cursor-pointer hover:underline"
-          [class.opacity-60]="isUploadingImage()"
-          [class.pointer-events-none]="isUploadingImage()"
-        >
-          {{ isUploadingImage() ? 'Uploading...' : 'Change Photo' }}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            class="hidden"
-            [disabled]="isUploadingImage()"
-            (change)="onAvatarFileSelected($event)"
-          />
-        </label>
+    <div class="relative mb-14">
+      <div
+        class="w-full h-40 md:h-48 rounded-xl bg-surface-container bg-cover bg-center overflow-hidden"
+        [style.backgroundImage]="bannerUrl() ? 'url(' + bannerUrl() + ')' : null"
+      >
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
+      </div>
+
+      <label
+        class="absolute top-sm right-sm px-sm py-xs rounded-full bg-white/90 text-caption font-label-md text-on-surface cursor-pointer hover:bg-white transition-colors"
+        [class.opacity-60]="isUploadingBanner()"
+        [class.pointer-events-none]="isUploadingBanner()"
+      >
+        {{ isUploadingBanner() ? 'Uploading...' : 'Change Banner' }}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          class="hidden"
+          [disabled]="isUploadingBanner()"
+          (change)="onBannerFileSelected($event)"
+        />
+      </label>
+
+      <div class="absolute -bottom-10 left-md">
+        <div class="relative">
+          <img [src]="avatarUrl()" alt="Your avatar" class="w-20 h-20 rounded-full object-cover border-4 border-surface-container-lowest" />
+          <label
+            class="absolute bottom-0 right-0 w-7 h-7 flex items-center justify-center rounded-full bg-primary text-on-primary cursor-pointer hover:bg-primary/90 transition-colors"
+            [class.opacity-60]="isUploadingImage()"
+            [class.pointer-events-none]="isUploadingImage()"
+            title="Change Photo"
+          >
+            <span class="material-symbols-outlined text-[14px]">{{ isUploadingImage() ? 'hourglass_top' : 'edit' }}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="hidden"
+              [disabled]="isUploadingImage()"
+              (change)="onAvatarFileSelected($event)"
+            />
+          </label>
+        </div>
       </div>
     </div>
 

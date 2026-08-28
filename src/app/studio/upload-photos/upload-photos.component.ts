@@ -17,6 +17,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 const PRESIGN_BATCH_MAX_FILES = 50;
+const PRESIGN_CHUNK_CONCURRENCY = 2;
 const UPLOAD_CONCURRENCY = 4;
 const PHOTOS_PAGE_SIZE_OPTIONS = [100, 200, 500];
 
@@ -247,6 +248,17 @@ export class UploadPhotosComponent implements OnInit {
       });
   }
 
+  toggleAlbumCover(photo: Photo): void {
+    this.photosService
+      .setAlbumCover(this.id(), photo.id, !photo.isEventAlbumCover)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) =>
+          this.uploadedPhotos.update((list) => list.map((p) => (p.id === updated.id ? updated : p))),
+        error: () => this.errorMsg.set('Failed to update album cover. Please try again.'),
+      });
+  }
+
   deletePhoto(photo: Photo): void {
     if (!confirm(`Delete "${photo.originalName}"? This can't be undone.`)) {
       return;
@@ -287,6 +299,16 @@ export class UploadPhotosComponent implements OnInit {
   }
 
   retryUpload(item: UploadItem): void {
+    this.reuploadOne(item);
+  }
+
+  reuploadAllFailed(): void {
+    this.uploading()
+      .filter((item) => item.status === 'failed')
+      .forEach((item) => this.reuploadOne(item));
+  }
+
+  private reuploadOne(item: UploadItem): void {
     this.setItemStatus(item.photoId, 'uploading');
     this.photosService
       .reupload(this.id(), item.photoId, item.fileName, item.file.type)
@@ -331,11 +353,13 @@ export class UploadPhotosComponent implements OnInit {
 
     from(chunk(files, PRESIGN_BATCH_MAX_FILES))
       .pipe(
-        mergeMap((fileChunk) =>
-          this.photosService.presignBatch(
-            eventId,
-            fileChunk.map((file) => ({ fileName: file.name, mimeType: file.type, sizeBytes: file.size })),
-          ).pipe(map((response) => ({ fileChunk, presigned: response.photos }))),
+        mergeMap(
+          (fileChunk) =>
+            this.photosService.presignBatch(
+              eventId,
+              fileChunk.map((file) => ({ fileName: file.name, mimeType: file.type, sizeBytes: file.size })),
+            ).pipe(map((response) => ({ fileChunk, presigned: response.photos }))),
+          PRESIGN_CHUNK_CONCURRENCY,
         ),
         takeUntilDestroyed(this.destroyRef),
       )

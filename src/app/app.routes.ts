@@ -115,6 +115,25 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'vouchers',
+        loadComponent: () =>
+          import('./studio/vouchers/vouchers-list/vouchers-list.component').then((m) => m.VouchersListComponent),
+      },
+      {
+        path: 'vouchers/new',
+        loadComponent: () =>
+          import('./studio/vouchers/voucher-form/voucher-form.component').then((m) => m.VoucherFormComponent),
+      },
+      {
+        path: 'vouchers/:id/edit',
+        loadComponent: () =>
+          import('./studio/vouchers/voucher-form/voucher-form.component').then((m) => m.VoucherFormComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./studio/orders/orders-list.component').then((m) => m.OrdersListComponent),
+      },
+      {
         path: 'earnings',
         loadComponent: () => import('./studio/earnings/earnings.component').then((m) => m.EarningsComponent),
       },

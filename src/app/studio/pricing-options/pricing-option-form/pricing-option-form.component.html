@@ -24,14 +24,17 @@
 
   <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
     <label class="block font-label-md text-label-md text-on-surface mb-xs" for="option-label">Format Name</label>
-    <input
+    <select
       id="option-label"
-      type="text"
-      placeholder="e.g. RAW"
       class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary max-w-[24rem]"
       [value]="draft().label"
-      (input)="setLabel($any($event.target).value)"
-    />
+      (change)="setLabel($any($event.target).value)"
+    >
+      <option value="" disabled>Select a format</option>
+      @for (option of formatOptions; track option) {
+        <option [value]="option">{{ option }}</option>
+      }
+    </select>
 
     <label class="block font-label-md text-label-md text-on-surface mb-xs mt-lg" for="option-price">Price (RM)</label>
     <div class="relative max-w-[20rem]">

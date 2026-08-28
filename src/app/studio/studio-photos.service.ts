@@ -99,6 +99,13 @@ export class StudioPhotosService {
     );
   }
 
+  setAlbumCover(eventId: string, photoId: string, isEventAlbumCover: boolean): Observable<Photo> {
+    return this.http.patch<Photo>(
+      `${this.env.apiUrl}/events/${eventId}/photos/${photoId}/album-cover`,
+      { isEventAlbumCover },
+    );
+  }
+
   deletePhoto(eventId: string, photoId: string): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean }>(
       `${this.env.apiUrl}/events/${eventId}/photos/${photoId}`,

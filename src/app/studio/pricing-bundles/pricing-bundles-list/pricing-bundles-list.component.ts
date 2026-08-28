@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
-import { PricingBundlesService } from '../../../pricing/pricing-bundles.service';
+import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../../pricing/pricing-bundles.service';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -15,25 +15,35 @@ export class PricingBundlesListComponent {
   private readonly pricingBundlesService = inject(PricingBundlesService);
 
   readonly formatCurrency = formatCurrency;
+  readonly lowestOptionPrice = lowestOptionPrice;
+  private readonly rawBundles = signal<IPricingBundle[]>([]);
 
   readonly bundles = computed(() =>
-    this.pricingBundlesService.getBundles(this.auth.demoPhotographerId).map((bundle) => ({
-      bundle,
-      eventCount: this.pricingBundlesService.eventCountUsingBundle(bundle.id),
-    })),
+    this.rawBundles().map((bundle) => ({ bundle, eventCount: bundle.eventsUsingCount })),
   );
 
-  ruleSummary(bundle: { bundleModel: string; bundleTiers: { minQuantity: number; value: number }[] }): string {
-    if (bundle.bundleModel === 'none' || bundle.bundleTiers.length === 0) {
+  constructor() {
+    this.reload();
+  }
+
+  ruleSummary(bundle: IPricingBundle): string {
+    if (bundle.vouchers.length === 0) {
       return 'Per-photo pricing only';
     }
-    const [tier] = bundle.bundleTiers;
-    return bundle.bundleModel === 'flat-tier'
-      ? `${tier.minQuantity}+ photos for RM${tier.value} flat`
-      : `${tier.minQuantity}+ photos, ${tier.value}% off each`;
+    return bundle.vouchers.map((v) => v.name).join(', ');
   }
 
   deleteBundle(id: string): void {
-    this.pricingBundlesService.deleteBundle(id);
+    this.pricingBundlesService
+      .deleteBundle(id)
+      .then(() => this.reload())
+      .catch(() => {
+        alert('Could not delete this bundle — it may still be in use by an event.');
+        this.reload();
+      });
+  }
+
+  private reload(): void {
+    this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.rawBundles.set(bundles));
   }
 }

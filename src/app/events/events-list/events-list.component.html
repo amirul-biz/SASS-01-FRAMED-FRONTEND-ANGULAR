@@ -1,65 +1,104 @@
-<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full py-xl">
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md mb-xl">
-    <div>
-      <h1 class="font-display-lg text-display-lg text-primary tracking-tight">Events Directory</h1>
-      <p class="font-body-lg text-body-lg text-on-surface-variant mt-sm">
+<div class="flex flex-col w-full">
+  <div class="relative w-full h-[280px] md:h-[340px] -mt-20 bg-primary bg-cover bg-center flex items-end"
+    style="background-image: url('https://picsum.photos/seed/picsweep-events/1600/600')"
+  >
+    <div class="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-primary/10"></div>
+    <div class="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full pb-xl">
+      <h1 class="font-display-lg text-display-lg text-on-primary tracking-tight">Events Directory</h1>
+      <p class="font-body-lg text-body-lg text-on-primary/80 mt-sm">
         Browse the latest extreme sports events captured by our professional network.
       </p>
     </div>
-    <div class="flex flex-wrap items-center gap-md">
-      <div class="relative">
-        <label class="sr-only" for="location-filter">Filter by Location</label>
-        <div class="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
-          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+  </div>
+
+  <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full py-xl">
+  <div class="flex flex-col md:flex-row justify-end items-start md:items-end gap-md mb-xl">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-md w-full md:w-auto">
+      <div class="relative flex-grow sm:min-w-[220px]">
+        <label class="sr-only" for="event-search">Search by event name</label>
+        <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
         </div>
-        <select
-          id="location-filter"
-          class="appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer hover:bg-surface-container-low min-w-[160px]"
-          (change)="onLocationChange($event)"
-        >
-          <option value="">All Locations</option>
-          @for (location of locations; track location) {
-            <option [value]="location">{{ location }}</option>
-          }
-        </select>
+        <input
+          id="event-search"
+          type="text"
+          placeholder="Search by event name..."
+          class="w-full h-12 bg-surface border border-outline-variant text-on-surface font-body-md text-body-md rounded-xl py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
+          (input)="onSearchInput($event)"
+        />
       </div>
-      <div class="relative">
-        <label class="sr-only" for="sort-select">Sort Events</label>
-        <div class="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
-          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">sort</span>
+      <div class="relative flex-grow sm:flex-grow-0 sm:min-w-[160px]">
+        <label class="sr-only" for="event-date-from">Filter from date</label>
+        <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
         </div>
-        <select
-          id="sort-select"
-          class="appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer hover:bg-surface-container-low min-w-[180px]"
-          (change)="onSortChange($event)"
-        >
-          <option value="latest">Latest Uploads</option>
-          <option value="photographer">Photographer (A-Z)</option>
-        </select>
+        <input
+          id="event-date-from"
+          type="date"
+          [value]="dateFrom()"
+          [max]="dateTo() || null"
+          class="w-full h-12 appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-xl py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer shadow-sm"
+          (change)="onDateFromChange($event)"
+        />
+      </div>
+      <div class="relative flex-grow sm:flex-grow-0 sm:min-w-[160px]">
+        <label class="sr-only" for="event-date-to">Filter to date</label>
+        <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
+        </div>
+        <input
+          id="event-date-to"
+          type="date"
+          [value]="dateTo()"
+          [min]="dateFrom() || null"
+          class="w-full h-12 appearance-none bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-xl py-sm pl-xl pr-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer shadow-sm"
+          (change)="onDateToChange($event)"
+        />
       </div>
     </div>
   </div>
 
-  @if (selectedLocation()) {
+  @if (dateFrom() || dateTo()) {
     <div class="flex gap-sm mb-lg">
       <span class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-md font-caption text-caption text-on-surface-variant">
-        Location: {{ selectedLocation() }}
-        <button (click)="clearLocationFilter()" class="hover:text-primary transition-colors flex items-center">
+        Date: {{ dateFrom() || 'Any' }} &ndash; {{ dateTo() || 'Any' }}
+        <button type="button" (click)="clearDateFilter()" class="hover:text-primary transition-colors flex items-center">
           <span class="material-symbols-outlined text-[16px]">close</span>
         </button>
       </span>
     </div>
   }
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
-    @for (event of events(); track event.id) {
-      <app-event-card [event]="event" />
-    }
-  </div>
+  @if (isLoading()) {
+    <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">Loading events...</p>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
+      @for (event of events(); track event.id) {
+        <app-event-card [event]="event" />
+      }
+    </div>
 
-  @if (events().length === 0) {
-    <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">
-      No events match this filter.
-    </p>
+    @if (events().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">
+        No events match this filter.
+      </p>
+    } @else {
+      <p class="text-caption font-label-md text-on-surface-variant text-center mt-lg">
+        Showing {{ events().length }} of {{ totalItemCount() }} events
+      </p>
+      @if (pageNumber() < totalPageCount()) {
+        <div class="flex justify-center mt-lg">
+          <button
+            type="button"
+            [disabled]="isLoadingMore()"
+            (click)="loadMore()"
+            class="px-lg py-sm border-2 border-primary text-primary hover:bg-primary hover:text-on-primary rounded-xl font-label-md text-label-md transition-colors disabled:opacity-60"
+          >
+            {{ isLoadingMore() ? 'Loading...' : 'Load More' }}
+          </button>
+        </div>
+      }
+    }
   }
+  </div>
 </div>

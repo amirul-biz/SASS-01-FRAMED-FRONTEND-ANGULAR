@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
-import { PricingOptionsService } from '../../../pricing/pricing-options.service';
+import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -15,10 +15,17 @@ export class PricingOptionsListComponent {
   private readonly pricingOptionsService = inject(PricingOptionsService);
 
   readonly formatCurrency = formatCurrency;
+  readonly options = signal<IPhotoFormatOption[]>([]);
 
-  readonly options = computed(() => this.pricingOptionsService.getOptions(this.auth.demoPhotographerId));
+  constructor() {
+    this.reload();
+  }
 
   deleteOption(id: string): void {
-    this.pricingOptionsService.deleteOption(id);
+    this.pricingOptionsService.deleteOption(id).then(() => this.reload());
+  }
+
+  private reload(): void {
+    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then((options) => this.options.set(options));
   }
 }

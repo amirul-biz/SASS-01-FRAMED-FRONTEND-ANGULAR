@@ -12,8 +12,17 @@
 
   @if (isLoading()) {
     <p class="text-body-md font-body-md text-on-surface-variant">Loading event...</p>
+  } @else if (availableBundles().length === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] text-center flex flex-col items-center gap-md max-w-[36rem]">
+      <span class="material-symbols-outlined text-outline text-[48px]">sell</span>
+      <p class="font-body-md text-body-md text-on-surface-variant">You need at least one pricing bundle before you can create an event.</p>
+      <a routerLink="/studio/pricing-bundles/new" class="px-lg py-md bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors">
+        Create a Pricing Bundle
+      </a>
+    </div>
   } @else {
-  <form [formGroup]="form" (ngSubmit)="save()" class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] flex flex-col gap-lg">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl items-start">
+  <form [formGroup]="form" (ngSubmit)="save()" class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex flex-col gap-lg">
     <div class="flex items-center gap-md">
       @if (coverPhotoUrl()) {
         <img [src]="coverPhotoUrl()" alt="Cover" class="w-24 h-16 rounded-lg object-cover" />
@@ -109,6 +118,32 @@
         }
       </div>
     </div>
+
+    <div>
+      <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
+      <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>
+      <div class="flex flex-col gap-sm">
+        @for (bundle of availableBundles(); track bundle.id) {
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input
+              type="checkbox"
+              class="accent-primary w-4 h-4 rounded border-outline-variant"
+              [checked]="isBundleChecked(bundle.id)"
+              (change)="toggleBundle(bundle.id)"
+            />
+            <span class="flex flex-col">
+              <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ lowestOptionPrice(bundle) }}/photo</span>
+              @if (bundle.pricingOptions.length > 0) {
+                <span class="text-caption text-on-surface-variant">{{ bundleFormatLabels(bundle) }}</span>
+              }
+            </span>
+          </label>
+        }
+      </div>
+      <p class="text-caption text-on-surface-variant mt-xs">
+        <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit.
+      </p>
+    </div>
     @if (form.errors?.['dateRangeInvalid'] && form.controls.eventEndDate.touched) {
       <p class="text-caption text-error -mt-sm">End date must be on or after the start date.</p>
     }
@@ -122,52 +157,6 @@
         class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
       ></textarea>
     </div>
-
-    @if (availableBundles.length > 0) {
-      <div>
-        <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
-        <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>
-        <div class="flex flex-col gap-sm">
-          @for (bundle of availableBundles; track bundle.id) {
-            <label class="flex items-center gap-sm cursor-pointer">
-              <input
-                type="checkbox"
-                class="accent-primary w-4 h-4 rounded border-outline-variant"
-                [checked]="isBundleChecked(bundle.id)"
-                (change)="toggleBundle(bundle.id)"
-              />
-              <span class="font-body-md text-body-md text-on-surface">{{ bundle.name }} — RM{{ bundle.basePrice }}/photo</span>
-            </label>
-          }
-        </div>
-        <p class="text-caption text-on-surface-variant mt-xs">
-          <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit. Pricing isn't wired up yet — this is a preview of what's coming.
-        </p>
-      </div>
-    }
-
-    @if (availableOptions.length > 0) {
-      <div>
-        <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Options</span>
-        <p class="text-caption text-on-surface-variant mb-sm">Check which delivery formats/resolutions riders can choose for this event.</p>
-        <div class="flex flex-col gap-sm">
-          @for (option of availableOptions; track option.id) {
-            <label class="flex items-center gap-sm cursor-pointer">
-              <input
-                type="checkbox"
-                class="accent-primary w-4 h-4 rounded border-outline-variant"
-                [checked]="isOptionChecked(option.id)"
-                (change)="toggleOption(option.id)"
-              />
-              <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — RM{{ option.price }}</span>
-            </label>
-          }
-        </div>
-        <p class="text-caption text-on-surface-variant mt-xs">
-          <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create a new option</a> if none of these fit. Pricing isn't wired up yet — this is a preview of what's coming.
-        </p>
-      </div>
-    }
 
     @if (errorMsg()) {
       <p class="text-caption text-error">{{ errorMsg() }}</p>
@@ -186,5 +175,43 @@
       </button>
     </div>
   </form>
+
+  <aside class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] sticky top-24">
+    <h2 class="font-headline-md text-headline-md text-primary mb-md">Live Preview</h2>
+    <div class="flex flex-col gap-md">
+      @if (selectedBundleIds().size === 0) {
+        <p class="text-caption text-on-surface-variant">Tick a pricing bundle to preview its price.</p>
+      }
+      @for (bundleRow of previewByBundle(); track bundleRow.bundle.id) {
+        <div [class]="$first ? 'flex flex-col gap-sm' : 'flex flex-col gap-sm border-t border-outline-variant mt-sm pt-sm'">
+          <span class="font-label-md text-label-md text-on-surface">{{ bundleRow.bundle.name }}</span>
+          @if (bundleRow.options.length === 0) {
+            <p class="text-caption text-on-surface-variant">This bundle has no pricing options yet.</p>
+          }
+          @for (row of bundleRow.options; track row.option.id) {
+            <div class="flex flex-col gap-sm">
+              <div class="flex justify-between items-center">
+                <span class="font-body-md text-body-md text-on-surface-variant">{{ row.option.label }}</span>
+                <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(row.option.price) }}/photo</span>
+              </div>
+              @if (row.matches.length > 0) {
+                <div class="flex flex-col gap-sm pl-md">
+                  @for (match of row.matches; track match.voucher.id + ':' + match.condition.minPhotos) {
+                    <div class="flex justify-between items-center">
+                      <span class="font-caption text-caption text-on-surface-variant">{{ match.voucher.name }}: {{ match.condition.minPhotos }}{{ match.condition.maxPhotos === null ? '+' : '-' + match.condition.maxPhotos }} Photos</span>
+                      <span class="font-label-md text-label-md text-on-surface">
+                        {{ formatCurrency(match.preview.subtotal) }} Total / {{ formatCurrency(match.preview.pricePerPhoto) }} / photo
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </aside>
+  </div>
   }
 </div>

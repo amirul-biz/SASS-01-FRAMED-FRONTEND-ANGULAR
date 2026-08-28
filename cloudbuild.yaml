@@ -1,0 +1,67 @@
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+
+steps:
+  # Build Docker image with environment-specific configuration
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'NG_BUILD_CONFIG=$_NG_BUILD_CONFIG'
+      - '--build-arg'
+      - 'ENV_CONFIG_JSON=$_ENV_CONFIG_JSON'
+      - '-t'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '-t'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+      - '.'
+    id: Build
+
+  # Push image (commit SHA tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+    id: Push
+
+  # Push image (latest tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+    id: PushLatest
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - '$_SERVICE_NAME'
+      - '--image=$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+      - '--region=$_DEPLOY_REGION'
+      - '--platform=$_PLATFORM'
+      - '--allow-unauthenticated'
+    id: Deploy
+
+images:
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA'
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:latest'
+
+substitutions:
+  _NG_BUILD_CONFIG: 'production'  # 'production' | 'staging' | 'local' — selects the Angular fileReplacements/environment (see angular.json)
+  # Full environment.ts JSON (apiUrl + firebase config) for the target above. Empty by
+  # default = build uses whatever's committed for that config. Set per-trigger per
+  # environment — not committed here. Not a secret: Firebase's client-side web config is
+  # meant to ship in the public bundle (see write-environment.js).
+  _ENV_CONFIG_JSON: ''
+  _AR_HOSTNAME: 'asia-southeast1-docker.pkg.dev'
+  # PROJECT_ID is NOT listed here — it's a Cloud Build built-in variable (auto-filled from
+  # whichever project the trigger runs in), referenced directly as $PROJECT_ID above.
+  _AR_REPOSITORY: 'picsweep-repository'
+  # _SERVICE_NAME is empty by default (build fails fast rather than silently deploying
+  # under the wrong name if you forget to set it). Set the real value per-trigger/
+  # per-environment via --substitutions or the trigger's UI; never commit it here.
+  _SERVICE_NAME: ''
+  _DEPLOY_REGION: 'asia-southeast1'
+  _PLATFORM: 'managed'

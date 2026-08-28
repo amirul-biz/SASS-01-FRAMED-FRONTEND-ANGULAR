@@ -36,10 +36,12 @@ export class ProfileSettingsComponent {
   readonly avatarUrl = computed(
     () => this.profileImageUrl() ?? AVATAR_PLACEHOLDER_URL,
   );
+  readonly bannerUrl = signal<string | null>(null);
   readonly saved = signal(false);
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly isUploadingImage = signal(false);
+  readonly isUploadingBanner = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
   readonly form = createProfileSettingsForm(
@@ -73,6 +75,7 @@ export class ProfileSettingsComponent {
             bio: profile.bio ?? '',
           });
           this.profileImageUrl.set(profile.profileImageUrl);
+          this.bannerUrl.set(profile.bannerUrl);
         },
         error: () => {
           this.errorMsg.set('Failed to load your profile. Please try again.');
@@ -118,6 +121,48 @@ export class ProfileSettingsComponent {
         },
         error: () => {
           this.errorMsg.set('Failed to upload your photo. Please try again.');
+        },
+      });
+  }
+
+  onBannerFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
+      this.errorMsg.set('Please choose a JPEG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      this.errorMsg.set('Image must be smaller than 5MB.');
+      return;
+    }
+
+    this.errorMsg.set(null);
+    this.isUploadingBanner.set(true);
+    this.profileService
+      .presignProfileBanner(file.name, file.type)
+      .pipe(
+        switchMap(({ uploadUrl, publicUrl }) =>
+          this.profileService
+            .uploadToPresignedUrl(uploadUrl, file)
+            .pipe(switchMap(() =>
+              this.profileService.updateMyProfile({ bannerUrl: publicUrl }),
+            )),
+        ),
+        finalize(() => this.isUploadingBanner.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (profile) => {
+          this.bannerUrl.set(profile.bannerUrl);
+        },
+        error: () => {
+          this.errorMsg.set('Failed to upload your banner. Please try again.');
         },
       });
   }

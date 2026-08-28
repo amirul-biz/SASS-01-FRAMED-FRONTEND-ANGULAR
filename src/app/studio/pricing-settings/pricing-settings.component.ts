@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { EventsService } from '../../events/events.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
-import { PricingOptionsService } from '../../pricing/pricing-options.service';
+import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
+import { IPhotoFormatOption, PricingOptionsService } from '../../pricing/pricing-options.service';
 import { calculatePricing } from '../../pricing/pricing.util';
 import { formatCurrency } from '../../pricing/currency.util';
 
@@ -23,9 +23,15 @@ export class PricingSettingsComponent {
   id = input.required<string>();
 
   readonly formatCurrency = formatCurrency;
+  readonly lowestOptionPrice = lowestOptionPrice;
   readonly event = computed(() => this.eventsService.getEvent(this.id()));
-  readonly availableBundles = computed(() => this.pricingBundlesService.getBundles(this.auth.demoPhotographerId));
-  readonly availableOptions = computed(() => this.pricingOptionsService.getOptions(this.auth.demoPhotographerId));
+  readonly availableBundles = signal<IPricingBundle[]>([]);
+  readonly availableOptions = signal<IPhotoFormatOption[]>([]);
+
+  constructor() {
+    this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.availableBundles.set(bundles));
+    this.pricingOptionsService.getOptions(this.auth.photographerId()!).then((options) => this.availableOptions.set(options));
+  }
 
   // Reset whenever `id` changes (new event navigated to), but not on unrelated data mutations
   // elsewhere in the app — the event lookup itself is read untracked for that reason.
@@ -44,10 +50,13 @@ export class PricingSettingsComponent {
   readonly previewByBundle = computed(() =>
     this.selectedBundles().map((bundle) => ({
       bundle,
-      tiers: bundle.bundleTiers.map((tier) => ({
-        tier,
-        preview: calculatePricing(tier.minQuantity * bundle.basePrice, tier.minQuantity, bundle),
-      })),
+      matches: bundle.vouchers.flatMap((voucher) =>
+        voucher.conditions.map((condition) => ({
+          voucher,
+          condition,
+          preview: calculatePricing(condition.minPhotos * lowestOptionPrice(bundle), condition.minPhotos, bundle),
+        })),
+      ),
     })),
   );
 

@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { ENVIRONMENT } from '../core/environment.token';
 
 export interface IPhotoFormatOption {
   id: string;
@@ -15,7 +18,7 @@ export const STANDARD_FORMAT_OPTION: IPhotoFormatOption = {
   price: 12,
 };
 
-function optionsFor(photographerId: string): IPhotoFormatOption[] {
+function seedOptionsFor(photographerId: string): IPhotoFormatOption[] {
   return [
     { id: `${photographerId}-jpeg-30mp`, photographerId, label: '30MP JPEG', price: 12 },
     { id: `${photographerId}-jpeg-50mp`, photographerId, label: '50MP JPEG', price: 17 },
@@ -24,12 +27,16 @@ function optionsFor(photographerId: string): IPhotoFormatOption[] {
   ];
 }
 
-const INITIAL_OPTIONS: IPhotoFormatOption[] = [
-  ...optionsFor('alex-rivers'),
-  ...optionsFor('marcus-chen'),
-  ...optionsFor('sarah-jenkins'),
-  ...optionsFor('david-lee'),
-  ...optionsFor('unknown-uploader'),
+/** Seed data for consumers that read the cache without ever calling getOptions() themselves (checkout's
+ *  selection.service, event-detail, photo-preview-modal — outside the pricing-options CRUD screens' scope).
+ *  getOptions() below replaces a photographer's slice with real data once actually called; until then, or for
+ *  photographers never fetched, these are what those consumers see. */
+const SEED_OPTIONS: IPhotoFormatOption[] = [
+  ...seedOptionsFor('alex-rivers'),
+  ...seedOptionsFor('marcus-chen'),
+  ...seedOptionsFor('sarah-jenkins'),
+  ...seedOptionsFor('david-lee'),
+  ...seedOptionsFor('unknown-uploader'),
 ];
 
 export type PricingOptionInput = Omit<IPhotoFormatOption, 'id'>;
@@ -37,47 +44,70 @@ export type PricingOptionChanges = Partial<Omit<IPhotoFormatOption, 'id' | 'phot
 
 @Injectable({ providedIn: 'root' })
 export class PricingOptionsService {
-  private readonly options = signal<IPhotoFormatOption[]>(INITIAL_OPTIONS);
+  private readonly http = inject(HttpClient);
+  private readonly env = inject(ENVIRONMENT);
 
-  getOptions(photographerId: string): IPhotoFormatOption[] {
-    return this.options().filter((o) => o.photographerId === photographerId);
+  /** Cache of options — seeded with mock data (see SEED_OPTIONS), then replaced photographer-by-photographer
+   *  as getOptions() is called for real. Several consumers outside the pricing-options screens (checkout,
+   *  selection.service) read getOption() synchronously, so it stays a cache read rather than a network call. */
+  private readonly cache = signal<IPhotoFormatOption[]>(SEED_OPTIONS);
+
+  async getOptions(photographerId: string): Promise<IPhotoFormatOption[]> {
+    const options = await firstValueFrom(
+      this.http.get<IPhotoFormatOption[]>(`${this.env.apiUrl}/pricing-options`, {
+        headers: this.headers(photographerId),
+      }),
+    );
+    this.cache.update((all) => [...all.filter((o) => o.photographerId !== photographerId), ...options]);
+    return options;
   }
 
   getOption(id: string): IPhotoFormatOption | undefined {
-    return this.options().find((o) => o.id === id);
+    return this.cache().find((o) => o.id === id);
   }
 
-  createOption(input: PricingOptionInput): IPhotoFormatOption {
-    const id = this.uniqueSlug(input.photographerId, input.label);
-    const option: IPhotoFormatOption = { ...input, id };
-    this.options.update((list) => [...list, option]);
-    return option;
+  async createOption(input: PricingOptionInput): Promise<IPhotoFormatOption> {
+    const created = await firstValueFrom(
+      this.http.post<IPhotoFormatOption>(
+        `${this.env.apiUrl}/pricing-options`,
+        { label: input.label, price: input.price },
+        { headers: this.headers(input.photographerId) },
+      ),
+    );
+    this.cache.update((all) => [...all, created]);
+    return created;
   }
 
-  updateOption(id: string, changes: PricingOptionChanges): void {
-    this.options.update((list) => list.map((o) => (o.id === id ? { ...o, ...changes } : o)));
+  async updateOption(id: string, changes: PricingOptionChanges): Promise<IPhotoFormatOption> {
+    const photographerId = this.requirePhotographerId(id);
+    const updated = await firstValueFrom(
+      this.http.patch<IPhotoFormatOption>(`${this.env.apiUrl}/pricing-options/${id}`, changes, {
+        headers: this.headers(photographerId),
+      }),
+    );
+    this.cache.update((all) => all.map((o) => (o.id === id ? updated : o)));
+    return updated;
   }
 
-  deleteOption(id: string): void {
-    this.options.update((list) => list.filter((o) => o.id !== id));
+  async deleteOption(id: string): Promise<void> {
+    const photographerId = this.requirePhotographerId(id);
+    await firstValueFrom(
+      this.http.delete<void>(`${this.env.apiUrl}/pricing-options/${id}`, {
+        headers: this.headers(photographerId),
+      }),
+    );
+    this.cache.update((all) => all.filter((o) => o.id !== id));
   }
 
-  private uniqueSlug(photographerId: string, label: string): string {
-    const hyphenated = label
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .split('-')
-      .filter(Boolean)
-      .join('-');
-    const base = `${photographerId}-${hyphenated || 'format'}`;
-
-    let slug = base;
-    let suffix = 2;
-    while (this.getOption(slug)) {
-      slug = `${base}-${suffix}`;
-      suffix++;
+  private requirePhotographerId(id: string): string {
+    const photographerId = this.getOption(id)?.photographerId;
+    if (!photographerId) {
+      throw new Error(`Unknown pricing option: ${id}`);
     }
-    return slug;
+    return photographerId;
+  }
+
+  private headers(photographerId: string): HttpHeaders {
+    return new HttpHeaders({ 'x-photographer-id': photographerId });
   }
 }

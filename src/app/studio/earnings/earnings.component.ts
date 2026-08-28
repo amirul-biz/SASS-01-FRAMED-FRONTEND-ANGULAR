@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthService } from '../../auth/auth.service';
 import { EventsService } from '../../events/events.service';
-import { PricingBundlesService } from '../../pricing/pricing-bundles.service';
+import { PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
 import { formatCurrency } from '../../pricing/currency.util';
 
 @Component({
@@ -16,11 +16,12 @@ export class EarningsComponent {
 
   readonly formatCurrency = formatCurrency;
 
-  readonly events = computed(() => this.eventsService.getEventsByPhotographer(this.auth.demoPhotographerId));
+  readonly events = computed(() => this.eventsService.getEventsByPhotographer(this.auth.photographerId()!));
 
   readonly rows = computed(() =>
     this.events().map((event) => {
-      const basePrice = this.pricingBundlesService.getBundle(event.pricingBundleIds[0])?.basePrice ?? 0;
+      const bundle = this.pricingBundlesService.getBundle(event.pricingBundleIds[0]);
+      const basePrice = bundle ? lowestOptionPrice(bundle) : 0;
       return { event, basePrice, estimatedRevenue: event.photoCount * basePrice };
     }),
   );

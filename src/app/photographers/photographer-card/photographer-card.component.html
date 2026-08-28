@@ -1,7 +1,7 @@
 <div class="bg-surface-container-lowest rounded-xl p-md flex flex-col gap-md group hover:-translate-y-1 transition-transform duration-300 shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)]">
   <div class="relative w-full h-48 rounded-lg overflow-hidden bg-surface-variant">
     <img
-      [src]="photographer().avatarUrl"
+      [src]="avatarUrl()"
       [alt]="photographer().name"
       class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
@@ -11,14 +11,12 @@
       <h3 class="font-headline-md text-headline-md text-on-surface m-0">{{ photographer().name }}</h3>
       <div class="bg-surface-container px-sm py-unit rounded flex items-center gap-xs">
         <span class="material-symbols-outlined text-[14px] text-on-surface-variant">photo_camera</span>
-        <span class="font-caption text-caption text-on-surface-variant font-medium">{{ photographer().stats.eventsShot }} Events</span>
+        <span class="font-caption text-caption text-on-surface-variant font-medium">{{ photographer().eventCount }} Events</span>
       </div>
     </div>
-    <p class="font-body-md text-body-md text-on-surface-variant m-0 h-12 line-clamp-2">{{ photographer().bio }}</p>
-    <div class="flex items-center gap-sm mt-sm">
-      <span class="material-symbols-outlined text-[18px] text-outline">location_on</span>
-      <span class="font-label-md text-label-md text-on-surface-variant">{{ photographer().location }}</span>
-    </div>
+    @if (photographer().bio) {
+      <p class="font-body-md text-body-md text-on-surface-variant m-0 h-12 line-clamp-2">{{ photographer().bio }}</p>
+    }
     <a
       [routerLink]="['/photographers', photographer().id]"
       class="w-full mt-md bg-secondary text-on-secondary font-label-md text-label-md h-12 rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-sm flex items-center justify-center"

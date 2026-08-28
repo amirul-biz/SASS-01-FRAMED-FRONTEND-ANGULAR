@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { StudioProfileService } from '../../studio/studio-profile.service';
 
 @Component({
   selector: 'app-studio-shell',
@@ -10,6 +12,30 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class StudioShellComponent {
   readonly auth = inject(AuthService);
+  private readonly profileService = inject(StudioProfileService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly profileImageUrl = signal<string | null>(null);
+
+  readonly pricingExpanded = signal(
+    ['/studio/pricing-bundles', '/studio/pricing-options', '/studio/vouchers'].some((path) =>
+      window.location.pathname.startsWith(path),
+    ),
+  );
+
+  constructor() {
+    this.profileService
+      .getMyProfile()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => this.profileImageUrl.set(profile.profileImageUrl),
+        error: () => undefined,
+      });
+  }
+
+  togglePricing(): void {
+    this.pricingExpanded.update((v) => !v);
+  }
 
   logout(): void {
     this.auth.logout();

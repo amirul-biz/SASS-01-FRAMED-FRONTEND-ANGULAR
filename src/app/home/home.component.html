@@ -10,7 +10,7 @@
     <div class="relative z-20 w-full max-w-max-width px-margin-mobile lg:px-margin-desktop flex flex-col items-center text-center -mt-8">
       <span class="inline-flex items-center gap-xs px-3 py-1 bg-surface-container-low/20 backdrop-blur-md rounded-full text-caption text-on-primary border border-on-primary/10 mb-lg shadow-sm">
         <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-        Live tracking at {{ latestEvents.length }} events today
+        Live tracking at {{ latestEvents().length }} events today
       </span>
       <h1 class="font-display-lg text-display-lg text-on-primary mb-md max-w-3xl drop-shadow-lg">Find Your Ride Photos Instantly</h1>
       <p class="font-body-lg text-body-lg text-on-primary/80 mb-xl max-w-2xl">
@@ -57,7 +57,7 @@
       </a>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-      @for (event of latestEvents; track event.id) {
+      @for (event of latestEvents(); track event.id) {
         <app-event-card [event]="event" />
       }
     </div>
@@ -71,15 +71,14 @@
         <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto mt-sm">Follow your favorite creators to get notified when they upload new sets.</p>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-md md:gap-lg">
-        @for (photographer of topPhotographers; track photographer.id) {
+        @for (photographer of topPhotographers(); track photographer.id) {
           <a
             [routerLink]="['/photographers', photographer.id]"
             class="bg-surface rounded-xl p-md flex flex-col items-center text-center shadow-[0_4px_12px_rgba(20,33,61,0.04)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.08)] transition-all cursor-pointer"
           >
-            <img [src]="photographer.avatarUrl" [alt]="photographer.name" class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-2 border-surface-variant mb-md" />
+            <img [src]="photographerAvatarUrl(photographer)" [alt]="photographer.name" class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-2 border-surface-variant mb-md" />
             <h4 class="font-headline-md text-[18px] text-primary mb-xs line-clamp-1">{{ photographer.name }}</h4>
-            <span class="bg-surface-container-high text-primary font-label-md text-caption px-2 py-1 rounded-md mb-sm">{{ photographer.location }}</span>
-            <p class="font-caption text-caption text-on-surface-variant">{{ photographer.stats.eventsShot }} Events</p>
+            <p class="font-caption text-caption text-on-surface-variant">{{ photographer.eventCount }} Events</p>
           </a>
         }
       </div>

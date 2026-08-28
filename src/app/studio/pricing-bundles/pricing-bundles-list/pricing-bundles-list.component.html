@@ -18,7 +18,7 @@
       <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex flex-col gap-sm">
         <div class="flex items-start justify-between">
           <h3 class="font-headline-md text-headline-md text-on-surface">{{ row.bundle.name }}</h3>
-          <span class="font-label-md text-label-md text-secondary">{{ formatCurrency(row.bundle.basePrice) }}/photo</span>
+          <span class="font-label-md text-label-md text-secondary">{{ formatCurrency(lowestOptionPrice(row.bundle)) }}/photo</span>
         </div>
         <p class="text-caption text-on-surface-variant">{{ ruleSummary(row.bundle) }}</p>
         <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full self-start">

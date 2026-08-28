@@ -1,97 +1,131 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { PricingBundlesService } from './pricing-bundles.service';
-import { EventsService } from '../events/events.service';
+import { ENVIRONMENT } from '../core/environment.token';
+import { IPricingBundle, PricingBundlesService } from './pricing-bundles.service';
 
 describe('PricingBundlesService', () => {
   let service: PricingBundlesService;
-  let eventsService: EventsService;
+  let httpMock: HttpTestingController;
+  const apiUrl = 'http://test-api';
+
+  const bundle: IPricingBundle = {
+    id: 'bundle-1',
+    photographerId: 'alex-rivers',
+    name: 'Standard Bundle',
+    pricingOptions: [{ id: 'option-1', label: 'HEIC', price: 15 }],
+    vouchers: [{ id: 'voucher-1', name: 'Group Discount', discountType: 'flat-tier', conditions: [{ minPhotos: 5, maxPhotos: null, value: 30 }] }],
+    fullGalleryEnabled: false,
+    fullGalleryPrice: 0,
+    eventsUsingCount: 0,
+  };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ENVIRONMENT, useValue: { apiUrl } },
+      ],
+    });
     service = TestBed.inject(PricingBundlesService);
-    eventsService = TestBed.inject(EventsService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('returns bundles scoped to a photographer only', () => {
-    const bundles = service.getBundles('alex-rivers');
-    expect(bundles.length).toBeGreaterThan(0);
-    expect(bundles.every((b) => b.photographerId === 'alex-rivers')).toBe(true);
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  it('getBundle returns undefined for an unknown id', () => {
+  it('getBundles fetches from the API with the photographer header and populates the cache', async () => {
+    const promise = service.getBundles('alex-rivers');
+
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('x-photographer-id')).toBe('alex-rivers');
+    req.flush([bundle]);
+
+    expect(await promise).toEqual([bundle]);
+    expect(service.getBundle('bundle-1')).toEqual(bundle);
+  });
+
+  it('getBundle returns undefined for an id not yet in the cache', () => {
     expect(service.getBundle('does-not-exist')).toBeUndefined();
   });
 
-  it('createBundle generates a slugified id and appends the bundle', () => {
-    const before = service.getBundles('alex-rivers').length;
+  it('fetchBundle fetches a single bundle by id and populates the cache', async () => {
+    const promise = service.fetchBundle('alex-rivers', 'bundle-1');
 
-    const created = service.createBundle({
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles/bundle-1`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('x-photographer-id')).toBe('alex-rivers');
+    req.flush(bundle);
+
+    expect(await promise).toEqual(bundle);
+    expect(service.getBundle('bundle-1')).toEqual(bundle);
+  });
+
+  it('createBundle posts the bundle fields and appends the response to the cache', async () => {
+    const promise = service.createBundle({
       photographerId: 'alex-rivers',
-      name: 'Weekend Special!',
-      basePrice: 20,
-      bundleModel: 'none',
-      bundleTiers: [],
+      name: 'Budget Bundle',
+      voucherIds: [],
+      pricingOptionIds: ['option-1'],
       fullGalleryEnabled: false,
       fullGalleryPrice: 0,
     });
 
-    expect(created.id).toBe('weekend-special');
-    expect(service.getBundles('alex-rivers').length).toBe(before + 1);
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('x-photographer-id')).toBe('alex-rivers');
+    const created = { ...bundle, id: 'bundle-2', name: 'Budget Bundle', vouchers: [] };
+    req.flush(created);
+
+    expect(await promise).toEqual(created);
+    expect(service.getBundle('bundle-2')).toEqual(created);
   });
 
-  it('createBundle disambiguates the slug on a name collision', () => {
-    const [existing] = service.getBundles('alex-rivers');
+  it('updateBundle patches using the cached photographerId and updates the cache', async () => {
+    const getReq0 = service.getBundles('alex-rivers');
+    httpMock.expectOne(`${apiUrl}/pricing-bundles`).flush([bundle]);
+    await getReq0;
 
-    const created = service.createBundle({
-      photographerId: 'alex-rivers',
-      name: existing.name,
-      basePrice: 10,
-      bundleModel: 'none',
-      bundleTiers: [],
-      fullGalleryEnabled: false,
-      fullGalleryPrice: 0,
-    });
+    const promise = service.updateBundle('bundle-1', { name: 'Renamed Bundle' });
 
-    expect(created.id).not.toBe(existing.id);
-    expect(created.id.startsWith(existing.id)).toBe(true);
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles/bundle-1`);
+    expect(req.request.method).toBe('PATCH');
+    const updated = { ...bundle, name: 'Renamed Bundle' };
+    req.flush(updated);
+
+    expect(await promise).toEqual(updated);
+    expect(service.getBundle('bundle-1')?.name).toBe('Renamed Bundle');
   });
 
-  it('updateBundle merges changes into the existing bundle only', () => {
-    const [bundle, other] = service.getBundles('alex-rivers');
+  it('deleteBundle removes the bundle from the cache once the API confirms', async () => {
+    const getReq0 = service.getBundles('alex-rivers');
+    httpMock.expectOne(`${apiUrl}/pricing-bundles`).flush([bundle]);
+    await getReq0;
 
-    service.updateBundle(bundle.id, { basePrice: 99 });
+    const promise = service.deleteBundle('bundle-1');
 
-    expect(service.getBundle(bundle.id)?.basePrice).toBe(99);
-    expect(service.getBundle(other.id)?.basePrice).not.toBe(99);
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles/bundle-1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promise;
+    expect(service.getBundle('bundle-1')).toBeUndefined();
   });
 
-  it('eventCountUsingBundle reflects how many events reference a bundle', () => {
-    const [event] = eventsService.getEvents();
-    expect(service.eventCountUsingBundle(event.pricingBundleIds[0])).toBeGreaterThan(0);
-    expect(service.eventCountUsingBundle('does-not-exist')).toBe(0);
-  });
+  it('deleteBundle propagates a 409 when an event still references the bundle', async () => {
+    const getReq0 = service.getBundles('alex-rivers');
+    httpMock.expectOne(`${apiUrl}/pricing-bundles`).flush([bundle]);
+    await getReq0;
 
-  it('deleteBundle is blocked while an event still references it', () => {
-    const [event] = eventsService.getEvents();
-    const result = service.deleteBundle(event.pricingBundleIds[0]);
-    expect(result).toBe(false);
-    expect(service.getBundle(event.pricingBundleIds[0])).toBeTruthy();
-  });
+    const promise = service.deleteBundle('bundle-1');
 
-  it('deleteBundle succeeds once no event references it', () => {
-    const created = service.createBundle({
-      photographerId: 'alex-rivers',
-      name: 'Unused Bundle',
-      basePrice: 10,
-      bundleModel: 'none',
-      bundleTiers: [],
-      fullGalleryEnabled: false,
-      fullGalleryPrice: 0,
-    });
+    const req = httpMock.expectOne(`${apiUrl}/pricing-bundles/bundle-1`);
+    req.flush('in use', { status: 409, statusText: 'Conflict' });
 
-    const result = service.deleteBundle(created.id);
-
-    expect(result).toBe(true);
-    expect(service.getBundle(created.id)).toBeUndefined();
+    await expect(promise).rejects.toBeTruthy();
+    expect(service.getBundle('bundle-1')).toEqual(bundle);
   });
 });
