@@ -24,9 +24,9 @@
       <div class="hidden sm:block w-unit h-8 bg-outline-variant/30 mx-xs"></div>
       <a routerLink="/cart" class="relative w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0" aria-label="View cart">
         <span class="material-symbols-outlined text-on-surface-variant text-[20px]">shopping_cart</span>
-        @if (selection.selectedCount() > 0) {
+        @if (selection.totalSelectedCount() > 0) {
           <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-on-secondary text-[10px] font-label-md flex items-center justify-center">
-            {{ selection.selectedCount() }}
+            {{ selection.totalSelectedCount() }}
           </span>
         }
       </a>

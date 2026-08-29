@@ -23,6 +23,17 @@ export interface IVoucher {
 export type VoucherInput = { name: string; discountType: WireVoucherDiscountType; conditions: IVoucherCondition[] };
 export type VoucherChanges = Partial<VoucherInput>;
 
+/** Human-readable rule text for a voucher, e.g. "2-5 photos: RM20 flat, 6+ photos: RM35 flat". */
+export function voucherConditionsSummary(voucher: IVoucher): string {
+  return voucher.conditions
+    .map((c) => {
+      const range = c.maxPhotos === null ? `${c.minPhotos}+` : `${c.minPhotos}-${c.maxPhotos}`;
+      const amount = voucher.discountType === 'percent-tier' ? `${c.value}% off` : `RM${c.value} flat`;
+      return `${range} photos: ${amount}`;
+    })
+    .join(', ');
+}
+
 @Injectable({ providedIn: 'root' })
 export class VouchersService {
   private readonly http = inject(HttpClient);

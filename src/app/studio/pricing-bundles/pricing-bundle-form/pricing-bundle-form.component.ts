@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
 import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
-import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
+import { IVoucher, VouchersService, voucherConditionsSummary } from '../../../pricing/vouchers.service';
 import { calculatePricing, findVoucherRangeClashes } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
@@ -32,6 +32,7 @@ export class PricingBundleFormComponent {
   private readonly loaded = signal(false);
 
   readonly formatCurrency = formatCurrency;
+  readonly voucherConditionsSummary = voucherConditionsSummary;
   readonly isEditMode = computed(() => !!this.id());
   readonly existingBundle = computed(() => {
     const id = this.id();
@@ -96,7 +97,7 @@ export class PricingBundleFormComponent {
         voucher.conditions.map((condition) => ({
           voucher,
           condition,
-          preview: calculatePricing(condition.minPhotos * option.price, condition.minPhotos, {
+          preview: calculatePricing(Array(condition.minPhotos).fill(option.price), {
             vouchers: [voucher],
             fullGalleryEnabled: false,
             fullGalleryPrice: 0,

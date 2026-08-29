@@ -65,6 +65,7 @@ export class CreateEventComponent {
     { validators: dateRangeValidator },
   );
 
+  readonly isMultiDay = signal(false);
   readonly selectedBundleIds = signal<Set<string>>(new Set());
   readonly coverPhotoUrl = signal<string | null>(null);
   readonly isUploadingCover = signal(false);
@@ -74,6 +75,14 @@ export class CreateEventComponent {
 
   constructor() {
     this.pricingBundlesService.getBundles(this.auth.photographerId()!).then((bundles) => this.availableBundles.set(bundles));
+
+    // While single-day, keep the end date mirrored to the start date so the saved range always
+    // collapses to one day — the form never lets the two controls drift apart in that mode.
+    this.form.controls.eventStartDate.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (!this.isMultiDay()) {
+        this.form.controls.eventEndDate.setValue(value, { emitEvent: false });
+      }
+    });
 
     if (this.eventId) {
       this.isLoading.set(true);
@@ -85,19 +94,31 @@ export class CreateEventComponent {
         )
         .subscribe({
           next: (event) => {
+            const startDate = event.eventStartDate.slice(0, 10);
+            const endDate = event.eventEndDate.slice(0, 10);
+            this.isMultiDay.set(startDate !== endDate);
             this.form.patchValue({
               title: event.title,
               category: event.category,
               location: event.location ?? '',
               description: event.description ?? '',
-              eventStartDate: event.eventStartDate.slice(0, 10),
-              eventEndDate: event.eventEndDate.slice(0, 10),
+              eventStartDate: startDate,
+              eventEndDate: endDate,
             });
             this.coverPhotoUrl.set(event.coverPhotoUrl);
             this.selectedBundleIds.set(new Set(event.pricingBundleIds));
           },
           error: () => this.errorMsg.set('Failed to load this event. Please try again.'),
         });
+    }
+  }
+
+  setMultiDay(value: boolean): void {
+    this.isMultiDay.set(value);
+    if (!value) {
+      // Collapsing back to single-day: snap the end date to the start date immediately, rather
+      // than waiting for the next edit to eventStartDate, so a stale multi-day range never saves.
+      this.form.controls.eventEndDate.setValue(this.form.controls.eventStartDate.value);
     }
   }
 
@@ -136,7 +157,7 @@ export class CreateEventComponent {
           voucher.conditions.map((condition) => ({
             voucher,
             condition,
-            preview: calculatePricing(condition.minPhotos * option.price, condition.minPhotos, {
+            preview: calculatePricing(Array(condition.minPhotos).fill(option.price), {
               vouchers: [voucher],
               fullGalleryEnabled: false,
               fullGalleryPrice: 0,

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
-import { IVoucher, VouchersService } from '../../../pricing/vouchers.service';
+import { IVoucher, VouchersService, voucherConditionsSummary } from '../../../pricing/vouchers.service';
 
 @Component({
   selector: 'app-vouchers-list',
@@ -14,19 +14,10 @@ export class VouchersListComponent {
   private readonly vouchersService = inject(VouchersService);
 
   readonly vouchers = signal<IVoucher[]>([]);
+  readonly conditionsSummary = voucherConditionsSummary;
 
   constructor() {
     this.reload();
-  }
-
-  conditionsSummary(voucher: IVoucher): string {
-    return voucher.conditions
-      .map((c) => {
-        const range = c.maxPhotos === null ? `${c.minPhotos}+` : `${c.minPhotos}-${c.maxPhotos}`;
-        const amount = voucher.discountType === 'percent-tier' ? `${c.value}% off` : `RM${c.value} flat`;
-        return `${range} photos: ${amount}`;
-      })
-      .join(', ');
   }
 
   deleteVoucher(id: string): void {

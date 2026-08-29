@@ -87,4 +87,9 @@ export class MyEventsDashboardComponent {
   formatCategory(category: string): string {
     return category.charAt(0) + category.slice(1).toLowerCase();
   }
+
+  // Same day → show it once, matching how the public event card already collapses its date range.
+  isSingleDay(event: Event): boolean {
+    return event.eventStartDate.slice(0, 10) === event.eventEndDate.slice(0, 10);
+  }
 }

@@ -15,6 +15,55 @@
         Browse Events
       </a>
     </div>
+  } @else if (selection.eventCarts().length > 1) {
+    <div class="w-full flex flex-col lg:flex-row gap-lg">
+      <aside class="w-full lg:w-1/3 flex flex-col gap-sm bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)] h-fit">
+        <h2 class="font-label-md text-label-md text-on-surface uppercase tracking-widest mb-xs">Your Carts</h2>
+        @for (cart of selection.eventCarts(); track cart.eventId) {
+          <div
+            role="button"
+            tabindex="0"
+            (click)="selectEvent(cart.eventId)"
+            (keydown.enter)="selectEvent(cart.eventId)"
+            class="flex items-center gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
+            [class.border-primary]="cart.isActive"
+            [class.bg-surface-container-low]="cart.isActive"
+            [class.border-outline-variant]="!cart.isActive"
+          >
+            @if (cart.coverImageUrl) {
+              <img [src]="cart.coverImageUrl" [alt]="cart.eventTitle" class="w-10 h-10 rounded-md object-cover shrink-0" />
+            } @else {
+              <div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0">
+                <span class="material-symbols-outlined text-[18px]">event</span>
+              </div>
+            }
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="font-label-md text-label-md text-on-surface truncate">{{ cart.eventTitle || 'Event' }}</span>
+              <span class="text-caption text-on-surface-variant">{{ cart.itemCount }} {{ cart.itemCount === 1 ? 'item' : 'items' }}</span>
+            </div>
+            <button
+              type="button"
+              (click)="removeCart(cart.eventId, $event)"
+              class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors"
+              [attr.aria-label]="'Remove cart for ' + (cart.eventTitle || 'this event')"
+            >
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        }
+      </aside>
+
+      <div class="w-full lg:w-2/3 flex flex-col gap-lg">
+        <app-order-summary [removable]="true" [fullWidth]="true" />
+        <a
+          routerLink="/checkout"
+          class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] flex items-center justify-center gap-sm"
+        >
+          Proceed to Checkout
+          <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        </a>
+      </div>
+    </div>
   } @else {
     <div class="max-w-2xl mx-auto w-full flex flex-col gap-lg">
       <app-order-summary [removable]="true" [fullWidth]="true" />
