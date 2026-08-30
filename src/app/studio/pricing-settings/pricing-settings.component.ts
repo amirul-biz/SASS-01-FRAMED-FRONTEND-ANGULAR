@@ -54,7 +54,7 @@ export class PricingSettingsComponent {
         voucher.conditions.map((condition) => ({
           voucher,
           condition,
-          preview: calculatePricing(condition.minPhotos * lowestOptionPrice(bundle), condition.minPhotos, bundle),
+          preview: calculatePricing(Array(condition.minPhotos).fill(lowestOptionPrice(bundle)), bundle),
         })),
       ),
     })),

@@ -57,7 +57,13 @@
                     </div>
                   </div>
                 </td>
-                <td class="p-md font-body-md text-body-md text-on-surface">{{ event.eventStartDate | date: 'mediumDate' }} &ndash; {{ event.eventEndDate | date: 'mediumDate' }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface">
+                  @if (isSingleDay(event)) {
+                    {{ event.eventStartDate | date: 'mediumDate' }}
+                  } @else {
+                    {{ event.eventStartDate | date: 'mediumDate' }} &ndash; {{ event.eventEndDate | date: 'mediumDate' }}
+                  }
+                </td>
                 <td class="p-md">
                   @if (event.isPublished) {
                     <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>

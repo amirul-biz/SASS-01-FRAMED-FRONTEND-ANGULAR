@@ -92,9 +92,21 @@
       />
     </div>
 
+    <div>
+      <label class="flex items-center gap-sm cursor-pointer">
+        <input
+          type="checkbox"
+          class="accent-primary w-4 h-4 rounded border-outline-variant"
+          [checked]="isMultiDay()"
+          (change)="setMultiDay($any($event.target).checked)"
+        />
+        <span class="font-body-md text-body-md text-on-surface">This event runs over multiple days</span>
+      </label>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
       <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-start-date">Start Date</label>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-start-date">{{ isMultiDay() ? 'Start Date' : 'Event Date' }}</label>
         <input
           id="event-start-date"
           formControlName="eventStartDate"
@@ -102,22 +114,27 @@
           class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
         />
         @if (form.controls.eventStartDate.invalid && form.controls.eventStartDate.touched) {
-          <p class="text-caption text-error mt-xs">Start date is required.</p>
+          <p class="text-caption text-error mt-xs">{{ isMultiDay() ? 'Start date is required.' : 'Event date is required.' }}</p>
         }
       </div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-end-date">End Date</label>
-        <input
-          id="event-end-date"
-          formControlName="eventEndDate"
-          type="date"
-          class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-        />
-        @if (form.controls.eventEndDate.invalid && form.controls.eventEndDate.touched) {
-          <p class="text-caption text-error mt-xs">End date is required.</p>
-        }
-      </div>
+      @if (isMultiDay()) {
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-end-date">End Date</label>
+          <input
+            id="event-end-date"
+            formControlName="eventEndDate"
+            type="date"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+          @if (form.controls.eventEndDate.invalid && form.controls.eventEndDate.touched) {
+            <p class="text-caption text-error mt-xs">End date is required.</p>
+          }
+        </div>
+      }
     </div>
+    @if (isMultiDay() && form.errors?.['dateRangeInvalid'] && form.controls.eventEndDate.touched) {
+      <p class="text-caption text-error -mt-sm">End date must be on or after the start date.</p>
+    }
 
     <div>
       <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
@@ -144,19 +161,19 @@
         <a routerLink="/studio/pricing-bundles/new" class="underline hover:text-primary">Create a new bundle</a> if none of these fit.
       </p>
     </div>
-    @if (form.errors?.['dateRangeInvalid'] && form.controls.eventEndDate.touched) {
-      <p class="text-caption text-error -mt-sm">End date must be on or after the start date.</p>
-    }
 
-    <div>
-      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="description">Description</label>
-      <textarea
-        id="description"
-        formControlName="description"
-        rows="4"
-        class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-      ></textarea>
-    </div>
+    <!-- Description hidden for now — form control stays wired so save() and the DTO are unaffected. -->
+    @if (false) {
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="description">Description</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="4"
+          class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+        ></textarea>
+      </div>
+    }
 
     @if (errorMsg()) {
       <p class="text-caption text-error">{{ errorMsg() }}</p>

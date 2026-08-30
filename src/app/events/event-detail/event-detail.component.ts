@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { switchMap, catchError, of, forkJoin } from 'rxjs';
-import { ClientService } from '../../client/client.service';
+import { Observable, switchMap, catchError, map, of, forkJoin } from 'rxjs';
+import { ClientEventPhoto, ClientService } from '../../client/client.service';
 import { toEventDetail, toGalleryPhoto, toSelectionBundles } from '../../client/client-event.util';
 import { IEvent, IPhoto } from '../events.service';
 import { SelectionService } from '../../pricing/selection.service';
-import { FindYourPhotosComponent, TimeRange } from './find-your-photos/find-your-photos.component';
+import { FindYourPhotosComponent } from './find-your-photos/find-your-photos.component';
+import { FilterByTimeComponent, TimeRange } from './filter-by-time/filter-by-time.component';
 import { FilterByAreaComponent } from './filter-by-area/filter-by-area.component';
 import { PhotoCardComponent } from './photo-card/photo-card.component';
 import { SelectionBarComponent } from './selection-bar/selection-bar.component';
@@ -42,12 +43,26 @@ const ALBUM_COVER_SLIDE_INTERVAL_MS = 3000;
   imports: [
     RouterLink,
     FindYourPhotosComponent,
+    FilterByTimeComponent,
     FilterByAreaComponent,
     PhotoCardComponent,
     SelectionBarComponent,
     PhotoPreviewModalComponent,
   ],
   templateUrl: './event-detail.component.html',
+  styles: [`
+    /* animation-name below is rewritten by Angular's view encapsulation to match this
+       component's scoped @keyframes automatically — a dynamic [style.animation] binding in the
+       template can't reference the scoped name, so the active state is driven by this class
+       instead, with only the duration passed in via a CSS custom property. */
+    .cover-dot-active {
+      animation: cover-dot-grow var(--cover-dot-duration, 3s) linear forwards;
+    }
+    @keyframes cover-dot-grow {
+      from { transform: scale(1); }
+      to { transform: scale(1.8); }
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EventDetailComponent {
@@ -86,7 +101,7 @@ export class EventDetailComponent {
           this.notFound.set(false);
           return forkJoin({
             event: this.clientService.getEvent(id),
-            photos: this.clientService.getEventPhotos(id, { pageNumber: 1, pageSize: 100 }),
+            photos: this.fetchAllEventPhotos(id),
           }).pipe(
             catchError(() => {
               this.notFound.set(true);
@@ -110,10 +125,14 @@ export class EventDetailComponent {
         const detail = toEventDetail(result.event);
         this.event.set(detail);
         this.startCoverSlideshow(detail.albumCoverPhotoUrls.length);
-        this.allPhotos.set(result.photos.items.map((photo) => toGalleryPhoto(eventId, photo)));
+        this.allPhotos.set(result.photos.map((photo) => toGalleryPhoto(eventId, photo)));
 
         const bundles = toSelectionBundles(result.event);
         this.selection.setBundlesForEvent(eventId, bundles);
+        // Browsing this event's gallery makes its cart the active one — otherwise the selection
+        // bar/prices below would keep showing whichever other event's cart was active before.
+        this.selection.setEventContext(eventId, { title: detail.title, coverImageUrl: detail.coverImageUrl });
+        this.selection.setActiveEvent(eventId);
 
         const optionsById = new Map<string, IPhotoFormatOption>();
         for (const bundle of bundles) {
@@ -130,15 +149,44 @@ export class EventDetailComponent {
       });
   }
 
+  readonly coverIntervalSeconds = ALBUM_COVER_SLIDE_INTERVAL_MS / 1000;
+
+  // getEventPhotos caps at PAGE_SIZE_MAX (100) per request — fetch every page so the full gallery
+  // (and its count) is actually complete instead of silently truncated at the first 100 photos.
+  private fetchAllEventPhotos(id: string): Observable<ClientEventPhoto[]> {
+    const pageSize = 100;
+    return this.clientService.getEventPhotos(id, { pageNumber: 1, pageSize }).pipe(
+      switchMap((first) => {
+        if (first.totalPageCount <= 1) {
+          return of(first.items);
+        }
+        const remainingPages = Array.from({ length: first.totalPageCount - 1 }, (_, i) => i + 2);
+        return forkJoin(
+          remainingPages.map((pageNumber) => this.clientService.getEventPhotos(id, { pageNumber, pageSize })),
+        ).pipe(map((rest) => [...first.items, ...rest.flatMap((r) => r.items)]));
+      }),
+    );
+  }
+
   private startCoverSlideshow(count: number): void {
     clearInterval(this.coverTimer);
     this.activeCoverIndex.set(0);
+    this.armCoverTimer(count);
+  }
+
+  private armCoverTimer(count: number): void {
     if (count > 1) {
       this.coverTimer = setInterval(
         () => this.activeCoverIndex.update((i) => (i + 1) % count),
         ALBUM_COVER_SLIDE_INTERVAL_MS,
       );
     }
+  }
+
+  goToCover(index: number): void {
+    clearInterval(this.coverTimer);
+    this.activeCoverIndex.set(index);
+    this.armCoverTimer(this.heroImageUrls().length);
   }
 
   // Falls back to the standard option when the event has no pricing bundle attached yet,

@@ -74,6 +74,9 @@
             />
             <span class="font-label-md text-label-md text-on-surface">
               {{ offer.condition.minPhotos }}{{ offer.condition.maxPhotos === null ? '+' : '-' + offer.condition.maxPhotos }} photos
+              @if (selection.selectedTier() === offer && selection.pricing().extraCount > 0) {
+                + {{ selection.pricing().extraCount }} extra
+              }
             </span>
           </span>
           @if (offer.voucher.discountType === 'percent-tier') {
@@ -97,6 +100,12 @@
           <span class="material-symbols-outlined text-[18px]">loyalty</span> Voucher discount applied
         </span>
         <span class="font-body-md text-body-md font-semibold">-{{ formatCurrency(selection.pricing().bundleDiscount) }}</span>
+      </div>
+    }
+    @if (selection.pricing().extraCount > 0) {
+      <div class="flex justify-between items-center text-on-surface-variant">
+        <span class="font-body-md text-body-md">{{ selection.pricing().extraCount }} extra photo{{ selection.pricing().extraCount === 1 ? '' : 's' }} beyond the voucher</span>
+        <span class="font-body-md text-body-md">{{ formatCurrency(selection.pricing().extraTotal) }}</span>
       </div>
     }
     <div class="border-t border-outline-variant mt-sm pt-sm flex justify-between items-end">

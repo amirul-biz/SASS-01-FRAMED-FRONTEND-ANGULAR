@@ -54,14 +54,17 @@
         } @else {
           <div class="flex flex-col gap-sm">
             @for (voucher of availableVouchers(); track voucher.id) {
-              <label class="flex items-center gap-sm cursor-pointer">
+              <label class="flex items-start gap-sm cursor-pointer">
                 <input
                   type="checkbox"
-                  class="accent-primary w-4 h-4 rounded border-outline-variant"
+                  class="accent-primary w-4 h-4 rounded border-outline-variant mt-0.5"
                   [checked]="isVoucherChecked(voucher.id)"
                   (change)="toggleVoucher(voucher.id)"
                 />
-                <span class="font-body-md text-body-md text-on-surface">{{ voucher.name }}</span>
+                <span class="flex flex-col">
+                  <span class="font-body-md text-body-md text-on-surface">{{ voucher.name }}</span>
+                  <span class="text-caption text-on-surface-variant">{{ voucherConditionsSummary(voucher) }}</span>
+                </span>
               </label>
             }
           </div>
