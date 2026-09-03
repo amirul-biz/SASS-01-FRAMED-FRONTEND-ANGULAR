@@ -1,6 +1,6 @@
-<footer class="w-full bg-primary py-xl mt-xl">
+<footer class="w-full bg-primary py-xl mt-xl pb-[180px] md:pb-xl">
   <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-xl pb-lg border-b border-on-primary/10">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-lg md:gap-xl pb-lg border-b border-on-primary/10">
       <div class="flex flex-col gap-sm">
         <span class="font-headline-md text-headline-md text-on-primary">PICSWEEP</span>
         <p class="text-caption text-on-primary/70 max-w-[20rem]">
@@ -9,19 +9,25 @@
       </div>
       <div class="flex flex-col gap-sm">
         <h4 class="font-label-md text-label-md text-on-primary uppercase tracking-widest">Platform</h4>
-        <nav class="flex flex-col gap-xs">
-          <a class="text-caption text-on-primary/60 hover:text-secondary" href="#">About</a>
-          <a class="text-caption text-on-primary/60 hover:text-secondary" href="#">Contact</a>
-          <a class="text-caption text-on-primary/60 hover:text-secondary" href="#">Privacy Policy</a>
-          <a class="text-caption text-on-primary/60 hover:text-secondary" href="#">Terms of Service</a>
+        <nav class="flex flex-col gap-sm">
+          <a class="min-h-11 flex items-center text-caption text-on-primary/60 hover:text-secondary" href="#">About</a>
+          <a class="min-h-11 flex items-center text-caption text-on-primary/60 hover:text-secondary" href="#">Contact</a>
+          <a class="min-h-11 flex items-center text-caption text-on-primary/60 hover:text-secondary" href="#">Privacy Policy</a>
+          <a class="min-h-11 flex items-center text-caption text-on-primary/60 hover:text-secondary" href="#">Terms of Service</a>
         </nav>
       </div>
       <div class="flex flex-col gap-sm">
         <h4 class="font-label-md text-label-md text-on-primary uppercase tracking-widest">Connect</h4>
-        <div class="flex gap-md">
-          <span class="material-symbols-outlined text-on-primary cursor-pointer hover:text-secondary">share</span>
-          <span class="material-symbols-outlined text-on-primary cursor-pointer hover:text-secondary">photo_camera</span>
-          <span class="material-symbols-outlined text-on-primary cursor-pointer hover:text-secondary">mail</span>
+        <div class="flex gap-xs -ml-sm">
+          <button type="button" class="w-11 h-11 flex items-center justify-center rounded-full text-on-primary hover:text-secondary transition-colors" aria-label="Share Picsweep">
+            <span class="material-symbols-outlined">share</span>
+          </button>
+          <button type="button" class="w-11 h-11 flex items-center justify-center rounded-full text-on-primary hover:text-secondary transition-colors" aria-label="Picsweep on Instagram">
+            <span class="material-symbols-outlined">photo_camera</span>
+          </button>
+          <button type="button" class="w-11 h-11 flex items-center justify-center rounded-full text-on-primary hover:text-secondary transition-colors" aria-label="Email Picsweep">
+            <span class="material-symbols-outlined">mail</span>
+          </button>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@
 } @else {
   @let ev = event()!;
   <div class="flex flex-col w-full relative">
-    <div class="-mt-20 w-full h-[480px] md:h-[614px] relative pt-20">
+    <div class="-mt-16 md:-mt-20 w-full h-[360px] sm:h-[480px] md:h-[614px] relative pt-16 md:pt-20">
       @for (url of heroImageUrls(); track url; let i = $index) {
         <div
           class="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
@@ -20,17 +20,33 @@
       }
       <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent"></div>
       @if (heroImageUrls().length > 1) {
-        <div class="absolute top-[96px] left-1/2 -translate-x-1/2 z-20 flex items-center gap-sm">
+        <div class="absolute bottom-sm right-sm md:bottom-md md:right-md z-20 flex items-center">
           @for (url of heroImageUrls(); track url; let i = $index) {
             <button
               type="button"
               (click)="goToCover(i)"
-              class="w-2 h-2 rounded-full bg-white/60 hover:bg-white transition-colors"
-              [class.cover-dot-active]="i === activeCoverIndex()"
-              [style.--cover-dot-duration]="coverIntervalSeconds + 's'"
+              class="relative w-11 h-11 flex items-center justify-center"
               [attr.aria-label]="'Go to cover photo ' + (i + 1)"
               [attr.aria-current]="i === activeCoverIndex()"
-            ></button>
+            >
+              <svg
+                class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none transition-opacity"
+                [class.opacity-0]="i !== activeCoverIndex()"
+                viewBox="0 0 20 20"
+              >
+                <circle
+                  class="cover-ring-circle"
+                  [class.cover-ring-active]="i === activeCoverIndex()"
+                  cx="10" cy="10" r="3.5" pathLength="100"
+                  fill="none" stroke="white" stroke-width="1" stroke-linecap="round"
+                  [style.--cover-dot-duration]="coverIntervalSeconds + 's'"
+                ></circle>
+              </svg>
+              <span
+                class="block w-2 h-2 rounded-full transition-colors hover:bg-white"
+                [class]="i === activeCoverIndex() ? 'bg-white' : 'bg-white/60'"
+              ></span>
+            </button>
           }
         </div>
       }
@@ -42,7 +58,7 @@
           }
         </div>
         <h1 class="font-display-lg text-headline-lg-mobile md:text-display-lg text-on-primary mb-sm">{{ ev.title }}</h1>
-        <div class="flex flex-wrap items-center gap-lg text-on-primary/80 font-body-md text-body-md mb-lg">
+        <div class="flex flex-wrap items-center gap-sm md:gap-lg text-on-primary/80 font-body-md text-body-md mb-lg">
           <div class="flex items-center gap-xs">
             <span class="material-symbols-outlined text-[20px]">calendar_today</span>
             <span>{{ ev.dateRange }}</span>
@@ -63,31 +79,97 @@
       </div>
     </div>
 
-    <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full -mt-xl relative z-20 flex flex-col lg:flex-row gap-xl pb-[100px]">
-      <aside class="w-full lg:w-1/3 flex flex-col gap-lg sticky top-24 h-fit z-10">
-        <app-filter-by-time (timeRangeChange)="onTimeRangeChange($event)" />
+    <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full -mt-xl relative z-20 flex flex-col lg:flex-row gap-xl pb-[180px] md:pb-[100px]">
+      <aside class="w-full lg:w-1/3 flex flex-col gap-lg lg:sticky lg:top-24 h-fit lg:z-10">
+        <app-collapsible-panel title="Filter by Time">
+          <app-filter-by-time (timeRangeChange)="onTimeRangeChange($event)" />
+        </app-collapsible-panel>
         <app-filter-by-area [areaCounts]="areaCounts()" [disabled]="true" />
-        <app-find-your-photos [disabledSearch]="true" />
+        <app-collapsible-panel title="Find Your Photos">
+          <app-find-your-photos [disabledSearch]="true" />
+        </app-collapsible-panel>
       </aside>
 
-      <div class="w-full lg:w-2/3 pt-xl mt-lg">
-        <div class="flex items-center justify-between mb-md">
+      <div class="w-full lg:w-2/3 lg:pt-xl lg:mt-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-md mb-md">
           <span class="font-headline-md text-headline-md text-on-surface">Latest Uploads</span>
-          <span class="text-caption text-on-surface-variant">{{ photos().length }} photos</span>
+          <div class="relative w-full sm:w-[280px]">
+            <label class="sr-only" for="photo-search">Search file name</label>
+            <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+              <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+            </div>
+            <input
+              id="photo-search"
+              type="text"
+              placeholder="Search photo name"
+              class="w-full h-11 bg-surface border border-outline-variant text-on-surface font-body-md text-body-md rounded-xl py-sm pl-xl pr-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
+              [value]="searchDraft()"
+              (input)="onSearchInput($event)"
+            />
+            @if (searchDraft()) {
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 pr-md flex items-center text-on-surface-variant hover:text-primary transition-colors"
+                (click)="clearSearch()"
+                aria-label="Clear search"
+              >
+                <span class="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            }
+          </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-md">
-          @for (photo of photos(); track photo.id) {
+
+        @if (response()) {
+          <div class="flex items-center justify-between mb-md">
+            <span class="text-caption text-on-surface-variant">
+              Showing {{ photos().length }} of {{ response()!.totalItemCount }} photos
+            </span>
+          </div>
+          @if (response()!.totalPageCount > 1) {
+            <app-paginator
+              class="hidden sm:block mb-md"
+              [pageNumber]="pageNumber()"
+              [totalPageCount]="response()!.totalPageCount"
+              [pageSize]="pageSize()"
+              [pageSizeOptions]="pageSizeOptions"
+              (pageNumberChange)="onPageNumberChange($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            />
+          }
+        }
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-md" [class.opacity-50]="isLoadingPhotos()">
+          @for (row of photoRows(); track row.photo.id) {
             <app-photo-card
-              [photo]="photo"
-              [selected]="selection.isSelected(photo.id)"
-              [price]="priceForPhoto(photo)"
-              (toggleSelect)="onTogglePhoto(photo)"
-              (previewPhoto)="openPreview(photo)"
+              [photo]="row.photo"
+              [selected]="row.selected"
+              [price]="row.price"
+              (toggleSelect)="onTogglePhoto(row.photo)"
+              (previewPhoto)="openPreview(row.photo)"
             />
           }
         </div>
-        @if (photos().length === 0) {
-          <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match this search.</p>
+
+        @if (photosError()) {
+          <p class="text-body-md font-body-md text-error py-xl text-center">{{ photosError() }}</p>
+        } @else if (!isLoadingPhotos() && photoRows().length === 0) {
+          @if (search()) {
+            <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match "{{ search() }}".</p>
+          } @else {
+            <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match this search.</p>
+          }
+        }
+
+        @if (response() && response()!.totalPageCount > 1) {
+          <app-paginator
+            class="block mt-lg"
+            [pageNumber]="pageNumber()"
+            [totalPageCount]="response()!.totalPageCount"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            (pageNumberChange)="onPageNumberChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          />
         }
       </div>
     </div>

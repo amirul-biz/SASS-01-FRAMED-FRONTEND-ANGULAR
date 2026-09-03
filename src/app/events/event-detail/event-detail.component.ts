@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { Observable, switchMap, catchError, map, of, forkJoin } from 'rxjs';
-import { ClientEventPhoto, ClientService } from '../../client/client.service';
+import { Subject, switchMap, catchError, of, finalize, debounceTime, distinctUntilChanged } from 'rxjs';
+import { PaginatedClientEventPhotoList, ClientService } from '../../client/client.service';
 import { toEventDetail, toGalleryPhoto, toSelectionBundles } from '../../client/client-event.util';
 import { IEvent, IPhoto } from '../events.service';
 import { SelectionService } from '../../pricing/selection.service';
+import { SEARCH_DEBOUNCE_MS } from '../../shared/constants/search.constants';
+import { PaginatorComponent } from '../../shared/paginator/paginator.component';
+import { CollapsiblePanelComponent } from '../../shared/collapsible-panel/collapsible-panel.component';
 import { FindYourPhotosComponent } from './find-your-photos/find-your-photos.component';
 import { FilterByTimeComponent, TimeRange } from './filter-by-time/filter-by-time.component';
 import { FilterByAreaComponent } from './filter-by-area/filter-by-area.component';
@@ -14,53 +17,42 @@ import { SelectionBarComponent } from './selection-bar/selection-bar.component';
 import { PhotoPreviewModalComponent } from './photo-preview-modal/photo-preview-modal.component';
 import { IPhotoFormatOption, STANDARD_FORMAT_OPTION } from '../../pricing/pricing-options.service';
 
-const CAPTURED_AT_PATTERN = /^(\d{1,2}):(\d{2})\s?(AM|PM)$/i;
-
-function parseCapturedAtMinutes(capturedAt: string): number {
-  const match = CAPTURED_AT_PATTERN.exec(capturedAt.trim());
-  if (!match) {
-    return 0;
-  }
-  const [, hourStr, minuteStr, meridiem] = match;
-  const hour = (Number(hourStr) % 12) + (meridiem.toUpperCase() === 'PM' ? 12 : 0);
-  return hour * 60 + Number(minuteStr);
-}
-
-function parseTimeInputMinutes(value: string): number | null {
-  if (!value) {
-    return null;
-  }
-  const [hourStr, minuteStr] = value.split(':');
-  return Number(hourStr) * 60 + Number(minuteStr);
-}
-
 type EventDetail = IEvent & { description: string | null; albumCoverPhotoUrls: string[] };
 
 const ALBUM_COVER_SLIDE_INTERVAL_MS = 3000;
+const PAGE_SIZE_OPTIONS = [30, 50, 100] as const;
 
 @Component({
   selector: 'app-event-detail',
   imports: [
     RouterLink,
+    CollapsiblePanelComponent,
     FindYourPhotosComponent,
     FilterByTimeComponent,
     FilterByAreaComponent,
     PhotoCardComponent,
+    PaginatorComponent,
     SelectionBarComponent,
     PhotoPreviewModalComponent,
   ],
   templateUrl: './event-detail.component.html',
   styles: [`
-    /* animation-name below is rewritten by Angular's view encapsulation to match this
-       component's scoped @keyframes automatically — a dynamic [style.animation] binding in the
-       template can't reference the scoped name, so the active state is driven by this class
-       instead, with only the duration passed in via a CSS custom property. */
-    .cover-dot-active {
-      animation: cover-dot-grow var(--cover-dot-duration, 3s) linear forwards;
+    /* Progress ring around the active cover dot, drawn via SVG stroke-dashoffset (pathLength="100"
+       makes 0-100 units independent of the circle's actual radius). animation-name below is
+       rewritten by Angular's view encapsulation to match this component's scoped @keyframes
+       automatically — a dynamic [style.animation] binding in the template can't reference the
+       scoped name, so the active state is driven by this class instead, with only the duration
+       passed in via a CSS custom property. */
+    .cover-ring-circle {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
     }
-    @keyframes cover-dot-grow {
-      from { transform: scale(1); }
-      to { transform: scale(1.8); }
+    .cover-ring-active {
+      animation: cover-ring-progress var(--cover-dot-duration, 3s) linear forwards;
+    }
+    @keyframes cover-ring-progress {
+      from { stroke-dashoffset: 100; }
+      to { stroke-dashoffset: 0; }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,7 +66,6 @@ export class EventDetailComponent {
 
   private readonly allPricingOptions = signal<IPhotoFormatOption[]>([]);
   readonly event = signal<EventDetail | null>(null);
-  private readonly allPhotos = signal<IPhoto[]>([]);
   readonly isLoading = signal(true);
   readonly notFound = signal(false);
 
@@ -91,18 +82,34 @@ export class EventDetailComponent {
     return ev.albumCoverPhotoUrls.length > 0 ? ev.albumCoverPhotoUrls : [ev.coverImageUrl];
   });
 
+  // --- Photo paging/search/time-filter state ---------------------------------------------------
+  // All server-side now: one request per page instead of fetching every page up front. `loadTrigger$`
+  // + switchMap (same idiom as studio/orders/orders-list.component.ts) means a fast page click or
+  // filter change cancels the previous in-flight request instead of racing it.
+  readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal<number>(PAGE_SIZE_OPTIONS[0]);
+  readonly search = signal('');
+  readonly searchDraft = signal('');
+  private readonly timeRange = signal<TimeRange>({ from: '', to: '' });
+  readonly response = signal<PaginatedClientEventPhotoList | null>(null);
+  readonly isLoadingPhotos = signal(true);
+  readonly photosError = signal<string | null>(null);
+
+  private readonly loadTrigger$ = new Subject<void>();
+  private readonly searchInput$ = new Subject<string>();
+
   constructor() {
     this.destroyRef.onDestroy(() => clearInterval(this.coverTimer));
 
+    // Event stream — hero, description, bundles, cart wiring. Kept independent of photo paging
+    // so a failed or slow photo page never produces the whole-page "Event not found."
     toObservable(this.id)
       .pipe(
         switchMap((id) => {
           this.isLoading.set(true);
           this.notFound.set(false);
-          return forkJoin({
-            event: this.clientService.getEvent(id),
-            photos: this.fetchAllEventPhotos(id),
-          }).pipe(
+          return this.clientService.getEvent(id).pipe(
             catchError(() => {
               this.notFound.set(true);
               return of(null);
@@ -111,23 +118,21 @@ export class EventDetailComponent {
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((result) => {
+      .subscribe((event) => {
         this.isLoading.set(false);
-        if (!result) {
+        if (!event) {
           this.event.set(null);
           this.startCoverSlideshow(0);
-          this.allPhotos.set([]);
           this.allPricingOptions.set([]);
           return;
         }
 
         const eventId = this.id();
-        const detail = toEventDetail(result.event);
+        const detail = toEventDetail(event);
         this.event.set(detail);
         this.startCoverSlideshow(detail.albumCoverPhotoUrls.length);
-        this.allPhotos.set(result.photos.map((photo) => toGalleryPhoto(eventId, photo)));
 
-        const bundles = toSelectionBundles(result.event);
+        const bundles = toSelectionBundles(event);
         this.selection.setBundlesForEvent(eventId, bundles);
         // Browsing this event's gallery makes its cart the active one — otherwise the selection
         // bar/prices below would keep showing whichever other event's cart was active before.
@@ -139,7 +144,7 @@ export class EventDetailComponent {
           for (const option of bundle.pricingOptions) {
             optionsById.set(option.id, {
               id: option.id,
-              photographerId: result.event.photographerId,
+              photographerId: event.photographerId,
               label: option.label,
               price: option.price,
             });
@@ -147,26 +152,52 @@ export class EventDetailComponent {
         }
         this.allPricingOptions.set([...optionsById.values()]);
       });
+
+    // New event id → reset paging/search/time filter back to defaults, then (re)load page 1.
+    toObservable(this.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.pageNumber.set(1);
+        this.pageSize.set(PAGE_SIZE_OPTIONS[0]);
+        this.search.set('');
+        this.searchDraft.set('');
+        this.timeRange.set({ from: '', to: '' });
+        this.loadTrigger$.next();
+      });
+
+    this.searchInput$
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        this.search.set(value);
+        this.pageNumber.set(1);
+        this.loadTrigger$.next();
+      });
+
+    this.loadTrigger$
+      .pipe(
+        switchMap(() => {
+          this.isLoadingPhotos.set(true);
+          this.photosError.set(null);
+          const { from, to } = this.timeRange();
+          return this.clientService
+            .getEventPhotos(this.id(), {
+              pageNumber: this.pageNumber(),
+              pageSize: this.pageSize(),
+              search: this.search() || undefined,
+              capturedFrom: from || undefined,
+              capturedTo: to || undefined,
+            })
+            .pipe(finalize(() => this.isLoadingPhotos.set(false)));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => this.response.set(response),
+        error: () => this.photosError.set('Failed to load photos. Please try again.'),
+      });
   }
 
   readonly coverIntervalSeconds = ALBUM_COVER_SLIDE_INTERVAL_MS / 1000;
-
-  // getEventPhotos caps at PAGE_SIZE_MAX (100) per request — fetch every page so the full gallery
-  // (and its count) is actually complete instead of silently truncated at the first 100 photos.
-  private fetchAllEventPhotos(id: string): Observable<ClientEventPhoto[]> {
-    const pageSize = 100;
-    return this.clientService.getEventPhotos(id, { pageNumber: 1, pageSize }).pipe(
-      switchMap((first) => {
-        if (first.totalPageCount <= 1) {
-          return of(first.items);
-        }
-        const remainingPages = Array.from({ length: first.totalPageCount - 1 }, (_, i) => i + 2);
-        return forkJoin(
-          remainingPages.map((pageNumber) => this.clientService.getEventPhotos(id, { pageNumber, pageSize })),
-        ).pipe(map((rest) => [...first.items, ...rest.flatMap((r) => r.items)]));
-      }),
-    );
-  }
 
   private startCoverSlideshow(count: number): void {
     clearInterval(this.coverTimer);
@@ -196,34 +227,55 @@ export class EventDetailComponent {
     return options.length > 0 ? options : [STANDARD_FORMAT_OPTION];
   });
 
-  private readonly timeRange = signal<TimeRange>({ from: '', to: '' });
-
   readonly photos = computed(() => {
-    const all = this.allPhotos();
-    const fromMinutes = parseTimeInputMinutes(this.timeRange().from);
-    const toMinutes = parseTimeInputMinutes(this.timeRange().to);
-    if (fromMinutes === null && toMinutes === null) {
-      return all;
-    }
-    return all.filter((p) => {
-      const minutes = parseCapturedAtMinutes(p.capturedAt);
-      return (fromMinutes === null || minutes >= fromMinutes) && (toMinutes === null || minutes <= toMinutes);
-    });
+    const eventId = this.id();
+    return (this.response()?.items ?? []).map((photo) => toGalleryPhoto(eventId, photo));
   });
 
   readonly areaCounts = computed(() => []);
 
+  // Pre-computes price/selected per photo once here instead of calling methods from inside the
+  // template's @for — with paging the worst case is 100 photos instead of 4000, but there's no
+  // reason to re-run a method call per photo on every change-detection pass either way.
+  readonly photoRows = computed(() => {
+    const options = this.formatOptions();
+    return this.photos().map((photo) => {
+      const formatId = this.selection.formatIdFor(photo.id) ?? options[0]?.id;
+      const price = options.find((o) => o.id === formatId)?.price ?? STANDARD_FORMAT_OPTION.price;
+      return { photo, price, selected: this.selection.isSelected(photo.id) };
+    });
+  });
+
   onTimeRangeChange(range: TimeRange): void {
     this.timeRange.set(range);
+    this.pageNumber.set(1);
+    this.loadTrigger$.next();
+  }
+
+  onSearchInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.searchDraft.set(value);
+    this.searchInput$.next(value);
+  }
+
+  clearSearch(): void {
+    this.searchDraft.set('');
+    this.searchInput$.next('');
+  }
+
+  onPageNumberChange(pageNumber: number): void {
+    this.pageNumber.set(pageNumber);
+    this.loadTrigger$.next();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.pageNumber.set(1);
+    this.loadTrigger$.next();
   }
 
   onTogglePhoto(photo: IPhoto): void {
     this.selection.toggle(photo);
-  }
-
-  priceForPhoto(photo: IPhoto): number {
-    const formatId = this.selection.formatIdFor(photo.id) ?? this.formatOptions()[0]?.id;
-    return this.formatOptions().find((o) => o.id === formatId)?.price ?? STANDARD_FORMAT_OPTION.price;
   }
 
   readonly previewPhoto = signal<IPhoto | null>(null);

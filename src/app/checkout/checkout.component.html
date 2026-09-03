@@ -61,7 +61,7 @@
                 <div class="flex gap-sm">
                   <select
                     formControlName="countryCode"
-                    class="h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest"
+                    class="shrink-0 h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest"
                   >
                     <option value="MALAYSIA">+60</option>
                     <option value="SINGAPORE">+65</option>
@@ -71,7 +71,7 @@
                     formControlName="phone"
                     placeholder="12 345 6789"
                     type="tel"
-                    class="flex-1 h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest placeholder:text-outline"
+                    class="flex-1 min-w-0 h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors bg-surface-container-lowest placeholder:text-outline"
                   />
                 </div>
               </div>
@@ -82,18 +82,9 @@
             <h2 class="font-headline-md text-headline-md text-primary mb-md flex items-center gap-sm">
               <span class="material-symbols-outlined text-secondary">payments</span> Payment Method
             </h2>
-            <form [formGroup]="paymentForm" class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
-              @for (method of paymentMethods; track method.value) {
-                <label class="cursor-pointer">
-                  <input type="radio" formControlName="paymentMethod" [value]="method.value" class="sr-only" />
-                  <app-payment-method-option
-                    [icon]="method.icon"
-                    [label]="method.label"
-                    [selected]="selectedPaymentMethod === method.value"
-                  />
-                </label>
-              }
-            </form>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-lg">
+              Online payment is coming soon — for now, payment is arranged with the photographer via WhatsApp.
+            </p>
             <button
               type="button"
               (click)="completePurchase()"
@@ -104,7 +95,7 @@
             </button>
             <div class="mt-md flex items-center justify-center gap-sm text-on-surface-variant opacity-80">
               <span class="material-symbols-outlined text-[16px]">chat</span>
-              <span class="font-caption text-caption">We'll open WhatsApp with your order details to confirm payment.</span>
+              <span class="font-caption text-caption">We'll open WhatsApp with the photographer with your order details to confirm payment.</span>
             </div>
           </section>
         </div>

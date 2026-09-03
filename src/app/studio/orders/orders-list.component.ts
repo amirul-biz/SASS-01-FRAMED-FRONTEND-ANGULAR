@@ -22,6 +22,12 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
   CANCELLED: 'bg-error-container text-error',
 };
 
+const STATUS_DOT_CLASS: Record<OrderStatus, string> = {
+  PENDING_CONFIRMATION: 'bg-on-surface-variant',
+  CONFIRMED: 'bg-secondary',
+  CANCELLED: 'bg-error',
+};
+
 const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING_CONFIRMATION: 'Pending confirmation',
   CONFIRMED: 'Confirmed',
@@ -44,6 +50,7 @@ export class OrdersListComponent {
   readonly countryDialCode = COUNTRY_DIAL_CODE;
   readonly statusOptions = STATUS_OPTIONS;
   readonly statusBadgeClass = STATUS_BADGE_CLASS;
+  readonly statusDotClass = STATUS_DOT_CLASS;
   readonly statusLabel = STATUS_LABEL;
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 

@@ -35,6 +35,10 @@ export interface IPhoto {
   label: string;
   plateNumber: string;
   capturedAt: string;
+  /** Intrinsic size, when known — used as the img's width/height attrs to avoid layout shift and
+   *  let the browser skip allocating a full-resolution decode buffer before it has laid out. */
+  width?: number | null;
+  height?: number | null;
 }
 
 function optionIdsFor(photographerId: string): string[] {

@@ -1,5 +1,5 @@
 <header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-  <div class="h-20 w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between gap-sm">
+  <div class="h-16 md:h-20 w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between gap-sm">
     <a routerLink="/" class="flex items-center gap-md shrink-0">
       <span class="material-symbols-outlined text-primary text-[28px]">photo_camera</span>
       <span class="font-headline-md text-headline-md text-primary tracking-tight">PICSWEEP</span>
@@ -17,12 +17,15 @@
         [ariaCurrentWhenActive]="'page'"
         class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors"
       >Events</a>
-      <span class="text-label-md font-label-md text-on-surface-variant/50 cursor-not-allowed" title="Coming soon">How It Works</span>
+      <span class="flex items-center gap-xs text-label-md font-label-md text-on-surface-variant/50 cursor-not-allowed">
+        How It Works
+        <span class="text-caption text-on-surface-variant/50">Soon</span>
+      </span>
     </nav>
     <div class="flex items-center gap-md ml-auto shrink-0">
       <a routerLink="/login" class="hidden sm:inline text-caption font-label-md text-on-surface-variant hover:text-primary transition-colors opacity-70 hover:opacity-100">Photographer / Admin Login</a>
       <div class="hidden sm:block w-unit h-8 bg-outline-variant/30 mx-xs"></div>
-      <a routerLink="/cart" class="relative w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0" aria-label="View cart">
+      <a routerLink="/cart" class="relative w-11 h-11 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0" aria-label="View cart">
         <span class="material-symbols-outlined text-on-surface-variant text-[20px]">shopping_cart</span>
         @if (selection.totalSelectedCount() > 0) {
           <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-on-secondary text-[10px] font-label-md flex items-center justify-center">
@@ -30,9 +33,51 @@
           </span>
         }
       </a>
-      <a [routerLink]="profileLink()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0">
+      <a [routerLink]="profileLink()" class="w-11 h-11 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface-variant shrink-0">
         <span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
       </a>
+      <button
+        type="button"
+        class="md:hidden w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="mobile-nav"
+        aria-label="Toggle navigation menu"
+        (click)="toggleMenu()"
+      >
+        <span class="material-symbols-outlined text-[24px]">{{ menuOpen() ? 'close' : 'menu' }}</span>
+      </button>
     </div>
   </div>
+
+  @if (menuOpen()) {
+    <nav
+      id="mobile-nav"
+      class="md:hidden fixed inset-x-0 top-16 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 px-margin-mobile py-lg flex flex-col gap-xs z-40"
+    >
+      <a
+        routerLink="/photographers"
+        routerLinkActive="text-primary font-bold"
+        [ariaCurrentWhenActive]="'page'"
+        class="min-h-11 flex items-center text-body-md font-body-md text-on-surface-variant"
+        (click)="closeMenu()"
+      >Photographers</a>
+      <a
+        routerLink="/events"
+        routerLinkActive="text-primary font-bold"
+        [ariaCurrentWhenActive]="'page'"
+        class="min-h-11 flex items-center text-body-md font-body-md text-on-surface-variant"
+        (click)="closeMenu()"
+      >Events</a>
+      <span class="min-h-11 flex items-center gap-xs text-body-md font-body-md text-on-surface-variant/50">
+        How It Works
+        <span class="text-caption text-on-surface-variant/50">Soon</span>
+      </span>
+      <div class="h-unit bg-outline-variant/30 my-xs"></div>
+      <a
+        routerLink="/login"
+        class="min-h-11 flex items-center text-body-md font-body-md text-on-surface-variant opacity-70"
+        (click)="closeMenu()"
+      >Photographer / Admin Login</a>
+    </nav>
+  }
 </header>

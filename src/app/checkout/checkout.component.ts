@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SelectionService } from '../pricing/selection.service';
 import { IBundleVoucherSummary } from '../pricing/pricing-bundles.service';
-import { PAYMENT_METHODS, PaymentMethod } from './payment-method.constants';
-import { PaymentMethodOptionComponent } from './payment-method-option/payment-method-option.component';
+import { ClientService } from '../client/client.service';
 import { OrderSummaryComponent } from './order-summary/order-summary.component';
 import { CreateOrderPayload, OrderService } from './order.service';
 import { formatCurrency } from '../pricing/currency.util';
@@ -16,7 +15,7 @@ const WHATSAPP_NUMBER = '60104459106';
 
 @Component({
   selector: 'app-checkout',
-  imports: [ReactiveFormsModule, PaymentMethodOptionComponent, OrderSummaryComponent],
+  imports: [ReactiveFormsModule, OrderSummaryComponent],
   templateUrl: './checkout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,24 +23,40 @@ export class CheckoutComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly orderService = inject(OrderService);
+  private readonly clientService = inject(ClientService);
   readonly selection = inject(SelectionService);
 
-  readonly paymentMethods = PAYMENT_METHODS;
   readonly orderPlaced = signal(false);
+  // WhatsApp-able digits from the event photographer's profile settings (contactNo, falling back
+  // to phone). Falls back to the platform number while the profile has no number set.
+  private readonly photographerWhatsAppNumber = signal<string | null>(null);
+  private readonly loadedEventId = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const eventId = this.selection.eventId();
+      if (!eventId || this.loadedEventId() === eventId) {
+        return;
+      }
+      this.loadedEventId.set(eventId);
+      this.clientService.getEvent(eventId).subscribe({
+        next: (event) => {
+          const digits = (event.photographerContactNo ?? event.photographerPhone ?? '')
+            .replace(/\D/g, '');
+          if (digits) {
+            this.photographerWhatsAppNumber.set(digits);
+          }
+        },
+        error: () => {},
+      });
+    });
+  }
 
   readonly contactForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     countryCode: ['MALAYSIA' as CountryCode],
     phone: ['', Validators.required],
   });
-
-  readonly paymentForm = this.fb.nonNullable.group({
-    paymentMethod: ['fpx' as PaymentMethod],
-  });
-
-  get selectedPaymentMethod(): PaymentMethod {
-    return this.paymentForm.controls.paymentMethod.value;
-  }
 
   completePurchase(): void {
     this.contactForm.markAllAsTouched();
@@ -54,7 +69,10 @@ export class CheckoutComponent {
     this.orderService.createOrder(this.buildOrderPayload()).subscribe({ error: () => {} });
 
     const message = this.buildWhatsAppMessage();
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(
+      `https://wa.me/${this.photographerWhatsAppNumber() ?? WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+      '_blank',
+    );
 
     this.orderPlaced.set(true);
     this.selection.clear();

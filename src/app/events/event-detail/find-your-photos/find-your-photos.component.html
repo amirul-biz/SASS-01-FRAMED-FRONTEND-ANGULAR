@@ -1,72 +1,71 @@
-<div class="bg-surface-container-lowest rounded-[12px] p-md shadow-[0px_4px_12px_rgba(20,33,61,0.08)]">
-  <h2 class="font-headline-md text-headline-md text-on-surface mb-md">Find Your Photos</h2>
-
-  <div class="flex w-full mb-md p-unit bg-surface-container rounded-lg">
-    <button
-      type="button"
-      class="flex-1 py-sm text-label-md font-label-md rounded-md transition-all"
-      [class.bg-surface-container-lowest]="activeTab() === 'plate'"
-      [class.shadow-sm]="activeTab() === 'plate'"
-      [class.text-primary]="activeTab() === 'plate'"
-      [class.text-on-surface-variant]="activeTab() !== 'plate'"
-      (click)="setTab('plate')"
-    >By Plate #</button>
-    <button
-      type="button"
-      class="relative flex-1 py-sm text-label-md font-label-md rounded-md transition-all flex items-center justify-center gap-xs overflow-hidden"
-      [class.bg-gradient-to-r]="activeTab() === 'ai'"
-      [class.from-primary]="activeTab() === 'ai'"
-      [class.to-secondary]="activeTab() === 'ai'"
-      [class.text-on-primary]="activeTab() === 'ai'"
-      [class.shadow-md]="activeTab() === 'ai'"
-      [class.text-on-surface-variant]="activeTab() !== 'ai'"
-      (click)="setTab('ai')"
-    >
-      <span class="material-symbols-outlined text-[16px]" [class.animate-pulse]="activeTab() === 'ai'">auto_awesome</span>
-      AI Powered Search
-    </button>
-  </div>
-
-  @if (disabledSearch()) {
-    <div class="flex flex-col items-center gap-xs text-center py-md px-sm bg-surface-container rounded-[12px]">
-      <span class="material-symbols-outlined text-on-surface-variant">hourglass_empty</span>
-      <span class="text-body-md font-body-md text-on-surface-variant">Plate and AI face search are coming soon.</span>
-    </div>
-  } @else if (activeTab() === 'plate') {
-    <div class="flex flex-col gap-sm">
-      <label class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider" for="plate-input">Rider Plate Number</label>
-      <div class="flex gap-sm">
-        <input
-          #plateInput
-          id="plate-input"
-          type="text"
-          placeholder="e.g. 402"
-          class="w-full bg-surface rounded-[12px] border border-outline-variant px-md py-sm text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-          (keydown.enter)="search(plateInput.value)"
-        />
-        <button
-          type="button"
-          class="bg-primary text-on-primary rounded-[12px] px-md py-sm font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center min-w-[48px]"
-          (click)="search(plateInput.value)"
-        >
-          <span class="material-symbols-outlined">search</span>
-        </button>
-      </div>
-      <p class="text-caption text-on-surface-variant mt-xs">Leave blank to browse all photos.</p>
-    </div>
-  } @else {
-    <div class="flex flex-col gap-sm">
-      <label class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
-        <span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
-        Upload a Selfie
-        <span class="ml-auto px-xs py-[1px] rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary text-[9px] font-label-md tracking-widest">AI</span>
-      </label>
-      <div class="group relative border-2 border-dashed border-secondary/40 rounded-[12px] p-lg flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-surface to-secondary/10 cursor-pointer hover:border-secondary hover:shadow-[0_0_28px_-4px_rgba(171,53,0,0.35)] transition-all duration-300 overflow-hidden">
-        <div class="pointer-events-none absolute -inset-1 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-secondary/20 blur-xl transition-opacity duration-500"></div>
-        <span class="relative material-symbols-outlined text-transparent bg-clip-text bg-gradient-to-br from-primary to-secondary text-[40px] mb-sm animate-pulse" style="-webkit-text-fill-color: transparent;">auto_awesome</span>
-        <span class="relative font-headline-md text-[16px] text-on-surface text-center">Drag &amp; drop or click to upload</span>
-        <span class="relative text-caption text-on-surface-variant mt-xs text-center max-w-[220px]">Our AI instantly scans and matches your face across every photo in this event.</span>
-      </div>
-    </div>
-  }
+<div class="flex w-full mb-md p-unit bg-surface-container rounded-lg">
+  <button
+    type="button"
+    class="flex-1 min-h-11 text-label-md font-label-md rounded-md transition-all"
+    [class.bg-surface-container-lowest]="activeTab() === 'plate'"
+    [class.shadow-sm]="activeTab() === 'plate'"
+    [class.text-primary]="activeTab() === 'plate'"
+    [class.text-on-surface-variant]="activeTab() !== 'plate'"
+    (click)="setTab('plate')"
+  >By Plate #</button>
+  <button
+    type="button"
+    class="relative flex-1 min-h-11 text-label-md font-label-md rounded-md transition-all flex items-center justify-center gap-xs overflow-hidden"
+    [class.bg-gradient-to-r]="activeTab() === 'ai'"
+    [class.from-primary]="activeTab() === 'ai'"
+    [class.to-secondary]="activeTab() === 'ai'"
+    [class.text-on-primary]="activeTab() === 'ai'"
+    [class.shadow-md]="activeTab() === 'ai'"
+    [class.text-on-surface-variant]="activeTab() !== 'ai'"
+    (click)="setTab('ai')"
+  >
+    <span class="material-symbols-outlined text-[16px]" [class.animate-pulse]="activeTab() === 'ai'">auto_awesome</span>
+    <span class="hidden sm:inline">AI Powered </span>Search
+  </button>
 </div>
+
+@if (disabledSearch()) {
+  <div class="flex flex-col items-center gap-xs text-center py-md px-sm bg-surface-container rounded-[12px]">
+    <span class="material-symbols-outlined text-on-surface-variant">hourglass_empty</span>
+    <span class="text-body-md font-body-md text-on-surface-variant">Plate and AI face search are coming soon.</span>
+  </div>
+} @else if (activeTab() === 'plate') {
+  <div class="flex flex-col gap-sm">
+    <label class="text-caption font-label-md text-on-surface-variant uppercase tracking-wider" for="plate-input">Rider Plate Number</label>
+    <div class="flex gap-sm">
+      <input
+        #plateInput
+        id="plate-input"
+        type="text"
+        placeholder="e.g. 402"
+        class="w-full min-w-0 h-11 bg-surface rounded-[12px] border border-outline-variant px-md text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+        (keydown.enter)="search(plateInput.value)"
+      />
+      <button
+        type="button"
+        class="bg-primary text-on-primary rounded-[12px] px-md h-11 font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center min-w-[48px]"
+        (click)="search(plateInput.value)"
+      >
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </div>
+    <p class="text-caption text-on-surface-variant mt-xs">Leave blank to browse all photos.</p>
+  </div>
+} @else {
+  <div class="flex flex-col gap-sm">
+    <label class="flex items-center gap-xs text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+      <span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
+      Upload a Selfie
+      <span class="ml-auto px-xs py-[1px] rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary text-[9px] font-label-md tracking-widest">AI</span>
+    </label>
+    <div class="group relative border-2 border-dashed border-secondary/40 rounded-[12px] p-lg flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-surface to-secondary/10 cursor-pointer hover:border-secondary hover:shadow-[0_0_28px_-4px_rgba(171,53,0,0.35)] transition-all duration-300 overflow-hidden">
+      <div class="pointer-events-none absolute -inset-1 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-secondary/20 blur-xl transition-opacity duration-500"></div>
+      <span class="relative material-symbols-outlined text-transparent bg-clip-text bg-gradient-to-br from-primary to-secondary text-[40px] mb-sm animate-pulse" style="-webkit-text-fill-color: transparent;">auto_awesome</span>
+      <span class="relative font-headline-md text-[16px] text-on-surface text-center">
+        <span class="sm:hidden">Tap to upload a selfie</span>
+        <span class="hidden sm:inline">Drag &amp; drop or click to upload</span>
+      </span>
+      <span class="relative text-caption text-on-surface-variant mt-xs text-center max-w-[220px]">Our AI instantly scans and matches your face across every photo in this event.</span>
+    </div>
+  </div>
+}

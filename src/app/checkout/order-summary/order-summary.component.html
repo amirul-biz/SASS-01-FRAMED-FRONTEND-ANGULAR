@@ -1,14 +1,14 @@
 <aside
   class="w-full bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]"
-  [class.sticky]="!fullWidth()"
-  [class.top-24]="!fullWidth()"
+  [class.lg:sticky]="!fullWidth()"
+  [class.lg:top-24]="!fullWidth()"
 >
   <h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-outline-variant pb-md flex justify-between items-end">
     Order Summary
     <span class="font-label-md text-label-md text-secondary bg-secondary/10 px-2 py-1 rounded-full">{{ selection.selectedCount() }} Items</span>
   </h2>
 
-  <div class="flex flex-col gap-md mb-lg max-h-[409px] overflow-y-auto pr-sm custom-scrollbar">
+  <div class="flex flex-col gap-md mb-lg max-h-none lg:max-h-[409px] overflow-y-auto pr-sm custom-scrollbar">
     @for (entry of selection.selectedEntries(); track entry.photo.id) {
       <div class="flex items-center justify-between gap-sm p-md bg-surface-container-low rounded-lg">
         <div class="flex items-center gap-sm min-w-0 flex-1">
@@ -23,7 +23,7 @@
           <button
             type="button"
             (click)="removePhoto(entry.photo)"
-            class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors"
+            class="shrink-0 w-11 h-11 p-sm flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors"
             [attr.aria-label]="'Remove ' + entry.photo.label"
           >
             <span class="material-symbols-outlined text-[18px]">close</span>

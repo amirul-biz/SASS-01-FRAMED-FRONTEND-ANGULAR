@@ -5,13 +5,13 @@
 } @else if (photographer(); as p) {
   <div class="flex flex-col w-full min-h-screen">
     <div
-      class="relative w-full h-[300px] md:h-[400px] -mt-20 bg-surface-container bg-cover bg-center"
+      class="relative w-full h-[300px] md:h-[400px] -mt-16 md:-mt-20 bg-surface-container bg-cover bg-center"
       [style.background-image]="p.bannerUrl ? 'url(' + p.bannerUrl + ')' : null"
     >
       <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
     </div>
 
-    <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full relative -mt-24 md:-mt-32">
+    <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full relative -mt-16 md:-mt-32">
       <div class="flex flex-col md:flex-row gap-lg md:gap-xl items-start md:items-end w-full mb-xl">
         <div class="relative flex-shrink-0">
           <img
@@ -22,7 +22,7 @@
         </div>
         <div class="flex-grow flex flex-col md:flex-row justify-between items-start md:items-end gap-md w-full">
           <div class="flex flex-col text-on-surface">
-            <h1 class="font-display-lg text-display-lg text-primary mb-xs">{{ p.name }}</h1>
+            <h1 class="font-display-lg text-headline-lg-mobile md:text-display-lg text-primary mb-xs break-words">{{ p.name }}</h1>
             @if (p.bio) {
               <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-md">{{ p.bio }}</p>
             }
@@ -46,7 +46,7 @@
         <div class="bg-surface-container rounded-xl p-md flex flex-col items-start shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
           <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-xs">Top Category</span>
           <div class="flex items-center gap-xs mt-1">
-            <span class="bg-secondary/10 text-secondary px-2 py-1 rounded-sm font-label-md text-label-md whitespace-nowrap">{{ topCategoryLabel() }}</span>
+            <span class="bg-secondary/10 text-secondary px-2 py-1 rounded-sm font-label-md text-label-md truncate max-w-full">{{ topCategoryLabel() }}</span>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@
           <div class="flex gap-sm mb-lg">
             <span class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-md font-caption text-caption text-on-surface-variant">
               Date: {{ dateFrom() || 'Any' }} &ndash; {{ dateTo() || 'Any' }}
-              <button type="button" (click)="clearDateFilter()" class="hover:text-primary transition-colors flex items-center">
+              <button type="button" (click)="clearDateFilter()" class="hover:text-primary transition-colors flex items-center p-xs -m-xs">
                 <span class="material-symbols-outlined text-[16px]">close</span>
               </button>
             </span>

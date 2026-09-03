@@ -1,10 +1,10 @@
 <div class="flex flex-col w-full">
-  <div class="relative w-full h-[280px] md:h-[340px] -mt-20 bg-primary bg-cover bg-center flex items-end"
+  <div class="relative w-full h-[320px] md:h-[340px] -mt-16 md:-mt-20 bg-primary bg-cover bg-center flex items-end"
     style="background-image: url('https://picsum.photos/seed/picsweep-events/1600/600')"
   >
     <div class="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-primary/10"></div>
     <div class="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full pb-xl">
-      <h1 class="font-display-lg text-display-lg text-on-primary tracking-tight">Events Directory</h1>
+      <h1 class="font-display-lg text-headline-lg-mobile md:text-display-lg text-on-primary tracking-tight">Events Directory</h1>
       <p class="font-body-lg text-body-lg text-on-primary/80 mt-sm">
         Browse the latest extreme sports events captured by our professional network.
       </p>
@@ -62,7 +62,7 @@
     <div class="flex gap-sm mb-lg">
       <span class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-md font-caption text-caption text-on-surface-variant">
         Date: {{ dateFrom() || 'Any' }} &ndash; {{ dateTo() || 'Any' }}
-        <button type="button" (click)="clearDateFilter()" class="hover:text-primary transition-colors flex items-center">
+        <button type="button" (click)="clearDateFilter()" class="hover:text-primary transition-colors flex items-center p-xs -m-xs">
           <span class="material-symbols-outlined text-[16px]">close</span>
         </button>
       </span>
