@@ -56,7 +56,12 @@
                 class="border-b border-outline-variant last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors"
                 (click)="toggleExpanded(order.id)"
               >
-                <td class="p-md font-body-md text-body-md text-on-surface whitespace-nowrap">{{ order.createdAt | date: 'mediumDate' }}</td>
+                <td class="p-md whitespace-nowrap">
+                  <div class="flex flex-col">
+                    <span class="font-body-md text-body-md text-on-surface">{{ order.createdAt | date: 'mediumDate' }}</span>
+                    <span class="font-caption text-caption text-on-surface-variant">{{ order.createdAt | date: 'h:mm a' }}</span>
+                  </div>
+                </td>
                 <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
                 <td class="p-md">
                   <div class="flex flex-col">
@@ -73,33 +78,81 @@
                 </td>
               </tr>
               @if (isExpanded(order.id)) {
-                <tr class="border-b border-outline-variant last:border-0 bg-surface-container-low">
+                <tr class="bg-surface-container-low">
                   <td colspan="6" class="p-md">
-                    <div class="flex flex-col gap-xs">
-                      @for (item of order.items; track item.id) {
-                        <div class="flex items-center justify-between font-body-md text-body-md text-on-surface">
-                          <span>{{ item.photoName }}</span>
-                          <span>{{ formatCurrency(item.price) }}</span>
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_8px_rgba(20,33,61,0.06)] overflow-hidden">
+                      <!-- Panel header -->
+                      <div class="flex flex-wrap items-center justify-between gap-sm px-lg py-md border-b border-outline-variant bg-surface-container">
+                        <div class="flex items-center gap-sm">
+                          <span class="material-symbols-outlined text-[20px] text-secondary">receipt_long</span>
+                          <span class="font-label-md text-label-md text-on-surface">Order Details</span>
+                          <span class="text-caption font-label-md text-on-surface-variant">· {{ order.createdAt | date: 'mediumDate' }}</span>
                         </div>
-                      }
-                      <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant pt-xs">
-                        <span>Voucher</span>
-                        <span>{{ order.voucherName || 'No voucher' }}</span>
                       </div>
-                      <div class="border-t border-outline-variant mt-xs pt-xs flex flex-col gap-xs">
-                        <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
-                          <span>Subtotal</span>
-                          <span>{{ formatCurrency(order.priceBreakdown.subtotal) }}</span>
-                        </div>
-                        @if (order.priceBreakdown.discountAmount > 0) {
-                          <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
-                            <span>Discount</span>
-                            <span>-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+
+                      <div class="flex flex-col lg:flex-row">
+                        <!-- Ordered items -->
+                        <div class="flex-1 min-w-0 px-lg py-md">
+                          <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">
+                            Photos ({{ order.items.length }})
+                          </p>
+                          <div class="flex flex-col gap-sm">
+                            @for (item of order.items; track item.id) {
+                              <div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low">
+                                <div class="w-9 h-9 shrink-0 rounded-md bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-label-md">
+                                  {{ $index + 1 }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                  <p class="font-label-md text-label-md text-on-surface truncate">{{ item.photoName }}</p>
+                                  <span class="inline-block mt-xs px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-caption text-caption">
+                                    {{ item.formatLabel }}
+                                  </span>
+                                </div>
+                                <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">{{ formatCurrency(item.price) }}</span>
+                              </div>
+                            }
                           </div>
-                        }
-                        <div class="flex items-center justify-between font-label-md text-label-md text-on-surface">
-                          <span>Total</span>
-                          <span>{{ formatCurrency(order.priceBreakdown.total) }}</span>
+                        </div>
+
+                        <!-- Customer + totals -->
+                        <div class="lg:w-80 shrink-0 px-lg py-md border-t lg:border-t-0 lg:border-l border-outline-variant flex flex-col gap-md">
+                          <div>
+                            <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Customer</p>
+                            <div class="flex items-center gap-sm mb-xs">
+                              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span>
+                              <span class="font-body-md text-body-md text-on-surface break-all">{{ order.email }}</span>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">call</span>
+                              <span class="font-body-md text-body-md text-on-surface">{{ customerPhone(order) }}</span>
+                            </div>
+                          </div>
+
+                          <div class="border-t border-outline-variant pt-md flex flex-col gap-xs">
+                            @if (order.voucherName) {
+                              <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                                <span class="flex items-center gap-xs">
+                                  <span class="material-symbols-outlined text-[16px] text-secondary">local_activity</span>
+                                  {{ order.voucherName }}
+                                </span>
+                                <span class="text-secondary">-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+                              </div>
+                            }
+                            <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                              <span>Subtotal</span>
+                              <span>{{ formatCurrency(order.priceBreakdown.subtotal) }}</span>
+                            </div>
+                            @if (order.priceBreakdown.discountAmount > 0 && !order.voucherName) {
+                              <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                                <span>Discount</span>
+                                <span>-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+                              </div>
+                            }
+                            <div class="flex items-center justify-between border-t border-outline-variant pt-sm mt-xs font-headline-md text-body-lg text-on-surface">
+                              <span>Total</span>
+                              <span>{{ formatCurrency(order.priceBreakdown.total) }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -71,6 +71,8 @@ export interface ClientEventPricingBundle {
 }
 
 export interface ClientEventDetail extends ClientLatestEvent {
+  photographerPhone: string | null;
+  photographerContactNo: string | null;
   description: string | null;
   pricingBundles: ClientEventPricingBundle[];
   albumCoverPhotoUrls: string[];
