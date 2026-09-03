@@ -1,0 +1,70 @@
+<div class="flex flex-col sm:flex-row items-center justify-between gap-md">
+  <div class="flex items-center gap-sm">
+    <label class="text-caption font-label-md text-on-surface-variant" [attr.for]="'paginator-page-size-' + uid">Per page</label>
+    <select
+      [attr.id]="'paginator-page-size-' + uid"
+      class="h-11 sm:h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+      (change)="onPageSizeChange($event)"
+    >
+      @for (size of pageSizeOptions(); track size) {
+        <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="flex items-center gap-sm sm:gap-xs flex-wrap justify-center">
+    <button
+      type="button"
+      class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low active:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+      [disabled]="pageNumber() === 1"
+      (click)="goToPage(pageNumber() - 1)"
+    >
+      <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+    </button>
+
+    @for (entry of pageWindow(); track $index) {
+      @if (entry === 'ellipsis') {
+        <span class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center text-on-surface-variant">&hellip;</span>
+      } @else {
+        <button
+          type="button"
+          class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
+          [class.bg-primary]="entry === pageNumber()"
+          [class.text-on-primary]="entry === pageNumber()"
+          [class.text-on-surface-variant]="entry !== pageNumber()"
+          [class.hover:bg-surface-container-low]="entry !== pageNumber()"
+          [class.active:bg-surface-container-low]="entry !== pageNumber()"
+          (click)="goToPage(entry)"
+        >
+          {{ entry }}
+        </button>
+      }
+    }
+
+    <button
+      type="button"
+      class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low active:bg-surface-container-low disabled:opacity-40 disabled:pointer-events-none transition-colors"
+      [disabled]="pageNumber() === totalPageCount()"
+      (click)="goToPage(pageNumber() + 1)"
+    >
+      <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+    </button>
+  </div>
+
+  <div class="flex items-center gap-sm">
+    <span class="text-caption font-label-md text-on-surface-variant">Page {{ pageNumber() }} of {{ totalPageCount() }}</span>
+    <label class="sr-only" [attr.for]="'paginator-go-to-' + uid">Go to page</label>
+    <input
+      [attr.id]="'paginator-go-to-' + uid"
+      type="number"
+      min="1"
+      [max]="totalPageCount()"
+      placeholder="Go to..."
+      class="w-24 h-11 sm:w-20 sm:h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+      [value]="goToDraft()"
+      (input)="onGoToInput($event)"
+      (keydown.enter)="commitGoTo()"
+      (blur)="commitGoTo()"
+    />
+  </div>
+</div>

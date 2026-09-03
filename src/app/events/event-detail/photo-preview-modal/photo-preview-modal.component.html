@@ -1,19 +1,41 @@
-<div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-md" (click)="close()">
+<div
+  class="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-md"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="'Preview of ' + photo().label"
+  tabindex="0"
+  (click)="close()"
+  (keydown.escape)="close()"
+>
   <div
-    class="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(20,33,61,0.2)] w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
+    class="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(20,33,61,0.2)] w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
     (click)="$event.stopPropagation()"
   >
-    <div class="w-full md:w-1/2 aspect-square md:aspect-auto bg-surface-variant relative shrink-0">
-      <img [src]="photo().imageUrl" [alt]="photo().label" class="w-full h-full object-cover" />
+    <div class="w-full md:w-2/3 bg-black relative shrink md:shrink-0 max-h-[60vh] md:max-h-none" [style.aspect-ratio]="photoAspectRatio()">
+      <img [src]="photo().imageUrl" [alt]="photo().label" class="w-full h-full object-contain" />
+      <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        <div
+          class="absolute left-1/2 top-1/2 w-[150%] h-[150%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] opacity-100 grid items-center justify-items-center"
+          [style.gridTemplateColumns]="'repeat(5, minmax(110px, 1fr))'"
+          [style.gridTemplateRows]="'repeat(5, minmax(110px, 1fr))'"
+        >
+          @for (tile of watermarkTiles(); track $index) {
+            <div class="flex flex-col items-center gap-0 whitespace-nowrap">
+              <span class="font-headline-lg text-[18px] md:text-[28px] font-extrabold text-on-secondary tracking-widest drop-shadow-md">PICSWEEP</span>
+              <span class="font-caption text-[9px] md:text-[12px] font-bold text-on-secondary tracking-wide">ALL RIGHTS RESERVED</span>
+            </div>
+          }
+        </div>
+      </div>
       <button
         type="button"
         (click)="close()"
-        class="absolute top-sm right-sm w-9 h-9 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors"
+        class="absolute top-sm right-sm w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors"
       >
         <span class="material-symbols-outlined text-[20px]">close</span>
       </button>
     </div>
-    <div class="w-full md:w-1/2 p-md md:p-lg flex flex-col gap-md">
+    <div class="w-full md:w-1/3 p-md md:p-lg flex flex-col gap-md">
       <div>
         <h2 class="font-headline-md text-headline-md text-on-surface">{{ photo().label }}</h2>
         <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>
@@ -22,7 +44,7 @@
         <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Choose Format</span>
         @for (option of formatOptions(); track option.id) {
           <label
-            class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
+            class="flex items-center justify-between gap-sm min-h-11 p-sm rounded-lg border-2 cursor-pointer transition-all"
             [class.border-primary]="selectedFormatId() === option.id"
             [class.bg-surface-container-low]="selectedFormatId() === option.id"
             [class.border-outline-variant]="selectedFormatId() !== option.id"
@@ -44,7 +66,7 @@
       <button
         type="button"
         (click)="confirmAddToCart()"
-        class="mt-auto w-full h-12 bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-xs"
+        class="mt-auto sticky bottom-0 w-full h-12 bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors flex items-center justify-center gap-xs"
       >
         <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
         Add to Cart

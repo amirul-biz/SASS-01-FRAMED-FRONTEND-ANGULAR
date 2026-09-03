@@ -194,18 +194,22 @@
               <span class="material-symbols-outlined text-[20px]">chevron_left</span>
             </button>
 
-            @for (page of photosTotalPageCount() | range; track page) {
-              <button
-                type="button"
-                class="w-9 h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
-                [class.bg-primary]="page === photosPageNumber()"
-                [class.text-on-primary]="page === photosPageNumber()"
-                [class.text-on-surface-variant]="page !== photosPageNumber()"
-                [class.hover:bg-surface-container-low]="page !== photosPageNumber()"
-                (click)="onPhotosPageNumberChange(page)"
-              >
-                {{ page }}
-              </button>
+            @for (entry of photosPageWindow(); track $index) {
+              @if (entry === 'ellipsis') {
+                <span class="w-9 flex items-center justify-center font-label-md text-label-md text-on-surface-variant select-none">…</span>
+              } @else {
+                <button
+                  type="button"
+                  class="w-9 h-9 flex items-center justify-center rounded-full font-label-md text-label-md transition-colors"
+                  [class.bg-primary]="entry === photosPageNumber()"
+                  [class.text-on-primary]="entry === photosPageNumber()"
+                  [class.text-on-surface-variant]="entry !== photosPageNumber()"
+                  [class.hover:bg-surface-container-low]="entry !== photosPageNumber()"
+                  (click)="onPhotosPageNumberChange(entry)"
+                >
+                  {{ entry }}
+                </button>
+              }
             }
 
             <button

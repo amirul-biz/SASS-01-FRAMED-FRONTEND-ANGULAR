@@ -1,4 +1,4 @@
-<div class="group relative bg-surface-container-lowest rounded-[12px] overflow-hidden shadow-[0px_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0px_8px_24px_rgba(20,33,61,0.12)] transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+<div class="group relative bg-surface-container-lowest rounded-[12px] overflow-hidden shadow-[0px_4px_12px_rgba(20,33,61,0.08)] lg:hover:shadow-[0px_8px_24px_rgba(20,33,61,0.12)] transition-all duration-300 lg:hover:scale-[1.02] cursor-pointer">
   <div class="relative w-full aspect-square">
     <button
       type="button"
@@ -6,23 +6,30 @@
       [attr.aria-label]="'Preview ' + photo().label"
       (click)="previewPhoto.emit()"
     >
-      <img class="w-full h-full object-cover" [src]="photo().imageUrl" [alt]="photo().label" />
+      <img
+        class="w-full h-full object-cover"
+        [src]="photo().imageUrl"
+        [alt]="photo().label"
+        [width]="photo().width ?? undefined"
+        [height]="photo().height ?? undefined"
+        loading="lazy"
+        decoding="async"
+        fetchpriority="low"
+      />
     </button>
     <div class="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-      <span class="font-headline-lg text-[40px] text-on-secondary rotate-[-30deg] tracking-widest drop-shadow-md">PICSWEEP</span>
+      <span class="font-headline-lg text-[24px] md:text-[40px] text-on-secondary rotate-[-30deg] tracking-widest drop-shadow-md">PICSWEEP</span>
     </div>
     <div
-      class="absolute inset-0 bg-primary/20 flex flex-col justify-between p-sm transition-opacity group-hover:opacity-100 pointer-events-none"
-      [class.opacity-100]="selected()"
-      [class.opacity-0]="!selected()"
+      class="absolute inset-0 bg-primary/20 flex flex-col justify-between p-sm transition-opacity opacity-100 lg:opacity-0 lg:group-hover:opacity-100 pointer-events-none"
+      [class.lg:opacity-100]="selected()"
     >
-      <label class="ml-auto cursor-pointer pointer-events-auto">
+      <label class="ml-auto min-w-11 min-h-11 flex items-center justify-end cursor-pointer pointer-events-auto">
         <input type="checkbox" class="sr-only" [checked]="selected()" (change)="toggleSelect.emit()" />
         <div
           class="w-6 h-6 rounded-full border-2 border-on-primary flex items-center justify-center transition-colors"
           [class.bg-secondary]="selected()"
           [class.border-secondary]="selected()"
-          [class.bg-primary/20]="!selected()"
         >
           <span class="material-symbols-outlined text-[16px] text-on-primary" [class.opacity-0]="!selected()">check</span>
         </div>
@@ -30,7 +37,7 @@
       <button
         type="button"
         (click)="toggleSelect.emit()"
-        class="bg-primary/90 text-on-primary rounded-lg py-sm px-md backdrop-blur-sm self-center font-label-md flex items-center gap-xs pointer-events-auto"
+        class="bg-primary/90 text-on-primary rounded-lg min-h-11 px-md backdrop-blur-sm self-center font-label-md flex items-center gap-xs pointer-events-auto"
       >
         <span class="material-symbols-outlined text-[18px]">{{ selected() ? 'check' : 'add' }}</span>
         {{ selected() ? 'Selected' : 'Select' }}

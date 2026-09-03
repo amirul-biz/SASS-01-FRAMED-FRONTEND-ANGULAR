@@ -20,13 +20,19 @@ export function isEventLive(startDateStr: string, endDateStr: string): boolean {
   return now >= new Date(startDateStr).getTime() && now <= new Date(endDateStr).getTime();
 }
 
+// captured_at is stored as a wall-clock EXIF time with no timezone (TIMESTAMP(3) without time
+// zone). The API serializes it with a trailing "Z", so new Date(...) parses those digits as UTC —
+// reading them back with getHours()/getMinutes() would reinterpret them in the browser's local
+// zone instead, shifting the displayed time by that offset. getUTCHours/getUTCMinutes read the
+// digits as stored, which is also what the server-side capturedFrom/capturedTo filter matches
+// against.
 function formatCapturedAtTime(capturedAt: string | null): string {
   if (!capturedAt) {
     return '';
   }
   const date = new Date(capturedAt);
-  let hours = date.getHours();
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+  let hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
   const meridiem = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
   return `${hours}:${minutes} ${meridiem}`;
@@ -88,5 +94,7 @@ export function toGalleryPhoto(eventId: string, photo: ClientEventPhoto): IPhoto
     label: photo.originalName,
     plateNumber: '',
     capturedAt: formatCapturedAtTime(photo.capturedAt),
+    width: photo.width,
+    height: photo.height,
   };
 }

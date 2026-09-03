@@ -1,0 +1,18 @@
+<div class="bg-surface-container-lowest rounded-[12px] p-md shadow-[0px_4px_12px_rgba(20,33,61,0.08)]">
+  <h2 class="hidden lg:block font-headline-md text-headline-md text-on-surface mb-md">{{ title() }}</h2>
+
+  <button
+    type="button"
+    class="lg:hidden w-full min-h-11 flex items-center justify-between font-headline-md text-headline-md text-on-surface"
+    [class.mb-md]="expanded()"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggle()"
+  >
+    {{ title() }}
+    <span class="material-symbols-outlined text-on-surface-variant">{{ expanded() ? 'expand_less' : 'expand_more' }}</span>
+  </button>
+
+  <div class="lg:block" [class.hidden]="!expanded()">
+    <ng-content />
+  </div>
+</div>

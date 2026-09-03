@@ -138,14 +138,25 @@ export class ClientService {
 
   getEventPhotos(
     id: string,
-    params: { pageNumber?: number; pageSize?: number } = {},
+    params: {
+      pageNumber?: number;
+      pageSize?: number;
+      search?: string;
+      capturedFrom?: string;
+      capturedTo?: string;
+    } = {},
   ): Observable<PaginatedClientEventPhotoList> {
     return this.http.get<PaginatedClientEventPhotoList>(
       `${this.env.apiUrl}/client/events/${id}/photos`,
       {
         params: {
           pageNumber: params.pageNumber ?? 1,
-          pageSize: params.pageSize ?? 100,
+          pageSize: params.pageSize ?? 30,
+          // Omit rather than send empty — an explicit search='' would still hit the backend's
+          // `contains` filter and match every row, defeating the "no filter" case.
+          ...(params.search && { search: params.search }),
+          ...(params.capturedFrom && { capturedFrom: params.capturedFrom }),
+          ...(params.capturedTo && { capturedTo: params.capturedTo }),
         },
       },
     );
