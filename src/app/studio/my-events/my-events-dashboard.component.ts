@@ -26,6 +26,9 @@ export class MyEventsDashboardComponent {
   readonly isLoading = signal(true);
   readonly errorMsg = signal<string | null>(null);
 
+  // Mobile card layout's per-row "..." actions menu — only one open at a time.
+  readonly openMenuId = signal<string | null>(null);
+
   constructor() {
     this.loadTrigger$
       .pipe(
@@ -56,6 +59,14 @@ export class MyEventsDashboardComponent {
     this.pageSize.set(Number((event.target as HTMLSelectElement).value));
     this.pageNumber.set(1);
     this.loadTrigger$.next();
+  }
+
+  toggleMenu(event: Event): void {
+    this.openMenuId.update((id) => (id === event.id ? null : event.id));
+  }
+
+  closeMenu(): void {
+    this.openMenuId.set(null);
   }
 
   togglePublish(event: Event): void {

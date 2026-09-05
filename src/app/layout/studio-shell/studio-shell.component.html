@@ -1,4 +1,10 @@
-<aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(20,33,61,0.04)]">
+@if (sidebarOpen()) {
+  <div class="fixed inset-0 bg-primary/40 z-40 md:hidden" aria-hidden="true" (click)="closeSidebar()"></div>
+}
+<aside
+  class="fixed left-0 top-0 h-dvh w-72 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(20,33,61,0.04)] transition-transform duration-300 md:translate-x-0 overflow-y-auto"
+  [class.-translate-x-full]="!sidebarOpen()"
+>
   <div class="p-lg flex items-center gap-sm mb-lg">
     <span class="material-symbols-outlined text-primary text-[28px]">photo_camera</span>
     <span class="font-headline-md text-headline-md text-primary tracking-tight">PICSWEEP</span>
@@ -21,6 +27,7 @@
       routerLink="/studio/events"
       routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
       class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+      (click)="closeSidebar()"
     >
       <span class="material-symbols-outlined mr-md">calendar_today</span>
       <span class="font-label-md text-label-md">My Events</span>
@@ -29,6 +36,7 @@
       routerLink="/studio/orders"
       routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
       class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+      (click)="closeSidebar()"
     >
       <span class="material-symbols-outlined mr-md">receipt_long</span>
       <span class="font-label-md text-label-md">Orders</span>
@@ -49,6 +57,7 @@
           routerLink="/studio/pricing-bundles"
           routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
           class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+          (click)="closeSidebar()"
         >
           <span class="font-label-md text-label-md">Bundles</span>
         </a>
@@ -56,6 +65,7 @@
           routerLink="/studio/pricing-options"
           routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
           class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+          (click)="closeSidebar()"
         >
           <span class="font-label-md text-label-md">Options</span>
         </a>
@@ -63,6 +73,7 @@
           routerLink="/studio/vouchers"
           routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
           class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+          (click)="closeSidebar()"
         >
           <span class="font-label-md text-label-md">Vouchers</span>
         </a>
@@ -72,6 +83,7 @@
       routerLink="/studio/profile-settings"
       routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
       class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all mt-xl"
+      (click)="closeSidebar()"
     >
       <span class="material-symbols-outlined mr-md">settings</span>
       <span class="font-label-md text-label-md">Profile Settings</span>
@@ -86,16 +98,47 @@
     </button>
   </nav>
 </aside>
-<div class="pl-72">
-  <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-end px-margin-desktop gap-lg">
-    <div class="flex-1 flex justify-start">
-      <div class="bg-surface-container flex items-center px-md py-xs rounded-full w-64">
-        <span class="material-symbols-outlined text-on-surface-variant mr-sm">search</span>
-        <input class="bg-transparent border-none focus:ring-0 text-caption w-full" placeholder="Search gallery..." aria-label="Search gallery" type="text" />
-      </div>
+<div class="pl-0 md:pl-72">
+  <header class="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-30 flex items-center justify-between px-margin-mobile md:px-margin-desktop gap-lg">
+    <div class="flex items-center gap-sm min-w-0">
+      <button
+        type="button"
+        class="md:hidden w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"
+        [attr.aria-expanded]="sidebarOpen()"
+        aria-controls="studio-sidebar-nav"
+        aria-label="Toggle navigation menu"
+        (click)="toggleSidebar()"
+      >
+        <span class="material-symbols-outlined text-[24px]">{{ sidebarOpen() ? 'close' : 'menu' }}</span>
+      </button>
+      <span class="md:hidden flex items-center gap-xs min-w-0 truncate">
+        <span class="material-symbols-outlined text-primary text-[22px] shrink-0">photo_camera</span>
+        <span class="font-headline-md text-headline-md text-primary tracking-tight truncate">PICSWEEP</span>
+      </span>
     </div>
+    <button
+      type="button"
+      class="w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"
+      aria-label="Search gallery"
+    >
+      <span class="material-symbols-outlined text-[24px]">search</span>
+    </button>
   </header>
-  <main class="relative pt-16 min-h-screen bg-surface">
+  <main class="relative pt-16 pb-24 md:pb-0 min-h-dvh bg-surface">
+    @if (!profileComplete()) {
+      <div class="mx-margin-desktop mt-lg flex items-center gap-md rounded-lg bg-error-container px-lg py-md">
+        <span class="material-symbols-outlined text-on-error-container">warning</span>
+        <span class="font-label-md text-label-md text-on-error-container flex-1">
+          Complete your profile settings before you can create events.
+        </span>
+        <a
+          routerLink="/studio/profile-settings"
+          class="font-label-md text-label-md text-on-error-container underline"
+        >
+          Go to Profile Settings
+        </a>
+      </div>
+    }
     <router-outlet />
   </main>
 </div>

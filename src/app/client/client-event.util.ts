@@ -20,22 +20,33 @@ export function isEventLive(startDateStr: string, endDateStr: string): boolean {
   return now >= new Date(startDateStr).getTime() && now <= new Date(endDateStr).getTime();
 }
 
-// captured_at is stored as a wall-clock EXIF time with no timezone (TIMESTAMP(3) without time
-// zone). The API serializes it with a trailing "Z", so new Date(...) parses those digits as UTC —
-// reading them back with getHours()/getMinutes() would reinterpret them in the browser's local
-// zone instead, shifting the displayed time by that offset. getUTCHours/getUTCMinutes read the
-// digits as stored, which is also what the server-side capturedFrom/capturedTo filter matches
-// against.
+// capturedAt is a real UTC instant (converted from the camera's local wall-clock time at
+// upload); convert it back to the viewer's local time for display.
 function formatCapturedAtTime(capturedAt: string | null): string {
   if (!capturedAt) {
     return '';
   }
   const date = new Date(capturedAt);
-  let hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
   const meridiem = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
   return `${hours}:${minutes} ${meridiem}`;
+}
+
+// This app only serves Malaysia-based events and there's no per-event timezone field, so a fixed
+// Asia/Kuala_Lumpur (UTC+8) offset converts the customer's local time-of-day filter selection into
+// the UTC time-of-day the backend's capturedMinuteOfDay filter (derived from the stored UTC
+// instant) actually compares against.
+const EVENT_TIMEZONE_OFFSET_MINUTES = 8 * 60;
+
+export function toUtcTimeOfDay(localTime: string): string {
+  const [hourStr, minuteStr] = localTime.split(':');
+  const totalMinutes =
+    (Number(hourStr) * 60 + Number(minuteStr) - EVENT_TIMEZONE_OFFSET_MINUTES + 1440) % 1440;
+  const hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+  const minutes = (totalMinutes % 60).toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 export function formatCategory(category: string): string {

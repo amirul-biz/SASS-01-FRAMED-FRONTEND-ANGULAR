@@ -185,6 +185,7 @@ export class ProfileSettingsComponent {
       .subscribe({
         next: () => {
           this.saved.set(true);
+          this.profileService.refreshProfileCompleteness();
           setTimeout(() => this.saved.set(false), 2000);
         },
         error: () => {

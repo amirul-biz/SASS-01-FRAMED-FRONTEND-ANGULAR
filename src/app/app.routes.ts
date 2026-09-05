@@ -4,6 +4,7 @@ import { StudioShellComponent } from './layout/studio-shell/studio-shell.compone
 import { AdminShellComponent } from './layout/admin-shell/admin-shell.component';
 import { studioGuard } from './auth/studio.guard';
 import { adminGuard } from './auth/admin.guard';
+import { studioLandingGuard, profileCompleteDeactivateGuard } from './studio/profile-complete.guard';
 
 export const routes: Routes = [
   {
@@ -48,7 +49,7 @@ export const routes: Routes = [
     component: StudioShellComponent,
     canActivate: [studioGuard],
     children: [
-      { path: '', redirectTo: 'events', pathMatch: 'full' },
+      { path: '', canActivate: [studioLandingGuard], pathMatch: 'full', children: [] },
       {
         path: 'events',
         loadComponent: () =>
@@ -141,6 +142,7 @@ export const routes: Routes = [
         path: 'profile-settings',
         loadComponent: () =>
           import('./studio/profile-settings/profile-settings.component').then((m) => m.ProfileSettingsComponent),
+        canDeactivate: [profileCompleteDeactivateGuard],
       },
     ],
   },

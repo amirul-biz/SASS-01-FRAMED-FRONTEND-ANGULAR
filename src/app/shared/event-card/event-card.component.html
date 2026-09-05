@@ -13,25 +13,25 @@
       <span class="font-label-md text-label-md text-on-surface">{{ event().photoCount }}</span>
     </div>
     @if (event().isLive) {
-      <div class="absolute top-sm left-sm px-sm py-xs bg-secondary rounded-md text-caption font-label-md text-on-secondary uppercase tracking-widest">
+      <div class="absolute top-sm left-sm px-sm py-xs bg-secondary rounded-md text-caption font-caption text-on-secondary uppercase tracking-widest">
         Live
       </div>
     }
   </div>
   <div class="p-md flex flex-col gap-xs flex-1">
-    <span class="text-caption font-label-md text-secondary uppercase tracking-widest">{{ event().category }}</span>
+    <span class="text-caption font-caption text-secondary uppercase tracking-widest">{{ event().category }}</span>
     <h3 class="font-headline-md text-headline-md text-on-surface leading-tight line-clamp-2">{{ event().title }}</h3>
     <div class="flex items-center gap-xs text-on-surface-variant">
       <span class="material-symbols-outlined text-[16px]">calendar_today</span>
-      <span class="text-caption font-body-md">{{ event().dateRange }}</span>
+      <span class="text-caption font-caption">{{ event().dateRange }}</span>
     </div>
     <div class="flex items-center gap-xs text-on-surface-variant">
       <span class="material-symbols-outlined text-[16px]">location_on</span>
-      <span class="text-caption font-body-md">{{ event().location }}</span>
+      <span class="text-caption font-caption">{{ event().location }}</span>
     </div>
     <div class="flex items-center gap-xs text-on-surface-variant pt-xs border-t border-outline-variant mt-auto">
       <span class="material-symbols-outlined text-[16px]">photo_camera</span>
-      <span class="text-caption font-body-md truncate">{{ event().photographerName }}</span>
+      <span class="text-caption font-caption truncate">{{ event().photographerName }}</span>
     </div>
   </div>
 </article>

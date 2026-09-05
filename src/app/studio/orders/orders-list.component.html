@@ -44,8 +44,8 @@
             <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
               <th class="p-md">Date</th>
               <th class="p-md">Event</th>
-              <th class="p-md">Customer</th>
-              <th class="p-md">Photos</th>
+              <th class="p-md hidden md:table-cell">Customer</th>
+              <th class="p-md hidden md:table-cell">Photos</th>
               <th class="p-md text-right">Total</th>
               <th class="p-md"></th>
             </tr>
@@ -63,13 +63,13 @@
                   </div>
                 </td>
                 <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
-                <td class="p-md">
+                <td class="p-md hidden md:table-cell">
                   <div class="flex flex-col">
                     <span class="font-label-md text-label-md text-on-surface">{{ order.email }}</span>
                     <span class="font-caption text-caption text-on-surface-variant">{{ customerPhone(order) }}</span>
                   </div>
                 </td>
-                <td class="p-md font-body-md text-body-md text-on-surface">{{ order.items.length }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface hidden md:table-cell">{{ order.items.length }}</td>
                 <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
                 <td class="p-md text-right">
                   <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
@@ -80,9 +80,9 @@
               @if (isExpanded(order.id)) {
                 <tr class="bg-surface-container-low">
                   <td colspan="6" class="p-md">
-                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_8px_rgba(20,33,61,0.06)] overflow-hidden">
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_8px_rgba(20,33,61,0.06)]">
                       <!-- Panel header -->
-                      <div class="flex flex-wrap items-center justify-between gap-sm px-lg py-md border-b border-outline-variant bg-surface-container">
+                      <div class="flex flex-wrap items-center justify-between gap-sm px-lg py-md border-b border-outline-variant bg-surface-container rounded-t-xl">
                         <div class="flex items-center gap-sm">
                           <span class="material-symbols-outlined text-[20px] text-secondary">receipt_long</span>
                           <span class="font-label-md text-label-md text-on-surface">Order Details</span>
