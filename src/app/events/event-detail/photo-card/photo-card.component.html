@@ -3,13 +3,13 @@
     <button
       type="button"
       class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer"
-      [attr.aria-label]="'Preview ' + photo().label"
+      aria-label="Preview event photo"
       (click)="previewPhoto.emit()"
     >
       <img
         class="w-full h-full object-cover"
         [src]="photo().imageUrl"
-        [alt]="photo().label"
+        alt="Event upload"
         [width]="photo().width ?? undefined"
         [height]="photo().height ?? undefined"
         loading="lazy"
@@ -45,8 +45,7 @@
     </div>
   </div>
   <div class="p-md">
-    <div class="flex justify-between items-start mb-xs">
-      <span class="text-label-md font-label-md text-on-surface truncate">{{ photo().label }}</span>
+    <div class="flex justify-end items-start mb-xs">
       <span class="text-label-md font-label-md text-secondary">{{ formatCurrency(price()) }}</span>
     </div>
     <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>

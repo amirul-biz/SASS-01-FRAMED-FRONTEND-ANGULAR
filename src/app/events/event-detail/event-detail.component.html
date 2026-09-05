@@ -93,30 +93,6 @@
       <div class="w-full lg:w-2/3 lg:pt-xl lg:mt-lg">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-md mb-md">
           <span class="font-headline-md text-headline-md text-on-surface">Latest Uploads</span>
-          <div class="relative w-full sm:w-[280px]">
-            <label class="sr-only" for="photo-search">Search file name</label>
-            <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
-              <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
-            </div>
-            <input
-              id="photo-search"
-              type="text"
-              placeholder="Search photo name"
-              class="w-full h-11 bg-surface border border-outline-variant text-on-surface font-body-md text-body-md rounded-xl py-sm pl-xl pr-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
-              [value]="searchDraft()"
-              (input)="onSearchInput($event)"
-            />
-            @if (searchDraft()) {
-              <button
-                type="button"
-                class="absolute inset-y-0 right-0 pr-md flex items-center text-on-surface-variant hover:text-primary transition-colors"
-                (click)="clearSearch()"
-                aria-label="Clear search"
-              >
-                <span class="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            }
-          </div>
         </div>
 
         @if (response()) {
@@ -153,11 +129,7 @@
         @if (photosError()) {
           <p class="text-body-md font-body-md text-error py-xl text-center">{{ photosError() }}</p>
         } @else if (!isLoadingPhotos() && photoRows().length === 0) {
-          @if (search()) {
-            <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match "{{ search() }}".</p>
-          } @else {
-            <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match this search.</p>
-          }
+          <p class="text-body-md font-body-md text-on-surface-variant py-xl text-center">No photos match the current filters.</p>
         }
 
         @if (response() && response()!.totalPageCount > 1) {

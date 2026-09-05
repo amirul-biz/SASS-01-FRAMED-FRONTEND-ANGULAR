@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { Subject, switchMap, catchError, of, finalize, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, switchMap, catchError, of, finalize } from 'rxjs';
 import { PaginatedClientEventPhotoList, ClientService } from '../../client/client.service';
-import { toEventDetail, toGalleryPhoto, toSelectionBundles } from '../../client/client-event.util';
+import { toEventDetail, toGalleryPhoto, toSelectionBundles, toUtcTimeOfDay } from '../../client/client-event.util';
 import { IEvent, IPhoto } from '../events.service';
 import { SelectionService } from '../../pricing/selection.service';
-import { SEARCH_DEBOUNCE_MS } from '../../shared/constants/search.constants';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { CollapsiblePanelComponent } from '../../shared/collapsible-panel/collapsible-panel.component';
 import { FindYourPhotosComponent } from './find-your-photos/find-your-photos.component';
@@ -82,22 +81,19 @@ export class EventDetailComponent {
     return ev.albumCoverPhotoUrls.length > 0 ? ev.albumCoverPhotoUrls : [ev.coverImageUrl];
   });
 
-  // --- Photo paging/search/time-filter state ---------------------------------------------------
+  // --- Photo paging/time-filter state -----------------------------------------------------------
   // All server-side now: one request per page instead of fetching every page up front. `loadTrigger$`
   // + switchMap (same idiom as studio/orders/orders-list.component.ts) means a fast page click or
   // filter change cancels the previous in-flight request instead of racing it.
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly pageNumber = signal(1);
   readonly pageSize = signal<number>(PAGE_SIZE_OPTIONS[0]);
-  readonly search = signal('');
-  readonly searchDraft = signal('');
   private readonly timeRange = signal<TimeRange>({ from: '', to: '' });
   readonly response = signal<PaginatedClientEventPhotoList | null>(null);
   readonly isLoadingPhotos = signal(true);
   readonly photosError = signal<string | null>(null);
 
   private readonly loadTrigger$ = new Subject<void>();
-  private readonly searchInput$ = new Subject<string>();
 
   constructor() {
     this.destroyRef.onDestroy(() => clearInterval(this.coverTimer));
@@ -153,23 +149,13 @@ export class EventDetailComponent {
         this.allPricingOptions.set([...optionsById.values()]);
       });
 
-    // New event id → reset paging/search/time filter back to defaults, then (re)load page 1.
+    // New event id → reset paging/time filter back to defaults, then (re)load page 1.
     toObservable(this.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.pageNumber.set(1);
         this.pageSize.set(PAGE_SIZE_OPTIONS[0]);
-        this.search.set('');
-        this.searchDraft.set('');
         this.timeRange.set({ from: '', to: '' });
-        this.loadTrigger$.next();
-      });
-
-    this.searchInput$
-      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        this.search.set(value);
-        this.pageNumber.set(1);
         this.loadTrigger$.next();
       });
 
@@ -183,17 +169,23 @@ export class EventDetailComponent {
             .getEventPhotos(this.id(), {
               pageNumber: this.pageNumber(),
               pageSize: this.pageSize(),
-              search: this.search() || undefined,
-              capturedFrom: from || undefined,
-              capturedTo: to || undefined,
+              capturedFrom: from ? toUtcTimeOfDay(from) : undefined,
+              capturedTo: to ? toUtcTimeOfDay(to) : undefined,
             })
-            .pipe(finalize(() => this.isLoadingPhotos.set(false)));
+            .pipe(
+              catchError(() => {
+                this.photosError.set('Failed to load photos. Please try again.');
+                return of(null);
+              }),
+              finalize(() => this.isLoadingPhotos.set(false)),
+            );
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({
-        next: (response) => this.response.set(response),
-        error: () => this.photosError.set('Failed to load photos. Please try again.'),
+      .subscribe((response) => {
+        if (response) {
+          this.response.set(response);
+        }
       });
   }
 
@@ -250,17 +242,6 @@ export class EventDetailComponent {
     this.timeRange.set(range);
     this.pageNumber.set(1);
     this.loadTrigger$.next();
-  }
-
-  onSearchInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.searchDraft.set(value);
-    this.searchInput$.next(value);
-  }
-
-  clearSearch(): void {
-    this.searchDraft.set('');
-    this.searchInput$.next('');
   }
 
   onPageNumberChange(pageNumber: number): void {

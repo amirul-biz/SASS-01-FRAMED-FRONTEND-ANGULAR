@@ -16,6 +16,11 @@ export class StudioShellComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profileImageUrl = signal<string | null>(null);
+  readonly profileComplete = this.profileService.isProfileComplete;
+
+  // Mobile sidebar drawer — hidden off-canvas below md, always visible above it (see the
+  // template's md:translate-x-0). Same plain-signal pattern as layout/header's mobile menu.
+  readonly sidebarOpen = signal(false);
 
   readonly pricingExpanded = signal(
     ['/studio/pricing-bundles', '/studio/pricing-options', '/studio/vouchers'].some((path) =>
@@ -31,10 +36,20 @@ export class StudioShellComponent {
         next: (profile) => this.profileImageUrl.set(profile.profileImageUrl),
         error: () => undefined,
       });
+
+    this.profileService.refreshProfileCompleteness();
   }
 
   togglePricing(): void {
     this.pricingExpanded.update((v) => !v);
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update((v) => !v);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
   logout(): void {
