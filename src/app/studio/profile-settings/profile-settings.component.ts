@@ -105,11 +105,11 @@ export class ProfileSettingsComponent {
     this.profileService
       .presignProfileImage(file.name, file.type)
       .pipe(
-        switchMap(({ uploadUrl, publicUrl }) =>
+        switchMap(({ uploadUrl, key }) =>
           this.profileService
             .uploadToPresignedUrl(uploadUrl, file)
             .pipe(switchMap(() =>
-              this.profileService.updateMyProfile({ profileImageUrl: publicUrl }),
+              this.profileService.updateMyProfile({ profileImageKey: key }),
             )),
         ),
         finalize(() => this.isUploadingImage.set(false)),
@@ -147,11 +147,11 @@ export class ProfileSettingsComponent {
     this.profileService
       .presignProfileBanner(file.name, file.type)
       .pipe(
-        switchMap(({ uploadUrl, publicUrl }) =>
+        switchMap(({ uploadUrl, key }) =>
           this.profileService
             .uploadToPresignedUrl(uploadUrl, file)
             .pipe(switchMap(() =>
-              this.profileService.updateMyProfile({ bannerUrl: publicUrl }),
+              this.profileService.updateMyProfile({ bannerKey: key }),
             )),
         ),
         finalize(() => this.isUploadingBanner.set(false)),

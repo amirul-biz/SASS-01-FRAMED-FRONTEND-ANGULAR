@@ -36,7 +36,7 @@ export interface CreateEventDto {
   location?: string;
   eventStartDate: string;
   eventEndDate: string;
-  coverPhotoUrl?: string;
+  coverPhotoKey?: string;
   pricingBundleIds?: string[];
 }
 
@@ -47,7 +47,7 @@ export interface UpdateEventDto {
   location?: string;
   eventStartDate?: string;
   eventEndDate?: string;
-  coverPhotoUrl?: string;
+  coverPhotoKey?: string;
   isPublished?: boolean;
   pricingBundleIds?: string[];
 }

@@ -24,8 +24,8 @@ export interface UpdatePhotographerProfileDto {
   companyName?: string;
   phone?: string;
   contactNo?: string;
-  profileImageUrl?: string;
-  bannerUrl?: string;
+  profileImageKey?: string;
+  bannerKey?: string;
 }
 
 export interface PresignProfileImageUploadResponse {

@@ -68,6 +68,9 @@ export class CreateEventComponent {
   readonly isMultiDay = signal(false);
   readonly selectedBundleIds = signal<Set<string>>(new Set());
   readonly coverPhotoUrl = signal<string | null>(null);
+  // Only set when the user picks a new file this session — the GET response never exposes the
+  // R2 key, so an edit that doesn't touch the cover photo must omit this and leave it unchanged.
+  readonly coverPhotoKey = signal<string | undefined>(undefined);
   readonly isUploadingCover = signal(false);
   readonly isSaving = signal(false);
   readonly isLoading = signal(false);
@@ -190,16 +193,19 @@ export class CreateEventComponent {
     this.eventsService
       .presignCoverPhoto(file.name, file.type)
       .pipe(
-        switchMap(({ uploadUrl, publicUrl }) =>
+        switchMap(({ uploadUrl, publicUrl, key }) =>
           this.eventsService
             .uploadToPresignedUrl(uploadUrl, file)
-            .pipe(map(() => publicUrl)),
+            .pipe(map(() => ({ publicUrl, key }))),
         ),
         finalize(() => this.isUploadingCover.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (publicUrl) => this.coverPhotoUrl.set(publicUrl),
+        next: ({ publicUrl, key }) => {
+          this.coverPhotoUrl.set(publicUrl);
+          this.coverPhotoKey.set(key);
+        },
         error: () => this.errorMsg.set('Failed to upload the cover photo. Please try again.'),
       });
   }
@@ -219,7 +225,7 @@ export class CreateEventComponent {
       description: description || undefined,
       eventStartDate,
       eventEndDate,
-      coverPhotoUrl: this.coverPhotoUrl() ?? undefined,
+      coverPhotoKey: this.coverPhotoKey(),
       pricingBundleIds: [...this.selectedBundleIds()],
     };
 
