@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { parse as parseExif } from 'exifr';
 import { Observable, Subject, catchError, filter, finalize, from, map, mergeMap, of, switchMap, tap } from 'rxjs';
-import { buildPageWindow } from '../../shared/paginator/paginator.component';
+import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { Event as StudioEvent, StudioEventsService } from '../studio-events.service';
 import { Photo, PresignedPhoto, StudioPhotosService } from '../studio-photos.service';
 
@@ -59,7 +59,7 @@ function formatCategory(category: string): string {
 
 @Component({
   selector: 'app-upload-photos',
-  imports: [RouterLink],
+  imports: [RouterLink, PaginatorComponent],
   templateUrl: './upload-photos.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -88,8 +88,6 @@ export class UploadPhotosComponent implements OnInit {
   readonly photosTotalItemCount = signal(0);
   readonly photosTotalPageCount = signal(1);
   readonly isLoadingPhotos = signal(true);
-
-  readonly photosPageWindow = computed(() => buildPageWindow(this.photosPageNumber(), this.photosTotalPageCount()));
 
   readonly selectedPhotoIndex = signal<number | null>(null);
   readonly selectedPhoto = computed(() => {
@@ -175,8 +173,8 @@ export class UploadPhotosComponent implements OnInit {
     this.photosLoadTrigger$.next();
   }
 
-  onPhotosPageSizeChange(event: globalThis.Event): void {
-    this.photosPageSize.set(Number((event.target as HTMLSelectElement).value));
+  onPhotosPageSizeChange(pageSize: number): void {
+    this.photosPageSize.set(pageSize);
     this.photosPageNumber.set(1);
     this.photosLoadTrigger$.next();
   }

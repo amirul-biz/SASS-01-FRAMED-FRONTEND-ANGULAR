@@ -68,8 +68,14 @@ export class PaginatorComponent {
   }
 
   commitGoTo(): void {
-    const raw = Number(this.goToDraft());
+    const draft = this.goToDraft().trim();
     this.goToDraft.set('');
+    // Empty draft on blur (focused then clicked away, or Enter already consumed the value) must
+    // not navigate — Number('') is 0, which would clamp straight to page 1 otherwise.
+    if (draft === '') {
+      return;
+    }
+    const raw = Number(draft);
     if (!Number.isInteger(raw)) {
       return;
     }
