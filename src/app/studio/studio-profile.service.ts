@@ -44,21 +44,30 @@ export class StudioProfileService {
   private readonly _isProfileComplete = signal(true);
   readonly isProfileComplete = this._isProfileComplete.asReadonly();
 
+  private readonly _missingProfileFields = signal<string[]>([]);
+  readonly missingProfileFields = this._missingProfileFields.asReadonly();
+
   getMyProfile(): Observable<PhotographerProfile> {
     return this.http.get<PhotographerProfile>(
       `${this.env.apiUrl}/photographer/profile`,
     );
   }
 
-  getProfileCompleteness(): Observable<{ isComplete: boolean }> {
-    return this.http.get<{ isComplete: boolean }>(
+  getProfileCompleteness(): Observable<{
+    isComplete: boolean;
+    missingFields: string[];
+  }> {
+    return this.http.get<{ isComplete: boolean; missingFields: string[] }>(
       `${this.env.apiUrl}/photographer/profile/completeness`,
     );
   }
 
   refreshProfileCompleteness(): void {
     this.getProfileCompleteness().subscribe({
-      next: (res) => this._isProfileComplete.set(res.isComplete),
+      next: (res) => {
+        this._isProfileComplete.set(res.isComplete);
+        this._missingProfileFields.set(res.missingFields);
+      },
       error: () => undefined,
     });
   }

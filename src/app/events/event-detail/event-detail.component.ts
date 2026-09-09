@@ -247,6 +247,7 @@ export class EventDetailComponent {
   onPageNumberChange(pageNumber: number): void {
     this.pageNumber.set(pageNumber);
     this.loadTrigger$.next();
+    document.getElementById('photo-listing-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   onPageSizeChange(pageSize: number): void {

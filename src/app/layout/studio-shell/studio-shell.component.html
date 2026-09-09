@@ -130,6 +130,9 @@
         <span class="material-symbols-outlined text-on-error-container">warning</span>
         <span class="font-label-md text-label-md text-on-error-container flex-1">
           Complete your profile settings before you can create events.
+          @if (missingProfileFields().length) {
+            Missing: {{ missingProfileFields().join(', ') }}.
+          }
         </span>
         <a
           routerLink="/studio/profile-settings"

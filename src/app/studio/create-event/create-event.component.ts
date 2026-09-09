@@ -4,8 +4,10 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, switchMap } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
+import { SearchableSelectComponent } from '../../shared/searchable-select/searchable-select.component';
 import { IPricingBundle, PricingBundlesService, lowestOptionPrice } from '../../pricing/pricing-bundles.service';
-import { calculatePricing } from '../../pricing/pricing.util';
+import { IVoucherCondition, calculatePricing } from '../../pricing/pricing.util';
+import { IVoucher } from '../../pricing/vouchers.service';
 import { formatCurrency } from '../../pricing/currency.util';
 import { EventCategory, StudioEventsService } from '../studio-events.service';
 
@@ -32,7 +34,7 @@ function dateRangeValidator(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-create-event',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SearchableSelectComponent],
   templateUrl: './create-event.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -170,6 +172,26 @@ export class CreateEventComponent {
       })),
     })),
   );
+
+  // Percent-tier conditions carry their discount as a percentage directly; flat-tier conditions
+  // carry a flat per-photo price, so the % saved is derived from the option's list price.
+  voucherDiscountPercent(
+    option: { price: number },
+    voucher: { discountType: 'flat-tier' | 'percent-tier' },
+    condition: IVoucherCondition,
+  ): number {
+    const percent =
+      voucher.discountType === 'percent-tier'
+        ? condition.value
+        : option.price > 0
+          ? (1 - condition.value / option.price) * 100
+          : 0;
+    return Math.max(0, Math.min(100, Math.round(percent)));
+  }
+
+  voucherRangeLabel(condition: IVoucherCondition): string {
+    return `${condition.minPhotos}${condition.maxPhotos === null ? '+' : '-' + condition.maxPhotos} photos`;
+  }
 
   onCoverFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

@@ -17,6 +17,7 @@ export class StudioShellComponent {
 
   readonly profileImageUrl = signal<string | null>(null);
   readonly profileComplete = this.profileService.isProfileComplete;
+  readonly missingProfileFields = this.profileService.missingProfileFields;
 
   // Mobile sidebar drawer — hidden off-canvas below md, always visible above it (see the
   // template's md:translate-x-0). Same plain-signal pattern as layout/header's mobile menu.

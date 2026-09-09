@@ -1,0 +1,40 @@
+<div class="relative">
+  <input
+    #searchInput
+    type="text"
+    autocomplete="off"
+    role="combobox"
+    aria-expanded="{{ isOpen() }}"
+    class="w-full h-12 px-md pr-xl border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer read-only:cursor-default"
+    [class.border-outline-variant]="true"
+    [placeholder]="placeholder()"
+    [value]="isOpen() ? draft() : value()"
+    (focus)="open()"
+    (input)="onInput($event)"
+    (keydown.escape)="close()"
+    (keydown.enter)="selectFirst(); $event.preventDefault()"
+    (blur)="markTouched()"
+  />
+  <span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-[20px]">
+    {{ isOpen() ? 'search' : 'expand_more' }}
+  </span>
+
+  @if (isOpen()) {
+    <div class="absolute z-30 mt-xs w-full max-h-60 overflow-y-auto bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_8px_24px_rgba(20,33,61,0.12)]">
+      @for (option of filteredOptions(); track option) {
+        <button
+          type="button"
+          class="w-full text-left px-md py-sm font-body-md text-body-md hover:bg-surface-container-low transition-colors"
+          [class.bg-primary]="option === value()"
+          [class.text-on-primary]="option === value()"
+          (mousedown)="$event.preventDefault()"
+          (click)="select(option)"
+        >
+          {{ option }}
+        </button>
+      } @empty {
+        <p class="px-md py-sm text-caption text-on-surface-variant">No matches found</p>
+      }
+    </div>
+  }
+</div>

@@ -19,6 +19,9 @@ export class HomeComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
+  // Hero/search section is temporarily hidden (product call) — flip to true to restore it.
+  readonly showHero = false;
+
   readonly latestEvents = signal<IEvent[]>([]);
   readonly topPhotographers = signal<ClientTopPhotographer[]>([]);
 

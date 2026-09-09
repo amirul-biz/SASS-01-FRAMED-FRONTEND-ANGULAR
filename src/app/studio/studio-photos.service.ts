@@ -112,6 +112,13 @@ export class StudioPhotosService {
     );
   }
 
+  deletePhotosBatch(eventId: string, photoIds: string[]): Observable<{ deletedCount: number }> {
+    return this.http.post<{ deletedCount: number }>(
+      `${this.env.apiUrl}/events/${eventId}/photos/delete-batch`,
+      { photoIds },
+    );
+  }
+
   uploadWithProgress(uploadUrl: string, file: File): Observable<HttpEvent<unknown>> {
     return this.presignedUpload.uploadWithProgress(uploadUrl, file);
   }

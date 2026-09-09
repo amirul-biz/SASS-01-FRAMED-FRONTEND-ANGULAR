@@ -66,16 +66,11 @@
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface mb-xs" for="category">Category</label>
-      <select
-        id="category"
+      <app-searchable-select
         formControlName="category"
-        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-      >
-        <option value="" disabled>Select a category</option>
-        @for (category of categories; track category) {
-          <option [value]="category">{{ category }}</option>
-        }
-      </select>
+        [options]="categories"
+        placeholder="Select a category"
+      />
       @if (form.controls.category.invalid && form.controls.category.touched) {
         <p class="text-caption text-error mt-xs">Category is required.</p>
       }
@@ -212,13 +207,26 @@
                 <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(row.option.price) }}/photo</span>
               </div>
               @if (row.matches.length > 0) {
-                <div class="flex flex-col gap-sm pl-md">
+                <div class="flex flex-col gap-xs">
                   @for (match of row.matches; track match.voucher.id + ':' + match.condition.minPhotos) {
-                    <div class="flex justify-between items-center">
-                      <span class="font-caption text-caption text-on-surface-variant">{{ match.voucher.name }}: {{ match.condition.minPhotos }}{{ match.condition.maxPhotos === null ? '+' : '-' + match.condition.maxPhotos }} Photos</span>
-                      <span class="font-label-md text-label-md text-on-surface">
-                        {{ formatCurrency(match.preview.subtotal) }} Total / {{ formatCurrency(match.preview.pricePerPhoto) }} / photo
-                      </span>
+                    <div class="rounded-lg bg-surface-container px-sm py-xs flex flex-col gap-2xs">
+                      <div class="flex items-center justify-between gap-sm">
+                        <span class="inline-flex items-center gap-xs min-w-0">
+                          <span class="shrink-0 px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md">
+                            {{ voucherDiscountPercent(row.option, match.voucher, match.condition) }}% off
+                          </span>
+                          <span class="font-label-md text-label-md text-on-surface truncate">{{ match.voucher.name }}</span>
+                        </span>
+                        <span class="shrink-0 text-caption text-on-surface-variant">{{ voucherRangeLabel(match.condition) }}</span>
+                      </div>
+                      <div class="flex items-center justify-between gap-sm">
+                        <span class="text-caption text-on-surface-variant">
+                          <span class="line-through">{{ formatCurrency(row.option.price) }}</span>
+                          <span class="material-symbols-outlined text-[14px] align-middle">arrow_forward</span>
+                          <span class="font-label-md text-label-md text-secondary">{{ formatCurrency(match.preview.pricePerPhoto) }}/photo</span>
+                        </span>
+                        <span class="shrink-0 text-caption text-on-surface-variant">{{ formatCurrency(match.preview.subtotal) }} total</span>
+                      </div>
                     </div>
                   }
                 </div>

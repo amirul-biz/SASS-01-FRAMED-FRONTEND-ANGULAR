@@ -4,7 +4,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { IPricingBundle, PricingBundlesService } from '../../../pricing/pricing-bundles.service';
 import { IPhotoFormatOption, PricingOptionsService } from '../../../pricing/pricing-options.service';
 import { IVoucher, VouchersService, voucherConditionsSummary } from '../../../pricing/vouchers.service';
-import { calculatePricing, findVoucherRangeClashes } from '../../../pricing/pricing.util';
+import { IVoucherCondition, calculatePricing, findVoucherRangeClashes } from '../../../pricing/pricing.util';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 type DraftBundle = Omit<IPricingBundle, 'id' | 'eventsUsingCount' | 'vouchers' | 'pricingOptions'> & {
@@ -137,6 +137,26 @@ export class PricingBundleFormComponent {
 
   isOptionChecked(id: string): boolean {
     return this.draft().pricingOptionIds.includes(id);
+  }
+
+  // Percent-tier conditions carry their discount as a percentage directly; flat-tier conditions
+  // carry a flat per-photo price, so the % saved is derived from the option's list price.
+  voucherDiscountPercent(
+    option: IPhotoFormatOption,
+    voucher: IVoucher,
+    condition: IVoucherCondition,
+  ): number {
+    const percent =
+      voucher.discountType === 'percent-tier'
+        ? condition.value
+        : option.price > 0
+          ? (1 - condition.value / option.price) * 100
+          : 0;
+    return Math.max(0, Math.min(100, Math.round(percent)));
+  }
+
+  voucherRangeLabel(condition: IVoucherCondition): string {
+    return `${condition.minPhotos}${condition.maxPhotos === null ? '+' : '-' + condition.maxPhotos} photos`;
   }
 
   toggleOption(id: string): void {

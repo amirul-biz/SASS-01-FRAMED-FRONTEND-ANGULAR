@@ -44,6 +44,31 @@
       </section>
 
       <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <h2 class="font-headline-md text-headline-md text-primary mb-md">Pricing Options</h2>
+        <p class="text-caption text-on-surface-variant mb-md">Tick which of your saved pricing options riders can choose for photos in this bundle.</p>
+
+        @if (availablePricingOptions().length === 0) {
+          <p class="text-caption text-on-surface-variant">
+            No pricing options yet. <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create one</a> to attach it here.
+          </p>
+        } @else {
+          <div class="flex flex-col gap-sm">
+            @for (option of availablePricingOptions(); track option.id) {
+              <label class="flex items-center gap-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="accent-primary w-4 h-4 rounded border-outline-variant"
+                  [checked]="isOptionChecked(option.id)"
+                  (change)="toggleOption(option.id)"
+                />
+                <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — {{ formatCurrency(option.price) }}/photo</span>
+              </label>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
         <h2 class="font-headline-md text-headline-md text-primary mb-md">Vouchers</h2>
         <p class="text-caption text-on-surface-variant mb-md">Attach any vouchers you've already set up — riders get whichever gives the best discount.</p>
 
@@ -83,31 +108,6 @@
           </div>
         }
       </section>
-
-      <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-        <h2 class="font-headline-md text-headline-md text-primary mb-md">Pricing Options</h2>
-        <p class="text-caption text-on-surface-variant mb-md">Tick which of your saved pricing options riders can choose for photos in this bundle.</p>
-
-        @if (availablePricingOptions().length === 0) {
-          <p class="text-caption text-on-surface-variant">
-            No pricing options yet. <a routerLink="/studio/pricing-options/new" class="underline hover:text-primary">Create one</a> to attach it here.
-          </p>
-        } @else {
-          <div class="flex flex-col gap-sm">
-            @for (option of availablePricingOptions(); track option.id) {
-              <label class="flex items-center gap-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="accent-primary w-4 h-4 rounded border-outline-variant"
-                  [checked]="isOptionChecked(option.id)"
-                  (change)="toggleOption(option.id)"
-                />
-                <span class="font-body-md text-body-md text-on-surface">{{ option.label }} — {{ formatCurrency(option.price) }}/photo</span>
-              </label>
-            }
-          </div>
-        }
-      </section>
     </div>
 
     <aside class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] sticky top-24">
@@ -119,17 +119,30 @@
         @for (row of previewByOption(); track row.option.id) {
           <div [class]="$first ? 'flex flex-col gap-sm' : 'flex flex-col gap-sm border-t border-outline-variant mt-sm pt-sm'">
             <div class="flex justify-between items-center">
-              <span class="font-body-md text-body-md text-on-surface-variant">{{ row.option.label }}</span>
-              <span class="font-label-md text-label-md text-on-surface">{{ formatCurrency(row.option.price) }}/photo</span>
+              <span class="font-label-md text-label-md text-on-surface">{{ row.option.label }}</span>
+              <span class="font-body-md text-body-md text-on-surface">{{ formatCurrency(row.option.price) }}/photo</span>
             </div>
             @if (row.matches.length > 0) {
-              <div class="flex flex-col gap-sm pl-md">
+              <div class="flex flex-col gap-xs">
                 @for (match of row.matches; track match.voucher.id + ':' + match.condition.minPhotos) {
-                  <div class="flex justify-between items-center">
-                    <span class="font-caption text-caption text-on-surface-variant">{{ match.voucher.name }}: {{ match.condition.minPhotos }}{{ match.condition.maxPhotos === null ? '+' : '-' + match.condition.maxPhotos }} Photos</span>
-                    <span class="font-label-md text-label-md text-on-surface">
-                      {{ formatCurrency(match.preview.subtotal) }} Total / {{ formatCurrency(match.preview.pricePerPhoto) }} / photo
-                    </span>
+                  <div class="rounded-lg bg-surface-container px-sm py-xs flex flex-col gap-2xs">
+                    <div class="flex items-center justify-between gap-sm">
+                      <span class="inline-flex items-center gap-xs min-w-0">
+                        <span class="shrink-0 px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md">
+                          {{ voucherDiscountPercent(row.option, match.voucher, match.condition) }}% off
+                        </span>
+                        <span class="font-label-md text-label-md text-on-surface truncate">{{ match.voucher.name }}</span>
+                      </span>
+                      <span class="shrink-0 text-caption text-on-surface-variant">{{ voucherRangeLabel(match.condition) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-sm">
+                      <span class="text-caption text-on-surface-variant">
+                        <span class="line-through">{{ formatCurrency(row.option.price) }}</span>
+                        <span class="material-symbols-outlined text-[14px] align-middle">arrow_forward</span>
+                        <span class="font-label-md text-label-md text-secondary">{{ formatCurrency(match.preview.pricePerPhoto) }}/photo</span>
+                      </span>
+                      <span class="shrink-0 text-caption text-on-surface-variant">{{ formatCurrency(match.preview.subtotal) }} total</span>
+                    </div>
                   </div>
                 }
               </div>

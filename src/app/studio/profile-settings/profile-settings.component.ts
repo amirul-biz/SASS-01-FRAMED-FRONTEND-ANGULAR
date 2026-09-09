@@ -70,7 +70,6 @@ export class ProfileSettingsComponent {
           this.form.patchValue({
             name: profile.name,
             companyName: profile.companyName ?? '',
-            phone: profile.phone ?? '',
             contactNo: profile.contactNo ?? '',
             bio: profile.bio ?? '',
           });
@@ -81,6 +80,14 @@ export class ProfileSettingsComponent {
           this.errorMsg.set('Failed to load your profile. Please try again.');
         },
       });
+  }
+
+  onContactNoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digitsOnly = input.value.replace(/\D/g, '');
+    if (digitsOnly !== input.value) {
+      this.form.controls.contactNo.setValue(digitsOnly);
+    }
   }
 
   onAvatarFileSelected(event: Event): void {
@@ -172,12 +179,12 @@ export class ProfileSettingsComponent {
     if (this.form.invalid) {
       return;
     }
-    const { name, companyName, phone, contactNo, bio } =
+    const { name, companyName, contactNo, bio } =
       this.form.getRawValue();
     this.errorMsg.set(null);
     this.isSaving.set(true);
     this.profileService
-      .updateMyProfile({ name, companyName, phone, contactNo, bio })
+      .updateMyProfile({ name, companyName, contactNo, bio })
       .pipe(
         finalize(() => this.isSaving.set(false)),
         takeUntilDestroyed(this.destroyRef),

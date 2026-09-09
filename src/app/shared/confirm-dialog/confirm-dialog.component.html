@@ -1,0 +1,33 @@
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" (click)="$event.stopPropagation()">
+  <div class="flex items-start gap-sm">
+    <span class="material-symbols-outlined text-error text-[28px]">delete_forever</span>
+    <div>
+      <h3 id="confirm-dialog-title" class="font-headline-md text-headline-md text-on-surface">{{ title() }}</h3>
+      <p class="text-caption text-on-surface-variant mt-xs">{{ message() }}</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button
+      type="button"
+      (click)="cancel()"
+      [disabled]="isBusy()"
+      class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+    >
+      Cancel
+    </button>
+    <button
+      type="button"
+      (click)="confirm()"
+      [disabled]="isBusy()"
+      class="px-md py-sm bg-error text-on-error rounded-xl font-label-md text-label-md hover:bg-error/90 transition-colors disabled:opacity-60 flex items-center gap-xs"
+    >
+      @if (isBusy()) {
+        <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+        Deleting...
+      } @else {
+        <span class="material-symbols-outlined text-[18px]">delete</span>
+        {{ confirmLabel() }}
+      }
+    </button>
+  </div>
+</div>

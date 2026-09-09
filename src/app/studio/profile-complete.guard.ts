@@ -38,12 +38,12 @@ export const profileCompleteDeactivateGuard: CanDeactivateFn<
   }
 
   try {
-    const { isComplete } = await firstValueFrom(
+    const { isComplete, missingFields } = await firstValueFrom(
       profileService.getProfileCompleteness(),
     );
     if (!isComplete) {
       component.errorMsg.set(
-        'Please complete all required fields before leaving this page.',
+        `Please fill in the following before leaving this page: ${missingFields.join(', ')}.`,
       );
     }
     return isComplete;

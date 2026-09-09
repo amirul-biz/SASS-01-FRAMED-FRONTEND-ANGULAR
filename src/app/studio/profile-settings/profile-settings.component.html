@@ -55,12 +55,14 @@
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-lg">
         <div>
-          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="name">Display Name</label>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="name">Display Name <span class="text-error">*</span></label>
           <input
             id="name"
             formControlName="name"
             type="text"
-            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            [class.border-outline-variant]="form.controls.name.valid || form.controls.name.pristine"
+            [class.border-error]="form.controls.name.invalid && form.controls.name.touched"
           />
           @if (form.controls.name.invalid && form.controls.name.touched) {
             <p class="text-caption text-error mt-xs">Display name is required.</p>
@@ -68,7 +70,7 @@
         </div>
 
         <div>
-          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address</label>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address <span class="text-error">*</span></label>
           <input
             id="email"
             formControlName="email"
@@ -89,23 +91,17 @@
         </div>
 
         <div>
-          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="phone">Phone</label>
-          <input
-            id="phone"
-            formControlName="phone"
-            type="tel"
-            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-          />
-        </div>
-
-        <div>
-          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="contactNo">Contact Number</label>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="contactNo">Contact Number <span class="text-error">*</span></label>
           <div class="flex items-center gap-sm">
             <input
               id="contactNo"
               formControlName="contactNo"
               type="tel"
-              class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              inputmode="numeric"
+              class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              [class.border-outline-variant]="form.controls.contactNo.valid || form.controls.contactNo.pristine"
+              [class.border-error]="form.controls.contactNo.invalid && form.controls.contactNo.touched"
+              (input)="onContactNoInput($event)"
             />
             <a
               [href]="whatsappTestUrl()"
@@ -119,6 +115,13 @@
               Test WhatsApp
             </a>
           </div>
+          @if (form.controls.contactNo.invalid && form.controls.contactNo.touched) {
+            @if (form.controls.contactNo.hasError('pattern')) {
+              <p class="text-caption text-error mt-xs">Contact number must contain numbers only.</p>
+            } @else {
+              <p class="text-caption text-error mt-xs">Contact number is required.</p>
+            }
+          }
           <p class="text-caption text-on-surface-variant mt-xs">Shown on your public photographer profile.</p>
         </div>
 

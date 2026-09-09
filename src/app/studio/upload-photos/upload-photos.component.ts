@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { parse as parseExif } from 'exifr';
-import { Observable, Subject, catchError, filter, finalize, from, map, mergeMap, of, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, filter, finalize, forkJoin, from, map, mergeMap, of, switchMap, tap } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { Event as StudioEvent, StudioEventsService } from '../studio-events.service';
 import { Photo, PresignedPhoto, StudioPhotosService } from '../studio-photos.service';
 
@@ -19,7 +20,7 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 const PRESIGN_BATCH_MAX_FILES = 50;
 const PRESIGN_CHUNK_CONCURRENCY = 2;
 const UPLOAD_CONCURRENCY = 4;
-const PHOTOS_PAGE_SIZE_OPTIONS = [100, 200, 500];
+const PHOTOS_PAGE_SIZE_OPTIONS = [30, 50, 100];
 
 interface UploadItem {
   photoId: string;
@@ -59,7 +60,7 @@ function formatCategory(category: string): string {
 
 @Component({
   selector: 'app-upload-photos',
-  imports: [RouterLink, PaginatorComponent],
+  imports: [RouterLink, PaginatorComponent, ConfirmDialogComponent],
   templateUrl: './upload-photos.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -94,6 +95,12 @@ export class UploadPhotosComponent implements OnInit {
     const index = this.selectedPhotoIndex();
     return index !== null ? (this.uploadedPhotos()[index] ?? null) : null;
   });
+
+  // Batch selection for the "Recently Uploaded" grid — ids only, so it survives list refreshes.
+  readonly selectedPhotoIds = signal<Set<string>>(new Set());
+  readonly selectedCount = computed(() => this.selectedPhotoIds().size);
+  readonly isDeleteConfirmOpen = signal(false);
+  readonly isDeletingSelected = signal(false);
 
   readonly formatDisplayDate = formatDisplayDate;
   readonly formatCategory = formatCategory;
@@ -170,13 +177,114 @@ export class UploadPhotosComponent implements OnInit {
 
   onPhotosPageNumberChange(pageNumber: number): void {
     this.photosPageNumber.set(pageNumber);
+    // Selection doesn't span pages — starting fresh keeps the "Delete selected" button honest.
+    this.selectedPhotoIds.set(new Set());
     this.photosLoadTrigger$.next();
+    document.getElementById('uploaded-photos-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   onPhotosPageSizeChange(pageSize: number): void {
     this.photosPageSize.set(pageSize);
     this.photosPageNumber.set(1);
+    this.selectedPhotoIds.set(new Set());
     this.photosLoadTrigger$.next();
+  }
+
+  isPhotoSelected(photoId: string): boolean {
+    return this.selectedPhotoIds().has(photoId);
+  }
+
+  togglePhotoSelection(photoId: string): void {
+    this.selectedPhotoIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(photoId)) {
+        next.delete(photoId);
+      } else {
+        next.add(photoId);
+      }
+      return next;
+    });
+  }
+
+  toggleSelectAllOnPage(): void {
+    const pageIds = this.uploadedPhotos().map((photo) => photo.id);
+    const allSelected = pageIds.length > 0 && pageIds.every((id) => this.selectedPhotoIds().has(id));
+    this.selectedPhotoIds.update((current) => {
+      const next = new Set(current);
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }
+
+  isWholePageSelected(): boolean {
+    const photos = this.uploadedPhotos();
+    return photos.length > 0 && photos.every((photo) => this.selectedPhotoIds().has(photo.id));
+  }
+
+  openBatchDeleteConfirm(): void {
+    if (this.selectedCount() === 0) {
+      return;
+    }
+    this.closePreview();
+    this.isDeleteConfirmOpen.set(true);
+  }
+
+  closeBatchDeleteConfirm(): void {
+    if (this.isDeletingSelected()) {
+      return;
+    }
+    this.isDeleteConfirmOpen.set(false);
+  }
+
+  confirmBatchDelete(): void {
+    const ids = [...this.selectedPhotoIds()];
+    if (ids.length === 0) {
+      this.isDeleteConfirmOpen.set(false);
+      return;
+    }
+
+    this.isDeletingSelected.set(true);
+    // Chunked so each request stays within the backend's per-request batch cap regardless of
+    // how large the current page is.
+    const requests = chunk(ids, 50).map((chunkIds) =>
+      this.photosService.deletePhotosBatch(this.id(), chunkIds),
+    );
+    forkJoin(requests)
+      .pipe(
+        finalize(() => this.isDeletingSelected.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (responses) => {
+          this.isDeleteConfirmOpen.set(false);
+          const deleted = new Set(ids);
+          const remaining = this.uploadedPhotos().filter((photo) => !deleted.has(photo.id));
+          const deletedCount = responses.reduce((sum, response) => sum + response.deletedCount, 0);
+          const totalItemCount = Math.max(0, this.photosTotalItemCount() - deletedCount);
+          this.photosTotalItemCount.set(totalItemCount);
+          this.photosTotalPageCount.set(Math.max(1, Math.ceil(totalItemCount / this.photosPageSize())));
+          this.selectedPhotoIds.set(new Set());
+          if (remaining.length === 0 && this.photosPageNumber() > 1) {
+            this.photosPageNumber.update((page) => page - 1);
+            this.photosLoadTrigger$.next();
+          } else {
+            this.uploadedPhotos.set(remaining);
+          }
+        },
+        error: (err) => {
+          const serverMessage = err?.error?.message;
+          const detail = Array.isArray(serverMessage) ? serverMessage.join(' ') : serverMessage;
+          this.errorMsg.set(
+            detail
+              ? `Failed to delete the selected photos: ${detail}`
+              : 'Failed to delete the selected photos. Please try again.',
+          );
+        },
+      });
   }
 
   openPreview(index: number): void {
@@ -277,6 +385,11 @@ export class UploadPhotosComponent implements OnInit {
     if (this.selectedPhoto()?.id === photoId) {
       this.closePreview();
     }
+    this.selectedPhotoIds.update((current) => {
+      const next = new Set(current);
+      next.delete(photoId);
+      return next;
+    });
 
     const totalItemCount = Math.max(0, this.photosTotalItemCount() - 1);
     this.photosTotalItemCount.set(totalItemCount);
