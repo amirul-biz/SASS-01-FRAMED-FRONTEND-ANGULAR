@@ -8,6 +8,7 @@ import { OrderSummaryComponent } from './order-summary/order-summary.component';
 import { CreateOrderPayload, OrderService } from './order.service';
 import { formatCurrency } from '../pricing/currency.util';
 import { COUNTRY_DIAL_CODE, CountryCode } from './country-code.constants';
+import { toWhatsAppNumber } from '../shared/whatsapp-number.util';
 
 // No payment gateway is integrated yet — orders are simulated by handing the details off to
 // WhatsApp so the photographer/platform can confirm payment manually in the meantime.
@@ -69,10 +70,19 @@ export class CheckoutComponent {
     this.orderService.createOrder(this.buildOrderPayload()).subscribe({ error: () => {} });
 
     const message = this.buildWhatsAppMessage();
-    window.open(
-      `https://wa.me/${this.photographerWhatsAppNumber() ?? WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      '_blank',
-    );
+    const targetNumber = toWhatsAppNumber(this.photographerWhatsAppNumber() ?? WHATSAPP_NUMBER);
+    const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`;
+    // Handing the URL to window.open() directly is unreliable on mobile: the OS's wa.me → app
+    // handoff often keeps just the phone number and drops the ?text= query for a window.open-
+    // spawned context. Opening a blank tab synchronously (still same click tick, so not popup-
+    // blocked) and navigating *that* tab via location.href makes it a real top-level navigation,
+    // which mobile OSes carry through to the app intact.
+    const target = window.open('', '_blank');
+    if (target) {
+      target.location.href = whatsappUrl;
+    } else {
+      window.location.href = whatsappUrl;
+    }
 
     this.orderPlaced.set(true);
     this.selection.clear();
@@ -119,7 +129,7 @@ export class CheckoutComponent {
 
     entries.forEach((entry, index) => {
       lines.push(
-        `${index + 1}. [${entry.photo.id}] ${entry.photo.label} — ${entry.formatOption.label} — ${formatCurrency(entry.formatOption.price)}`,
+        `${index + 1}. ${entry.photo.label} — ${entry.formatOption.label} — ${formatCurrency(entry.formatOption.price)}`,
       );
       lines.push(entry.photo.imageUrl);
     });

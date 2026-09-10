@@ -98,10 +98,17 @@
                           </p>
                           <div class="flex flex-col gap-sm">
                             @for (item of order.items; track item.id) {
-                              <div class="flex items-center gap-md p-sm rounded-lg bg-surface-container-low">
-                                <div class="w-9 h-9 shrink-0 rounded-md bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-label-md">
-                                  {{ $index + 1 }}
-                                </div>
+                              <button
+                                type="button"
+                                (click)="openPhotoPreview(item)"
+                                class="w-full flex items-center gap-md p-sm rounded-lg bg-surface-container-low text-left hover:bg-surface-container transition-colors"
+                              >
+                                <img
+                                  [src]="item.photoUrl"
+                                  [alt]="item.photoName"
+                                  loading="lazy"
+                                  class="w-9 h-9 shrink-0 rounded-md object-cover bg-surface-container-high"
+                                />
                                 <div class="flex-1 min-w-0">
                                   <p class="font-label-md text-label-md text-on-surface truncate">{{ item.photoName }}</p>
                                   <span class="inline-block mt-xs px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-caption text-caption">
@@ -109,7 +116,7 @@
                                   </span>
                                 </div>
                                 <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">{{ formatCurrency(item.price) }}</span>
-                              </div>
+                              </button>
                             }
                           </div>
                         </div>
@@ -223,4 +230,24 @@
       </div>
     }
   </div>
+
+  @if (previewItem(); as item) {
+    <div
+      class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-md"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="item.photoName"
+      (click)="closePhotoPreview()"
+    >
+      <img [src]="item.photoUrl" [alt]="item.photoName" class="max-w-full max-h-full object-contain" />
+      <button
+        type="button"
+        aria-label="Close preview"
+        (click)="closePhotoPreview()"
+        class="absolute top-md right-md w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+  }
 </div>

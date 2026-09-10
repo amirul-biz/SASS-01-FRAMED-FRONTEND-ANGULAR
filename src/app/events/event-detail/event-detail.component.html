@@ -153,6 +153,11 @@
         [photo]="photo"
         [formatOptions]="formatOptions()"
         [initialFormatId]="previewFormatId()"
+        [hasPrev]="hasPrevPhoto()"
+        [hasNext]="hasNextPhoto()"
+        [isNavigating]="isLoadingPhotos()"
+        (prev)="showPrevPhoto()"
+        (next)="showNextPhoto()"
         (closed)="closePreview()"
         (addToCart)="onAddToCartFromModal($event)"
       />

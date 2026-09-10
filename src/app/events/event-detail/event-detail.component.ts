@@ -185,6 +185,7 @@ export class EventDetailComponent {
       .subscribe((response) => {
         if (response) {
           this.response.set(response);
+          this.applyPendingPreviewEdge();
         }
       });
   }
@@ -244,9 +245,13 @@ export class EventDetailComponent {
     this.loadTrigger$.next();
   }
 
-  onPageNumberChange(pageNumber: number): void {
+  private loadPage(pageNumber: number): void {
     this.pageNumber.set(pageNumber);
     this.loadTrigger$.next();
+  }
+
+  onPageNumberChange(pageNumber: number): void {
+    this.loadPage(pageNumber);
     document.getElementById('photo-listing-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -275,6 +280,59 @@ export class EventDetailComponent {
 
   closePreview(): void {
     this.previewPhoto.set(null);
+  }
+
+  /** When an arrow steps past the edge of the loaded page we request the neighbouring page and
+   *  remember which end of it the preview should land on once the response arrives. */
+  private readonly pendingPreviewEdge = signal<'first' | 'last' | null>(null);
+
+  private readonly previewIndex = computed(() => {
+    const id = this.previewPhoto()?.id;
+    return id ? this.photos().findIndex((p) => p.id === id) : -1;
+  });
+
+  readonly hasPrevPhoto = computed(
+    () => this.previewIndex() > 0 || (this.previewIndex() === 0 && this.pageNumber() > 1),
+  );
+
+  readonly hasNextPhoto = computed(() => {
+    const i = this.previewIndex();
+    if (i < 0) return false;
+    return i < this.photos().length - 1 || this.pageNumber() < (this.response()?.totalPageCount ?? 1);
+  });
+
+  showPrevPhoto(): void {
+    this.stepPreview(-1);
+  }
+
+  showNextPhoto(): void {
+    this.stepPreview(1);
+  }
+
+  private stepPreview(delta: -1 | 1): void {
+    const i = this.previewIndex();
+    if (i < 0) return;
+
+    const neighbour = this.photos()[i + delta];
+    if (neighbour) {
+      this.previewPhoto.set(neighbour);
+      return;
+    }
+
+    const page = this.pageNumber() + delta;
+    if (page < 1 || page > (this.response()?.totalPageCount ?? 1)) return;
+    this.pendingPreviewEdge.set(delta === 1 ? 'first' : 'last');
+    this.loadPage(page);
+  }
+
+  private applyPendingPreviewEdge(): void {
+    const edge = this.pendingPreviewEdge();
+    if (!edge) return;
+    this.pendingPreviewEdge.set(null);
+    // Modal was closed mid-load, or the neighbouring page came back empty — don't reopen it.
+    if (!this.previewPhoto()) return;
+    const list = this.photos();
+    this.previewPhoto.set((edge === 'first' ? list[0] : list[list.length - 1]) ?? null);
   }
 
   onAddToCartFromModal(entry: { photo: IPhoto; formatId: string }): void {

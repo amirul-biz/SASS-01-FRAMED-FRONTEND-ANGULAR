@@ -12,6 +12,7 @@ import { finalize, switchMap } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { StudioProfileService } from '../studio-profile.service';
 import { createProfileSettingsForm } from './profile-settings-form.config';
+import { toWhatsAppNumber } from '../../shared/whatsapp-number.util';
 
 const AVATAR_PLACEHOLDER_URL = 'https://i.pravatar.cc/150?u=studio-profile';
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -55,7 +56,7 @@ export class ProfileSettingsComponent {
 
   readonly whatsappTestUrl = computed(() => {
     const digits = this.contactNoValue().replace(/\D/g, '');
-    return digits ? `https://wa.me/${digits}` : null;
+    return digits ? `https://wa.me/${toWhatsAppNumber(digits)}` : null;
   });
 
   constructor() {

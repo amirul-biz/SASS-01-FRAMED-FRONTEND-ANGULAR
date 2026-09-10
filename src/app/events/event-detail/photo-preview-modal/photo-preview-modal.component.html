@@ -8,11 +8,11 @@
   (keydown.escape)="close()"
 >
   <div
-    class="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(20,33,61,0.2)] w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
+    class="relative bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(20,33,61,0.2)] w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
     (click)="$event.stopPropagation()"
   >
     <div class="w-full md:w-2/3 bg-black relative shrink md:shrink-0 max-h-[60vh] md:max-h-none" [style.aspect-ratio]="photoAspectRatio()">
-      <img [src]="photo().imageUrl" alt="Preview" class="w-full h-full object-contain" />
+      <img [src]="photo().imageUrl" alt="Preview" class="w-full h-full object-contain" [class.opacity-60]="isNavigating()" />
       <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
         <div
           class="absolute left-1/2 top-1/2 w-[150%] h-[150%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] opacity-100 grid items-center justify-items-center"
@@ -33,6 +33,29 @@
         class="absolute top-sm right-sm w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors"
       >
         <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+    <div
+      class="flex shrink-0 items-center justify-center gap-lg py-sm
+             md:pointer-events-none md:absolute md:inset-y-0 md:left-0 md:w-2/3 md:justify-between md:px-sm md:py-0"
+    >
+      <button
+        type="button"
+        aria-label="Previous photo"
+        [disabled]="!hasPrev() || isNavigating()"
+        (click)="goPrev()"
+        class="w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors disabled:opacity-40 disabled:pointer-events-none md:pointer-events-auto"
+      >
+        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Next photo"
+        [disabled]="!hasNext() || isNavigating()"
+        (click)="goNext()"
+        class="w-11 h-11 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface hover:bg-surface transition-colors disabled:opacity-40 disabled:pointer-events-none md:pointer-events-auto"
+      >
+        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
       </button>
     </div>
     <div class="w-full md:w-1/3 p-md md:p-lg flex flex-col gap-md">

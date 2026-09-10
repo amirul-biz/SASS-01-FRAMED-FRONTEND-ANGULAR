@@ -6,7 +6,7 @@ import { RangePipe } from '../../shared/pipes/range.pipe';
 import { formatCurrency } from '../../pricing/currency.util';
 import { COUNTRY_DIAL_CODE } from '../../checkout/country-code.constants';
 import { Event, StudioEventsService } from '../studio-events.service';
-import { OrderStatus, PaginatedOrders, StudioOrder, StudioOrdersService } from '../studio-orders.service';
+import { OrderStatus, PaginatedOrders, StudioOrder, StudioOrderItem, StudioOrdersService } from '../studio-orders.service';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
@@ -63,6 +63,7 @@ export class OrdersListComponent {
   readonly errorMsg = signal<string | null>(null);
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly myEvents = signal<Event[]>([]);
+  readonly previewItem = signal<StudioOrderItem | null>(null);
 
   constructor() {
     this.loadTrigger$
@@ -130,6 +131,14 @@ export class OrdersListComponent {
       next.add(orderId);
     }
     this.expandedIds.set(next);
+  }
+
+  openPhotoPreview(item: StudioOrderItem): void {
+    this.previewItem.set(item);
+  }
+
+  closePhotoPreview(): void {
+    this.previewItem.set(null);
   }
 
   hasActiveFilters(): boolean {

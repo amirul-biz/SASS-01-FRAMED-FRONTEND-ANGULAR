@@ -11,6 +11,7 @@ export interface StudioOrderItem {
   id: string;
   photoId: string;
   photoName: string;
+  photoUrl: string;
   formatLabel: string;
   price: number;
 }
