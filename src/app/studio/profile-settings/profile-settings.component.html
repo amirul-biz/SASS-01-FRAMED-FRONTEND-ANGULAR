@@ -14,10 +14,11 @@
       </div>
 
       <label
-        class="absolute top-sm right-sm px-sm py-xs rounded-full bg-white/90 text-caption font-label-md text-on-surface cursor-pointer hover:bg-white transition-colors"
+        class="absolute top-sm right-sm flex items-center gap-xs px-md py-sm rounded-full bg-surface shadow-[0_2px_10px_rgba(20,33,61,0.35)] text-caption font-label-md text-on-surface cursor-pointer hover:bg-surface-container-low transition-colors"
         [class.opacity-60]="isUploadingBanner()"
         [class.pointer-events-none]="isUploadingBanner()"
       >
+        <span class="material-symbols-outlined text-[16px]">{{ isUploadingBanner() ? 'hourglass_top' : 'photo_camera' }}</span>
         {{ isUploadingBanner() ? 'Uploading...' : 'Change Banner' }}
         <input
           type="file"
@@ -70,6 +71,49 @@
         </div>
 
         <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="nickname">Nickname</label>
+          <div class="flex items-center gap-sm">
+            <input
+              id="nickname"
+              formControlName="nickname"
+              type="text"
+              class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              [class.border-outline-variant]="form.controls.nickname.valid || form.controls.nickname.pristine"
+              [class.border-error]="form.controls.nickname.invalid && form.controls.nickname.touched"
+              (input)="onNicknameInput($event)"
+            />
+            <button
+              type="button"
+              (click)="copyProfileLink()"
+              [disabled]="!savedNicknameLink()"
+              [attr.aria-disabled]="!savedNicknameLink()"
+              class="shrink-0 h-12 px-md flex items-center gap-xs rounded-xl font-label-md text-label-md border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              title="{{ savedNicknameLink() ? 'Copy your public profile link' : 'Save your nickname first' }}"
+            >
+              <span class="material-symbols-outlined text-[18px]">{{ nicknameCopied() ? 'check' : 'link' }}</span>
+              {{ nicknameCopied() ? 'Copied' : 'Copy Link' }}
+            </button>
+          </div>
+          <p class="text-caption text-on-surface-variant mt-xs">
+            Your profile link: picsweep.my/photographers/{{ form.controls.nickname.value || '…' }}
+          </p>
+          @switch (nicknameStatus()) {
+            @case ('checking') {
+              <p class="text-caption text-on-surface-variant mt-xs">Checking availability…</p>
+            }
+            @case ('available') {
+              <p class="text-caption text-secondary mt-xs">✓ Available</p>
+            }
+            @case ('taken') {
+              <p class="text-caption text-error mt-xs">✗ This nickname is already taken</p>
+            }
+          }
+          @if (form.controls.nickname.invalid && form.controls.nickname.touched) {
+            <p class="text-caption text-error mt-xs">3-30 characters: lowercase letters, numbers, hyphens.</p>
+          }
+        </div>
+
+        <div>
           <label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email Address <span class="text-error">*</span></label>
           <input
             id="email"
@@ -88,36 +132,6 @@
             type="text"
             class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
-        </div>
-
-        <div>
-          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="nickname">Nickname</label>
-          <input
-            id="nickname"
-            formControlName="nickname"
-            type="text"
-            class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            [class.border-outline-variant]="form.controls.nickname.valid || form.controls.nickname.pristine"
-            [class.border-error]="form.controls.nickname.invalid && form.controls.nickname.touched"
-            (input)="onNicknameInput($event)"
-          />
-          <p class="text-caption text-on-surface-variant mt-xs">
-            Your profile link: picsweep.my/photographers/{{ form.controls.nickname.value || '…' }}
-          </p>
-          @switch (nicknameStatus()) {
-            @case ('checking') {
-              <p class="text-caption text-on-surface-variant mt-xs">Checking availability…</p>
-            }
-            @case ('available') {
-              <p class="text-caption text-secondary mt-xs">✓ Available</p>
-            }
-            @case ('taken') {
-              <p class="text-caption text-error mt-xs">✗ This nickname is already taken</p>
-            }
-          }
-          @if (form.controls.nickname.invalid && form.controls.nickname.touched) {
-            <p class="text-caption text-error mt-xs">3-30 characters: lowercase letters, numbers, hyphens.</p>
-          }
         </div>
 
         <div>

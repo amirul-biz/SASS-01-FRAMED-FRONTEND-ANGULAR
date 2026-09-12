@@ -9,7 +9,7 @@
       <img
         class="w-full h-full object-cover"
         [src]="photo().imageUrl"
-        alt="Event upload"
+        [alt]="photo().label || 'Event upload'"
         [width]="photo().width ?? undefined"
         [height]="photo().height ?? undefined"
         loading="lazy"
@@ -45,9 +45,10 @@
     </div>
   </div>
   <div class="p-md">
-    <div class="flex justify-end items-start mb-xs">
-      <span class="text-label-md font-label-md text-secondary">{{ formatCurrency(price()) }}</span>
+    <span class="block text-caption font-label-md text-on-surface truncate mb-xs">{{ photo().label }}</span>
+    <div class="flex justify-between items-center gap-sm">
+      <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>
+      <span class="text-label-md font-label-md text-secondary shrink-0">{{ formatCurrency(price()) }}</span>
     </div>
-    <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>
   </div>
 </div>

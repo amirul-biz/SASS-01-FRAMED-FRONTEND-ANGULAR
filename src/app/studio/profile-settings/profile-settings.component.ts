@@ -61,9 +61,33 @@ export class ProfileSettingsComponent {
     return digits ? `https://wa.me/${toWhatsAppNumber(digits)}` : null;
   });
 
-  private originalNickname = '';
+  private originalNickname = signal('');
   private readonly nicknameInput$ = new Subject<string>();
   readonly nicknameStatus = signal<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  readonly nicknameCopied = signal(false);
+
+  readonly nicknameValue = toSignal(this.form.controls.nickname.valueChanges, {
+    initialValue: this.form.controls.nickname.value,
+  });
+
+  // The public link only exists once a nickname is saved — the copy button reflects the saved
+  // state, not whatever is currently typed in the field (an unsaved nickname has no live page).
+  readonly savedNicknameLink = computed(() => {
+    const nickname = this.nicknameValue();
+    return nickname && nickname === this.originalNickname()
+      ? `https://picsweep.my/photographers/${nickname}`
+      : null;
+  });
+
+  async copyProfileLink(): Promise<void> {
+    const link = this.savedNicknameLink();
+    if (!link) {
+      return;
+    }
+    await navigator.clipboard.writeText(link);
+    this.nicknameCopied.set(true);
+    setTimeout(() => this.nicknameCopied.set(false), 2000);
+  }
 
   constructor() {
     this.profileService
@@ -74,12 +98,12 @@ export class ProfileSettingsComponent {
       )
       .subscribe({
         next: (profile) => {
-          this.originalNickname = profile.nickname ?? '';
+          this.originalNickname.set(profile.nickname ?? '');
           this.form.patchValue({
             name: profile.name,
             companyName: profile.companyName ?? '',
             contactNo: profile.contactNo ?? '',
-            nickname: this.originalNickname,
+            nickname: this.originalNickname(),
             bio: profile.bio ?? '',
           });
           this.profileImageUrl.set(profile.profileImageUrl);
@@ -95,7 +119,7 @@ export class ProfileSettingsComponent {
         debounceTime(SEARCH_DEBOUNCE_MS),
         distinctUntilChanged(),
         switchMap((value) => {
-          if (!value || value === this.originalNickname) {
+          if (!value || value === this.originalNickname()) {
             this.nicknameStatus.set('idle');
             return EMPTY;
           }
@@ -229,7 +253,7 @@ export class ProfileSettingsComponent {
       )
       .subscribe({
         next: () => {
-          this.originalNickname = nickname;
+          this.originalNickname.set(nickname);
           this.saved.set(true);
           this.profileService.refreshProfileCompleteness();
           setTimeout(() => this.saved.set(false), 2000);

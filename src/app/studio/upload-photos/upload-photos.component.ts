@@ -283,11 +283,16 @@ export class UploadPhotosComponent implements OnInit {
           const deleted = new Set(ids);
           const remaining = this.uploadedPhotos().filter((photo) => !deleted.has(photo.id));
           const totalItemCount = Math.max(0, this.photosTotalItemCount() - deletedCount);
+          const totalPageCount = Math.max(1, Math.ceil(totalItemCount / this.photosPageSize()));
           this.photosTotalItemCount.set(totalItemCount);
-          this.photosTotalPageCount.set(Math.max(1, Math.ceil(totalItemCount / this.photosPageSize())));
+          this.photosTotalPageCount.set(totalPageCount);
           this.selectedPhotoIds.set(new Set());
-          if (remaining.length === 0 && this.photosPageNumber() > 1) {
-            this.photosPageNumber.update((page) => page - 1);
+          // remaining.length === 0 doesn't mean the event has no photos left — later pages may
+          // still have items to backfill this one, so always refetch instead of assuming blank.
+          if (remaining.length === 0 && totalItemCount > 0) {
+            if (this.photosPageNumber() > totalPageCount) {
+              this.photosPageNumber.set(totalPageCount);
+            }
             this.photosLoadTrigger$.next();
           } else {
             this.uploadedPhotos.set(remaining);
@@ -412,12 +417,15 @@ export class UploadPhotosComponent implements OnInit {
     });
 
     const totalItemCount = Math.max(0, this.photosTotalItemCount() - 1);
+    const totalPageCount = Math.max(1, Math.ceil(totalItemCount / this.photosPageSize()));
     this.photosTotalItemCount.set(totalItemCount);
-    this.photosTotalPageCount.set(Math.max(1, Math.ceil(totalItemCount / this.photosPageSize())));
+    this.photosTotalPageCount.set(totalPageCount);
 
     const remaining = this.uploadedPhotos().filter((p) => p.id !== photoId);
-    if (remaining.length === 0 && this.photosPageNumber() > 1) {
-      this.photosPageNumber.update((page) => page - 1);
+    if (remaining.length === 0 && totalItemCount > 0) {
+      if (this.photosPageNumber() > totalPageCount) {
+        this.photosPageNumber.set(totalPageCount);
+      }
       this.photosLoadTrigger$.next();
     } else {
       this.uploadedPhotos.set(remaining);
