@@ -12,6 +12,7 @@ export interface PhotographerProfile {
   companyName: string | null;
   phone: string | null;
   contactNo: string | null;
+  nickname: string | null;
   profileImageUrl: string | null;
   bannerUrl: string | null;
   createdAt: string;
@@ -24,6 +25,7 @@ export interface UpdatePhotographerProfileDto {
   companyName?: string;
   phone?: string;
   contactNo?: string;
+  nickname?: string;
   profileImageKey?: string;
   bannerKey?: string;
 }
@@ -59,6 +61,13 @@ export class StudioProfileService {
   }> {
     return this.http.get<{ isComplete: boolean; missingFields: string[] }>(
       `${this.env.apiUrl}/photographer/profile/completeness`,
+    );
+  }
+
+  checkNicknameAvailability(nickname: string): Observable<{ available: boolean }> {
+    return this.http.get<{ available: boolean }>(
+      `${this.env.apiUrl}/photographer/profile/nickname-availability`,
+      { params: { nickname } },
     );
   }
 

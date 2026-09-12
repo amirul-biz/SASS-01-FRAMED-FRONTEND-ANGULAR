@@ -8,7 +8,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
-import { finalize, switchMap } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs';
+import { SEARCH_DEBOUNCE_MS } from '../../shared/constants/search.constants';
 import { AuthService } from '../../auth/auth.service';
 import { StudioProfileService } from '../studio-profile.service';
 import { createProfileSettingsForm } from './profile-settings-form.config';
@@ -59,6 +61,10 @@ export class ProfileSettingsComponent {
     return digits ? `https://wa.me/${toWhatsAppNumber(digits)}` : null;
   });
 
+  private originalNickname = '';
+  private readonly nicknameInput$ = new Subject<string>();
+  readonly nicknameStatus = signal<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+
   constructor() {
     this.profileService
       .getMyProfile()
@@ -68,10 +74,12 @@ export class ProfileSettingsComponent {
       )
       .subscribe({
         next: (profile) => {
+          this.originalNickname = profile.nickname ?? '';
           this.form.patchValue({
             name: profile.name,
             companyName: profile.companyName ?? '',
             contactNo: profile.contactNo ?? '',
+            nickname: this.originalNickname,
             bio: profile.bio ?? '',
           });
           this.profileImageUrl.set(profile.profileImageUrl);
@@ -81,6 +89,26 @@ export class ProfileSettingsComponent {
           this.errorMsg.set('Failed to load your profile. Please try again.');
         },
       });
+
+    this.nicknameInput$
+      .pipe(
+        debounceTime(SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        switchMap((value) => {
+          if (!value || value === this.originalNickname) {
+            this.nicknameStatus.set('idle');
+            return EMPTY;
+          }
+          if (this.form.controls.nickname.invalid) {
+            this.nicknameStatus.set('invalid');
+            return EMPTY;
+          }
+          this.nicknameStatus.set('checking');
+          return this.profileService.checkNicknameAvailability(value);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => this.nicknameStatus.set(res.available ? 'available' : 'taken'));
   }
 
   onContactNoInput(event: Event): void {
@@ -89,6 +117,15 @@ export class ProfileSettingsComponent {
     if (digitsOnly !== input.value) {
       this.form.controls.contactNo.setValue(digitsOnly);
     }
+  }
+
+  onNicknameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const cleaned = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (cleaned !== input.value) {
+      this.form.controls.nickname.setValue(cleaned);
+    }
+    this.nicknameInput$.next(cleaned);
   }
 
   onAvatarFileSelected(event: Event): void {
@@ -177,27 +214,30 @@ export class ProfileSettingsComponent {
 
   save(): void {
     this.form.markAllAsTouched();
-    if (this.form.invalid) {
+    if (this.form.invalid || this.nicknameStatus() === 'taken') {
       return;
     }
-    const { name, companyName, contactNo, bio } =
+    const { name, companyName, contactNo, nickname, bio } =
       this.form.getRawValue();
     this.errorMsg.set(null);
     this.isSaving.set(true);
     this.profileService
-      .updateMyProfile({ name, companyName, contactNo, bio })
+      .updateMyProfile({ name, companyName, contactNo, bio, nickname: nickname || undefined })
       .pipe(
         finalize(() => this.isSaving.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: () => {
+          this.originalNickname = nickname;
           this.saved.set(true);
           this.profileService.refreshProfileCompleteness();
           setTimeout(() => this.saved.set(false), 2000);
         },
-        error: () => {
-          this.errorMsg.set('Failed to save your profile. Please try again.');
+        error: (err: HttpErrorResponse) => {
+          this.errorMsg.set(
+            err.status === 409 ? 'This nickname is already taken.' : 'Failed to save your profile. Please try again.',
+          );
         },
       });
   }

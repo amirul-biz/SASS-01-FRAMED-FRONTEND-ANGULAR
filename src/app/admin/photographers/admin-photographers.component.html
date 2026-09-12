@@ -1,0 +1,182 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Photographers</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">All registered photographer accounts and their status.</p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center justify-between gap-sm border-b border-outline-variant">
+      <div class="relative w-full sm:w-72">
+        <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+        </div>
+        <input
+          type="text"
+          placeholder="Search name or email"
+          class="w-full h-10 bg-surface border border-outline-variant text-on-surface font-body-md text-body-md rounded-xl pl-xl pr-md focus:outline-none focus:border-primary"
+          [value]="searchDraft()"
+          (input)="onSearchInput($event)"
+        />
+      </div>
+      <button
+        type="button"
+        (click)="openRegisterForm()"
+        class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center gap-xs"
+      >
+        <span class="material-symbols-outlined text-[20px]">person_add</span>
+        Register Photographer
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading photographers...</p>
+    } @else if (photographers().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        {{ searchDraft() ? 'No photographers match your search.' : 'No photographers registered yet.' }}
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Photographer</th>
+              <th class="p-md">Email</th>
+              <th class="p-md">Company</th>
+              <th class="p-md text-center">Events</th>
+              <th class="p-md text-center">Status</th>
+              <th class="p-md">Joined</th>
+              <th class="p-md"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (photographer of photographers(); track photographer.id) {
+              <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors">
+                <td class="p-md">
+                  <div class="flex items-center gap-sm">
+                    @if (photographer.profileImageUrl) {
+                      <img [src]="photographer.profileImageUrl" [alt]="photographer.name" class="w-9 h-9 rounded-full object-cover" />
+                    } @else {
+                      <span class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+                      </span>
+                    }
+                    <span class="font-label-md text-label-md text-on-surface">{{ photographer.name }}</span>
+                  </div>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ photographer.email }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ photographer.companyName ?? '—' }}</td>
+                <td class="p-md text-center font-body-md text-body-md text-on-surface">{{ photographer.eventCount }}</td>
+                <td class="p-md text-center">
+                  <span
+                    class="inline-flex items-center gap-xs px-md py-xs rounded-full font-label-md text-caption border border-outline-variant"
+                    [class]="photographer.isActive ? 'bg-surface-container text-on-surface-variant' : 'bg-error-container text-error'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" [class]="photographer.isActive ? 'bg-secondary' : 'bg-error'"></span>
+                    {{ photographer.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface whitespace-nowrap">{{ photographer.createdAt | date: 'mediumDate' }}</td>
+                <td class="p-md text-right">
+                  <button
+                    type="button"
+                    (click)="toggleStatus(photographer)"
+                    [disabled]="isToggling() === photographer.id"
+                    class="h-9 px-md border rounded-xl font-label-md text-label-md transition-colors disabled:opacity-40"
+                    [class.border-outline-variant]="photographer.isActive"
+                    [class.text-on-surface-variant]="photographer.isActive"
+                    [class.hover:bg-surface-container-low]="photographer.isActive"
+                    [class.border-secondary]="!photographer.isActive"
+                    [class.text-secondary]="!photographer.isActive"
+                  >
+                    {{ isToggling() === photographer.id ? 'Saving...' : photographer.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (isRegisterFormOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg" role="dialog" aria-modal="true" (click)="closeRegisterForm()">
+    <div class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)] max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <h2 class="font-headline-md text-headline-md text-primary mb-md">Register Photographer</h2>
+      <p class="text-caption text-on-surface-variant mb-lg">Creates a Firebase login and photographer profile. Share the password with the photographer.</p>
+
+      <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="flex flex-col gap-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-name">Display Name <span class="text-error">*</span></label>
+          <input id="reg-name" formControlName="name" type="text" class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary" />
+          @if (registerForm.controls.name.invalid && registerForm.controls.name.touched) {
+            <p class="text-caption text-error mt-xs">Name is required.</p>
+          }
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-email">Email <span class="text-error">*</span></label>
+          <input id="reg-email" formControlName="email" type="email" class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary" />
+          @if (registerForm.controls.email.invalid && registerForm.controls.email.touched) {
+            <p class="text-caption text-error mt-xs">Enter a valid email address.</p>
+          }
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-password">Password <span class="text-error">*</span></label>
+          <input id="reg-password" formControlName="password" type="text" class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary" />
+          @if (registerForm.controls.password.invalid && registerForm.controls.password.touched) {
+            <p class="text-caption text-error mt-xs">Password must be at least 6 characters.</p>
+          }
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-company">Company Name</label>
+          <input id="reg-company" formControlName="companyName" type="text" class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary" />
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-phone">Contact Number</label>
+          <input id="reg-phone" formControlName="phone" type="tel" class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary" />
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="reg-bio">Bio</label>
+          <textarea id="reg-bio" formControlName="bio" rows="3" class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary resize-none"></textarea>
+        </div>
+
+        @if (formError()) {
+          <p class="text-caption text-error">{{ formError() }}</p>
+        }
+
+        <div class="flex justify-end gap-sm mt-sm">
+          <button
+            type="button"
+            (click)="closeRegisterForm()"
+            [disabled]="isRegistering()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="isRegistering()"
+            class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-xs"
+          >
+            @if (isRegistering()) {
+              <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+              Registering...
+            } @else {
+              <span class="material-symbols-outlined text-[18px]">person_add</span>
+              Register
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

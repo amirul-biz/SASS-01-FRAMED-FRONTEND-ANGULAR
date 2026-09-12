@@ -1,0 +1,74 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Orders</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">All orders across the platform — filter by event or status.</p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center gap-sm border-b border-outline-variant">
+      <select
+        class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        (change)="onEventFilterChange($event)"
+      >
+        <option value="">All events</option>
+        @for (event of events(); track event.id) {
+          <option [value]="event.id">{{ event.title }}</option>
+        }
+      </select>
+      <select
+        class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        (change)="onStatusFilterChange($event)"
+      >
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading orders...</p>
+    } @else if (orders().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No orders match these filters.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Date</th>
+              <th class="p-md">Event</th>
+              <th class="p-md">Customer</th>
+              <th class="p-md text-center">Photos</th>
+              <th class="p-md text-center">Status</th>
+              <th class="p-md text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders(); track order.id) {
+              <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors">
+                <td class="p-md font-body-md text-body-md text-on-surface whitespace-nowrap">{{ order.createdAt | date: 'mediumDate' }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
+                <td class="p-md">
+                  <span class="block font-label-md text-label-md text-on-surface">{{ order.email }}</span>
+                  @if (order.voucherName) {
+                    <span class="text-caption text-caption text-on-surface-variant">Voucher: {{ order.voucherName }}</span>
+                  }
+                </td>
+                <td class="p-md text-center font-body-md text-body-md text-on-surface">{{ order.items.length }}</td>
+                <td class="p-md text-center">
+                  <span class="inline-flex items-center px-md py-xs rounded-full font-label-md text-caption border border-outline-variant {{ statusBadgeClass[order.status] }}">
+                    {{ statusLabel[order.status] }}
+                  </span>
+                </td>
+                <td class="p-md text-right font-label-md text-label-md text-on-surface">RM {{ order.total.toFixed(2) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

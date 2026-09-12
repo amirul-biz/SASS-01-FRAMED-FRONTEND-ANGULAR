@@ -155,9 +155,28 @@ export const routes: Routes = [
       {
         path: 'overview',
         loadComponent: () =>
-          import('./admin/dashboard-overview/admin-dashboard-overview.component').then((m) => m.AdminDashboardOverviewComponent),
+          import('./admin/dashboard-overview/admin-dashboard-overview.component').then((m) =>
+            m.AdminDashboardOverviewComponent,
+          ),
       },
-    ],
+      {
+        path: 'photographers',
+        loadComponent: () =>
+          import('./admin/photographers/admin-photographers.component').then((m) =>
+            m.AdminPhotographersComponent,
+          ),
+      },
+      {
+        path: 'events',
+        loadComponent: () =>
+          import('./admin/events/admin-events.component').then((m) => m.AdminEventsComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./admin/orders/admin-orders.component').then((m) => m.AdminOrdersComponent),
+      },
+],
   },
   { path: '**', redirectTo: '' },
 ];

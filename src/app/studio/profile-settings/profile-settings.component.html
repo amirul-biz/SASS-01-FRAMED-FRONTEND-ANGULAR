@@ -91,6 +91,36 @@
         </div>
 
         <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="nickname">Nickname</label>
+          <input
+            id="nickname"
+            formControlName="nickname"
+            type="text"
+            class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            [class.border-outline-variant]="form.controls.nickname.valid || form.controls.nickname.pristine"
+            [class.border-error]="form.controls.nickname.invalid && form.controls.nickname.touched"
+            (input)="onNicknameInput($event)"
+          />
+          <p class="text-caption text-on-surface-variant mt-xs">
+            Your profile link: picsweep.my/photographers/{{ form.controls.nickname.value || '…' }}
+          </p>
+          @switch (nicknameStatus()) {
+            @case ('checking') {
+              <p class="text-caption text-on-surface-variant mt-xs">Checking availability…</p>
+            }
+            @case ('available') {
+              <p class="text-caption text-secondary mt-xs">✓ Available</p>
+            }
+            @case ('taken') {
+              <p class="text-caption text-error mt-xs">✗ This nickname is already taken</p>
+            }
+          }
+          @if (form.controls.nickname.invalid && form.controls.nickname.touched) {
+            <p class="text-caption text-error mt-xs">3-30 characters: lowercase letters, numbers, hyphens.</p>
+          }
+        </div>
+
+        <div>
           <label class="block font-label-md text-label-md text-on-surface mb-xs" for="contactNo">Contact Number <span class="text-error">*</span></label>
           <div class="flex items-center gap-sm">
             <input

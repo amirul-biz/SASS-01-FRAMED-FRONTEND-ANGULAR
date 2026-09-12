@@ -1,125 +1,140 @@
 <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
   <div class="mb-xl">
     <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Platform Overview</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">Manage your photographers, events, and monitor platform health.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Live totals across photographers, events and orders.</p>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Photographers</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalPhotographers() }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Events</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalEvents() }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Photos</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ totalPhotos() }}</span>
-    </div>
-    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
-      <span class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Total Revenue</span>
-      <span class="font-headline-lg text-headline-lg text-primary block mt-xs">{{ formatCurrency(totalRevenue()) }}</span>
-    </div>
-  </div>
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
 
-  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden mb-xl">
-    <div class="p-md border-b border-outline-variant flex items-center justify-between">
-      <h2 class="font-headline-md text-headline-md text-on-surface">Photographer Management</h2>
+  @if (isLoading()) {
+    <p class="text-body-md font-body-md text-on-surface-variant">Loading stats...</p>
+  } @else if (stats(); as s) {
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-md mb-xl">
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <span class="material-symbols-outlined text-secondary text-[24px]">photo_library</span>
+        <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.totalPhotosUploaded }}</span>
+        <span class="text-caption font-label-md text-on-surface-variant">Photos Uploaded</span>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <span class="material-symbols-outlined text-secondary text-[24px]">event_available</span>
+        <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.totalEventsPublished }} <span class="text-caption font-label-md text-on-surface-variant">/ {{ s.totalEvents }}</span></span>
+        <span class="text-caption font-label-md text-on-surface-variant">Events Published / Total</span>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <span class="material-symbols-outlined text-secondary text-[24px]">photo_camera</span>
+        <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.totalPhotographers }}</span>
+        <span class="text-caption font-label-md text-on-surface-variant">Photographers Registered</span>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <span class="material-symbols-outlined text-secondary text-[24px]">receipt_long</span>
+        <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.totalOrders }}</span>
+        <span class="text-caption font-label-md text-on-surface-variant">Orders</span>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <span class="material-symbols-outlined text-secondary text-[24px]">payments</span>
+        <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ formatCurrency(s.totalRevenue) }}</span>
+        <span class="text-caption font-label-md text-on-surface-variant">Revenue</span>
+      </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
-            <th class="p-md">Photographer</th>
-            <th class="p-md">Join Date</th>
-            <th class="p-md">Events</th>
-            <th class="p-md">Status</th>
-            <th class="p-md text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (photographer of photographers(); track photographer.id) {
-            <tr class="border-b border-outline-variant last:border-0">
-              <td class="p-md">
-                <div class="flex items-center gap-sm">
-                  <img [src]="photographer.avatarUrl" [alt]="photographer.name" class="w-9 h-9 rounded-full object-cover" />
-                  <div class="flex flex-col">
-                    <span class="font-label-md text-label-md text-on-surface">{{ photographer.name }}</span>
-                    <span class="font-caption text-caption text-on-surface-variant">{{ photographer.email }}</span>
-                  </div>
-                </div>
-              </td>
-              <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ photographer.joinedDate }}</td>
-              <td class="p-md font-body-md text-body-md text-on-surface tabular-nums">{{ photographer.stats.eventsShot }}</td>
-              <td class="p-md">
-                @if (photographer.status === 'active') {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-container-high text-on-surface">Active</span>
-                } @else {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-error-container text-on-error-container">Suspended</span>
-                }
-              </td>
-              <td class="p-md text-right">
-                <button
-                  type="button"
-                  (click)="togglePhotographerStatus(photographer.id, photographer.status)"
-                  class="font-label-md text-label-md text-secondary hover:text-secondary-container transition-colors"
-                >
-                  {{ photographer.status === 'active' ? 'Suspend' : 'Reactivate' }}
-                </button>
-              </td>
-            </tr>
+
+    <!-- Activity graph -->
+    <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] mb-xl">
+      <div class="flex flex-wrap items-center justify-between gap-sm mb-md">
+        <h2 class="font-headline-md text-headline-md text-on-surface">Activity — Last 14 Days</h2>
+        <div class="flex flex-wrap gap-xs">
+          @for (series of chartSeries; track series.key) {
+            <button
+              type="button"
+              class="h-8 px-md rounded-full border font-label-md text-label-md transition-colors"
+              [class.bg-primary]="selectedSeries() === series.key"
+              [class.text-on-primary]="selectedSeries() === series.key"
+              [class.border-primary]="selectedSeries() === series.key"
+              [class.border-outline-variant]="selectedSeries() !== series.key"
+              [class.text-on-surface-variant]="selectedSeries() !== series.key"
+              [class.hover:bg-surface-container-low]="selectedSeries() !== series.key"
+              (click)="selectedSeries.set(series.key)"
+            >
+              {{ series.label }}
+            </button>
           }
-        </tbody>
-      </table>
-    </div>
-  </div>
+        </div>
+      </div>
 
-  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
-    <div class="p-md border-b border-outline-variant flex items-center justify-between">
-      <h2 class="font-headline-md text-headline-md text-on-surface">Platform-wide Events</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
-            <th class="p-md">Event Name</th>
-            <th class="p-md">Photographer</th>
-            <th class="p-md">Photos</th>
-            <th class="p-md">Status</th>
-            <th class="p-md text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (event of events(); track event.id) {
-            <tr class="border-b border-outline-variant last:border-0" [class.bg-error-container]="event.status === 'flagged'" [class.bg-opacity-10]="event.status === 'flagged'">
-              <td class="p-md">
-                <span class="font-label-md text-label-md" [class.text-error]="event.status === 'flagged'" [class.text-on-surface]="event.status !== 'flagged'">{{ event.title }}</span>
-              </td>
-              <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ event.photographerName }}</td>
-              <td class="p-md font-body-md text-body-md text-on-surface tabular-nums">{{ event.photoCount }}</td>
-              <td class="p-md">
-                @if (event.status === 'published') {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
-                } @else if (event.status === 'flagged') {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-error text-on-error">Flagged</span>
-                } @else {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
-                }
-              </td>
-              <td class="p-md text-right">
-                <button
-                  type="button"
-                  (click)="toggleEventFlag(event.id, event.status)"
-                  class="font-label-md text-label-md text-secondary hover:text-secondary-container transition-colors"
-                >
-                  {{ event.status === 'flagged' ? 'Unflag' : 'Flag' }}
-                </button>
-              </td>
-            </tr>
+      <div class="overflow-x-auto">
+        <svg [attr.viewBox]="'0 0 640 200'" class="w-full min-w-[600px]" role="img" [attr.aria-label]="'Daily ' + selectedSeriesLabel() + ' activity chart'">
+          <!-- horizontal grid lines -->
+          @for (line of [0, 1, 2, 3]; track line) {
+            <line
+              [attr.x1]="0" [attr.x2]="640"
+              [attr.y1]="20 + line * 50" [attr.y2]="20 + line * 50"
+              stroke="#d9e3f6" stroke-width="1"
+            />
           }
-        </tbody>
-      </table>
+          @for (bar of dailyBars(); track bar.date) {
+            <rect
+              [attr.x]="bar.x"
+              [attr.y]="bar.y"
+              [attr.width]="bar.barWidth"
+              [attr.height]="bar.barHeight"
+              rx="3"
+              fill="#fe6a34"
+              [attr.opacity]="bar.isToday ? 1 : 0.75"
+            >
+              <title>{{ bar.date }}: {{ bar.value }} {{ selectedSeriesLabel() }}</title>
+            </rect>
+            @if (bar.value > 0) {
+              <text
+                [attr.x]="bar.x + bar.barWidth / 2"
+                [attr.y]="bar.y - 4"
+                text-anchor="middle"
+                class="fill-[#121c2a]"
+                font-size="10"
+              >{{ bar.value }}</text>
+            }
+          }
+          <!-- date labels every other bar to avoid crowding -->
+          @for (bar of dailyBars(); track bar.date) {
+            @if (dailyBars().indexOf(bar) % 2 === 0) {
+              <text
+                [attr.x]="bar.x + bar.barWidth / 2"
+                y="196"
+                text-anchor="middle"
+                font-size="10"
+                fill="#45464d"
+              >{{ bar.date.slice(5) }}</text>
+            }
+          }
+        </svg>
+        <div class="flex items-center justify-between text-caption font-label-md text-on-surface-variant mt-xs">
+          <span>{{ daily().length ? daily()[0].date : '' }}</span>
+          <span>Peak: {{ maxDailyValue() }} {{ selectedSeriesLabel() }}</span>
+          <span>{{ daily().length ? daily()[daily().length - 1].date : '' }}</span>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <!-- Account status split -->
+    <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+      <h2 class="font-headline-md text-headline-md text-on-surface mb-md">Photographer Accounts</h2>
+      <div class="flex flex-col sm:flex-row gap-md">
+        <div class="flex-1 flex items-center gap-md p-md rounded-xl bg-surface-container-low">
+          <span class="material-symbols-outlined text-[32px] text-secondary">check_circle</span>
+          <div>
+            <span class="block font-headline-md text-headline-md text-on-surface">{{ s.activePhotographers }}</span>
+            <span class="text-caption font-label-md text-on-surface-variant">Active accounts</span>
+          </div>
+        </div>
+        <div class="flex-1 flex items-center gap-md p-md rounded-xl bg-surface-container-low">
+          <span class="material-symbols-outlined text-[32px] text-on-surface-variant">cancel</span>
+          <div>
+            <span class="block font-headline-md text-headline-md text-on-surface">{{ s.inactivePhotographers }}</span>
+            <span class="text-caption font-label-md text-on-surface-variant">Inactive accounts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

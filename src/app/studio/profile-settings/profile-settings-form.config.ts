@@ -5,6 +5,7 @@ export interface IProfileSettingsForm {
   email: FormControl<string>;
   companyName: FormControl<string>;
   contactNo: FormControl<string>;
+  nickname: FormControl<string>;
   bio: FormControl<string>;
 }
 
@@ -21,6 +22,10 @@ export function createProfileSettingsForm(
     contactNo: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^[0-9]+$/)],
+    }),
+    nickname: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.pattern(/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/)],
     }),
     bio: new FormControl('', { nonNullable: true }),
   });

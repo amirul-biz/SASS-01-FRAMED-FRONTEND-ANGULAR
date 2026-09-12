@@ -28,6 +28,7 @@ export interface ClientTopPhotographer {
 export interface ClientPhotographerProfile {
   id: string;
   name: string;
+  nickname: string | null;
   bio: string | null;
   profileImageUrl: string | null;
   bannerUrl: string | null;

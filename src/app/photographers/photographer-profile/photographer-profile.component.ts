@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { formatCategory, toEventCard } from '../../client/client-event.util';
@@ -20,6 +21,7 @@ const AVATAR_FALLBACK_BASE = 'https://i.pravatar.cc/300?u=';
 export class PhotographerProfileComponent implements OnInit {
   private readonly clientService = inject(ClientService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   private readonly searchInput$ = new Subject<string>();
 
   id = input.required<string>();
@@ -44,6 +46,9 @@ export class PhotographerProfileComponent implements OnInit {
         next: (profile) => {
           this.photographer.set(profile);
           this.isLoadingProfile.set(false);
+          if (profile.nickname && profile.nickname !== this.id()) {
+            this.router.navigate(['/photographers', profile.nickname], { replaceUrl: true });
+          }
         },
         error: () => this.isLoadingProfile.set(false),
       });

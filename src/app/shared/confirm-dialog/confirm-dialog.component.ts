@@ -44,6 +44,8 @@ export class ConfirmDialogComponent {
   readonly message = input.required<string>();
   readonly confirmLabel = input<string>('Delete');
   readonly isBusy = input(false);
+  // 0-100, shown as a progress bar while isBusy is true. Undefined = plain busy spinner.
+  readonly progress = input<number | undefined>(undefined);
 
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();

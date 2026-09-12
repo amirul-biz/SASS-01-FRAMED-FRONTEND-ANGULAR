@@ -4,6 +4,19 @@
     <div>
       <h3 id="confirm-dialog-title" class="font-headline-md text-headline-md text-on-surface">{{ title() }}</h3>
       <p class="text-caption text-on-surface-variant mt-xs">{{ message() }}</p>
+      @if (isBusy()) {
+        @if (progress(); as p) {
+          <div class="mt-xs">
+            <div class="flex justify-between text-caption font-label-md text-on-surface-variant mb-xs">
+              <span>Deleting...</span>
+              <span>{{ p }}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-error transition-all" [style.width.%]="p"></div>
+            </div>
+          </div>
+        }
+      }
     </div>
   </div>
   <div class="actions">

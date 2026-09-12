@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { parse as parseExif } from 'exifr';
-import { Observable, Subject, catchError, filter, finalize, forkJoin, from, map, mergeMap, of, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, filter, finalize, from, map, mergeMap, of, switchMap, tap, toArray } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { Event as StudioEvent, StudioEventsService } from '../studio-events.service';
@@ -101,6 +101,12 @@ export class UploadPhotosComponent implements OnInit {
   readonly selectedCount = computed(() => this.selectedPhotoIds().size);
   readonly isDeleteConfirmOpen = signal(false);
   readonly isDeletingSelected = signal(false);
+  readonly deleteTotalCount = signal(0);
+  readonly deleteCompletedCount = signal(0);
+  readonly deleteOverallProgress = computed(() => {
+    const total = this.deleteTotalCount();
+    return total === 0 ? 0 : Math.round((this.deleteCompletedCount() / total) * 100);
+  });
 
   readonly formatDisplayDate = formatDisplayDate;
   readonly formatCategory = formatCategory;
@@ -248,22 +254,34 @@ export class UploadPhotosComponent implements OnInit {
     }
 
     this.isDeletingSelected.set(true);
+    this.deleteTotalCount.set(ids.length);
+    this.deleteCompletedCount.set(0);
+
     // Chunked so each request stays within the backend's per-request batch cap regardless of
-    // how large the current page is.
-    const requests = chunk(ids, 50).map((chunkIds) =>
-      this.photosService.deletePhotosBatch(this.id(), chunkIds),
-    );
-    forkJoin(requests)
+    // how large the current page is. Limited concurrency keeps the progress bar meaningful —
+    // chunks tick in as they complete rather than one giant wait.
+    let deletedCount = 0;
+    from(chunk(ids, 50))
       .pipe(
+        mergeMap(
+          (chunkIds) =>
+            this.photosService.deletePhotosBatch(this.id(), chunkIds).pipe(
+              tap(() => {
+                deletedCount += chunkIds.length;
+                this.deleteCompletedCount.set(deletedCount);
+              }),
+            ),
+          3,
+        ),
+        toArray(),
         finalize(() => this.isDeletingSelected.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (responses) => {
+        next: () => {
           this.isDeleteConfirmOpen.set(false);
           const deleted = new Set(ids);
           const remaining = this.uploadedPhotos().filter((photo) => !deleted.has(photo.id));
-          const deletedCount = responses.reduce((sum, response) => sum + response.deletedCount, 0);
           const totalItemCount = Math.max(0, this.photosTotalItemCount() - deletedCount);
           this.photosTotalItemCount.set(totalItemCount);
           this.photosTotalPageCount.set(Math.max(1, Math.ceil(totalItemCount / this.photosPageSize())));
@@ -283,6 +301,8 @@ export class UploadPhotosComponent implements OnInit {
               ? `Failed to delete the selected photos: ${detail}`
               : 'Failed to delete the selected photos. Please try again.',
           );
+          // Some chunks may have succeeded before the failure — resync with the server.
+          this.photosLoadTrigger$.next();
         },
       });
   }

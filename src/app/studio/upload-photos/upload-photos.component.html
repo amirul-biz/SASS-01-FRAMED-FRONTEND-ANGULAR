@@ -112,7 +112,22 @@
 
       <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
         <h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider mb-md">Uploading</h3>
-        @if (uploadTotalCount() === 0) {
+        @if (isDeletingSelected()) {
+          <div class="flex items-center gap-md">
+            <span class="w-10 h-10 rounded-md bg-error-container flex items-center justify-center text-error">
+              <span class="material-symbols-outlined text-[20px]">delete</span>
+            </span>
+            <div class="flex-1">
+              <div class="flex justify-between text-caption font-label-md text-on-surface-variant mb-xs">
+                <span>Deleting photos</span>
+                <span>{{ deleteCompletedCount() }} / {{ deleteTotalCount() }}</span>
+              </div>
+              <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+                <div class="h-full bg-error transition-all" [style.width.%]="deleteOverallProgress()"></div>
+              </div>
+            </div>
+          </div>
+        } @else if (uploadTotalCount() === 0) {
           <p class="text-caption text-on-surface-variant">Nothing uploading right now.</p>
         } @else {
           <div class="flex items-center gap-md">
@@ -362,6 +377,7 @@
       title="Delete {{ selectedCount() }} {{ selectedCount() === 1 ? 'photo' : 'photos' }}?"
       message="These photos will be removed from this event. This can't be undone."
       [isBusy]="isDeletingSelected()"
+      [progress]="deleteOverallProgress()"
       (confirmed)="confirmBatchDelete()"
       (cancelled)="closeBatchDeleteConfirm()"
     />
