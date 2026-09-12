@@ -13,20 +13,6 @@
   >
     <div class="w-full md:w-2/3 bg-black relative shrink md:shrink-0 max-h-[60vh] md:max-h-none" [style.aspect-ratio]="photoAspectRatio()">
       <img [src]="photo().imageUrl" alt="Preview" class="w-full h-full object-contain" [class.opacity-60]="isNavigating()" />
-      <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
-        <div
-          class="absolute left-1/2 top-1/2 w-[150%] h-[150%] -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] opacity-100 grid items-center justify-items-center"
-          [style.gridTemplateColumns]="'repeat(5, minmax(110px, 1fr))'"
-          [style.gridTemplateRows]="'repeat(5, minmax(110px, 1fr))'"
-        >
-          @for (tile of watermarkTiles(); track $index) {
-            <div class="flex flex-col items-center gap-0 whitespace-nowrap">
-              <span class="font-headline-lg text-[18px] md:text-[28px] font-extrabold text-on-secondary tracking-widest drop-shadow-md">PICSWEEP</span>
-              <span class="font-caption text-[9px] md:text-[12px] font-bold text-on-secondary tracking-wide">ALL RIGHTS RESERVED</span>
-            </div>
-          }
-        </div>
-      </div>
       <button
         type="button"
         (click)="close()"

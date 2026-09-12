@@ -38,11 +38,6 @@ export class PhotoPreviewModalComponent {
     return width && height ? `${width} / ${height}` : '1 / 1';
   });
 
-  // 5x5 tiled watermark so the brand mark covers ~60% of the photo, matching the thumbnail's
-  // diagonal overlay but repeated. A fixed grid fills both the desktop (2/3 of a max-w-5xl modal)
-  // and mobile (full-width) image areas without needing the source dimensions.
-  readonly watermarkTiles = computed(() => Array.from({ length: 25 }, (_, i) => i));
-
   // Resets whenever `initialFormatId` changes (modal reopened for a different photo),
   // but stays put once the rider manually picks a different format for this photo.
   readonly selectedFormatId = linkedSignal(() => this.initialFormatId());
