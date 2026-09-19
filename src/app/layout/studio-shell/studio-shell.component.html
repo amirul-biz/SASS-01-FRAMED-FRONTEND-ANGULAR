@@ -1,5 +1,9 @@
 @if (sidebarOpen()) {
-  <div class="fixed inset-0 bg-primary/40 z-40 md:hidden" aria-hidden="true" (click)="closeSidebar()"></div>
+  <div
+    class="fixed inset-0 bg-primary/40 z-40 md:hidden"
+    aria-hidden="true"
+    (click)="closeSidebar()"
+  ></div>
 }
 <aside
   class="fixed left-0 top-0 h-dvh w-72 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(20,33,61,0.04)] transition-transform duration-300 md:translate-x-0 overflow-y-auto"
@@ -11,14 +15,22 @@
   </div>
   <div class="px-lg mb-xl flex items-center gap-md">
     @if (profileImageUrl(); as avatarUrl) {
-      <img [src]="avatarUrl" alt="Your avatar" class="w-12 h-12 rounded-full object-cover shadow-sm" />
+      <img
+        [src]="avatarUrl"
+        alt="Your avatar"
+        class="w-12 h-12 rounded-full object-cover shadow-sm"
+      />
     } @else {
-      <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center shadow-sm">
+      <div
+        class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center shadow-sm"
+      >
         <span class="material-symbols-outlined text-on-surface-variant">person</span>
       </div>
     }
     <div class="flex flex-col">
-      <span class="font-label-md text-label-md text-on-surface font-bold">{{ auth.currentUser()?.name }}</span>
+      <span class="font-label-md text-label-md text-on-surface font-bold">{{
+        auth.currentUser()?.name
+      }}</span>
       <span class="font-caption text-caption text-on-surface-variant">Photographer</span>
     </div>
   </div>
@@ -48,7 +60,11 @@
     >
       <span class="material-symbols-outlined mr-md">sell</span>
       <span class="font-label-md text-label-md flex-1">Pricing</span>
-      <span class="material-symbols-outlined transition-transform" [class.rotate-180]="pricingExpanded()">expand_more</span>
+      <span
+        class="material-symbols-outlined transition-transform"
+        [class.rotate-180]="pricingExpanded()"
+        >expand_more</span
+      >
     </button>
 
     @if (pricingExpanded()) {
@@ -99,7 +115,9 @@
   </nav>
 </aside>
 <div class="pl-0 md:pl-72">
-  <header class="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-30 flex items-center justify-between px-margin-mobile md:px-margin-desktop gap-lg">
+  <header
+    class="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-30 flex items-center justify-between px-margin-mobile md:px-margin-desktop gap-lg"
+  >
     <div class="flex items-center gap-sm min-w-0">
       <button
         type="button"
@@ -109,11 +127,17 @@
         aria-label="Toggle navigation menu"
         (click)="toggleSidebar()"
       >
-        <span class="material-symbols-outlined text-[24px]">{{ sidebarOpen() ? 'close' : 'menu' }}</span>
+        <span class="material-symbols-outlined text-[24px]">{{
+          sidebarOpen() ? 'close' : 'menu'
+        }}</span>
       </button>
       <span class="md:hidden flex items-center gap-xs min-w-0 truncate">
-        <span class="material-symbols-outlined text-primary text-[22px] shrink-0">photo_camera</span>
-        <span class="font-headline-md text-headline-md text-primary tracking-tight truncate">PICSWEEP</span>
+        <span class="material-symbols-outlined text-primary text-[22px] shrink-0"
+          >photo_camera</span
+        >
+        <span class="font-headline-md text-headline-md text-primary tracking-tight truncate"
+          >PICSWEEP</span
+        >
       </span>
     </div>
     <button
@@ -126,13 +150,30 @@
   </header>
   <main class="relative pt-16 pb-24 md:pb-0 min-h-dvh bg-surface">
     @if (!profileComplete()) {
-      <div class="mx-margin-desktop mt-lg flex items-center gap-md rounded-lg bg-error-container px-lg py-md">
+      <div
+        class="mx-margin-desktop mt-lg flex items-center gap-md rounded-lg bg-error-container px-lg py-md"
+      >
         <span class="material-symbols-outlined text-on-error-container">warning</span>
         <span class="font-label-md text-label-md text-on-error-container flex-1">
           Complete your profile settings before you can create events.
           @if (missingProfileFields().length) {
             Missing: {{ missingProfileFields().join(', ') }}.
           }
+        </span>
+        <a
+          routerLink="/studio/profile-settings"
+          class="font-label-md text-label-md text-on-error-container underline"
+        >
+          Go to Profile Settings
+        </a>
+      </div>
+    } @else if (!hasApprovedPaymentPlatform()) {
+      <div
+        class="mx-margin-desktop mt-lg flex items-center gap-md rounded-lg bg-error-container px-lg py-md"
+      >
+        <span class="material-symbols-outlined text-on-error-container">warning</span>
+        <span class="font-label-md text-label-md text-on-error-container flex-1">
+          Add a payment method and get it approved before you can create events.
         </span>
         <a
           routerLink="/studio/profile-settings"

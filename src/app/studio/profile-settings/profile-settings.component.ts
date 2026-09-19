@@ -12,21 +12,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS } from '../../shared/constants/search.constants';
 import { AuthService } from '../../auth/auth.service';
+import { PaymentMethodsComponent } from '../../merchant-payment-platform/payment-methods/payment-methods.component';
 import { StudioProfileService } from '../studio-profile.service';
 import { createProfileSettingsForm } from './profile-settings-form.config';
 import { toWhatsAppNumber } from '../../shared/whatsapp-number.util';
 
 const AVATAR_PLACEHOLDER_URL = 'https://i.pravatar.cc/150?u=studio-profile';
-const ALLOWED_AVATAR_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ALLOWED_AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 
 @Component({
   selector: 'app-profile-settings',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PaymentMethodsComponent],
   templateUrl: './profile-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,9 +33,7 @@ export class ProfileSettingsComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profileImageUrl = signal<string | null>(null);
-  readonly avatarUrl = computed(
-    () => this.profileImageUrl() ?? AVATAR_PLACEHOLDER_URL,
-  );
+  readonly avatarUrl = computed(() => this.profileImageUrl() ?? AVATAR_PLACEHOLDER_URL);
   readonly bannerUrl = signal<string | null>(null);
   readonly saved = signal(false);
   readonly isLoading = signal(true);
@@ -47,14 +42,11 @@ export class ProfileSettingsComponent {
   readonly isUploadingBanner = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
-  readonly form = createProfileSettingsForm(
-    this.auth.currentUser()?.email ?? '',
-  );
+  readonly form = createProfileSettingsForm(this.auth.currentUser()?.email ?? '');
 
-  private readonly contactNoValue = toSignal(
-    this.form.controls.contactNo.valueChanges,
-    { initialValue: this.form.controls.contactNo.value },
-  );
+  private readonly contactNoValue = toSignal(this.form.controls.contactNo.valueChanges, {
+    initialValue: this.form.controls.contactNo.value,
+  });
 
   readonly whatsappTestUrl = computed(() => {
     const digits = this.contactNoValue().replace(/\D/g, '');
@@ -177,9 +169,7 @@ export class ProfileSettingsComponent {
         switchMap(({ uploadUrl, key }) =>
           this.profileService
             .uploadToPresignedUrl(uploadUrl, file)
-            .pipe(switchMap(() =>
-              this.profileService.updateMyProfile({ profileImageKey: key }),
-            )),
+            .pipe(switchMap(() => this.profileService.updateMyProfile({ profileImageKey: key }))),
         ),
         finalize(() => this.isUploadingImage.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -219,9 +209,7 @@ export class ProfileSettingsComponent {
         switchMap(({ uploadUrl, key }) =>
           this.profileService
             .uploadToPresignedUrl(uploadUrl, file)
-            .pipe(switchMap(() =>
-              this.profileService.updateMyProfile({ bannerKey: key }),
-            )),
+            .pipe(switchMap(() => this.profileService.updateMyProfile({ bannerKey: key }))),
         ),
         finalize(() => this.isUploadingBanner.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -241,8 +229,7 @@ export class ProfileSettingsComponent {
     if (this.form.invalid || this.nicknameStatus() === 'taken') {
       return;
     }
-    const { name, companyName, contactNo, nickname, bio } =
-      this.form.getRawValue();
+    const { name, companyName, contactNo, nickname, bio } = this.form.getRawValue();
     this.errorMsg.set(null);
     this.isSaving.set(true);
     this.profileService
@@ -260,7 +247,9 @@ export class ProfileSettingsComponent {
         },
         error: (err: HttpErrorResponse) => {
           this.errorMsg.set(
-            err.status === 409 ? 'This nickname is already taken.' : 'Failed to save your profile. Please try again.',
+            err.status === 409
+              ? 'This nickname is already taken.'
+              : 'Failed to save your profile. Please try again.',
           );
         },
       });

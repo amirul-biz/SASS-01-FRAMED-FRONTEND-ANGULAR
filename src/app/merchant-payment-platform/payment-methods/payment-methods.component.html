@@ -1,0 +1,186 @@
+<div
+  class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] mt-lg"
+>
+  <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Payment Methods</h2>
+  <p class="font-body-md text-body-md text-on-surface-variant mb-lg">
+    Add a payment method and wait for it to be approved before you can create events.
+  </p>
+
+  @if (isLoading()) {
+    <p class="text-caption text-on-surface-variant">Loading your payment methods...</p>
+  } @else {
+    @if (options().length) {
+      <div class="flex flex-col gap-sm mb-lg">
+        @for (option of options(); track option.id) {
+          <div
+            class="flex items-center justify-between gap-md p-md border border-outline-variant rounded-xl"
+          >
+            <div class="flex items-center gap-sm flex-wrap">
+              <span class="font-label-md text-label-md text-on-surface">{{
+                providerLabel[option.provider]
+              }}</span>
+              <span
+                class="inline-flex items-center px-md py-xs rounded-full font-label-md text-caption border border-outline-variant {{
+                  statusBadgeClass[option.approvalStatus]
+                }}"
+              >
+                {{ statusLabel[option.approvalStatus] }}
+              </span>
+              @if (option.isDefaultPaymentPlatform) {
+                <span
+                  class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
+                  >Default</span
+                >
+              }
+            </div>
+            @if (!option.isDefaultPaymentPlatform) {
+              <button
+                type="button"
+                (click)="setAsDefault(option)"
+                class="shrink-0 font-label-md text-label-md text-primary hover:underline"
+              >
+                Set as Default
+              </button>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="text-caption text-on-surface-variant mb-lg">
+        You haven't added a payment method yet.
+      </p>
+    }
+
+    @if (errorMsg()) {
+      <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+    }
+
+    <div class="flex flex-col gap-md">
+      @if (!hasCashOption()) {
+        <button
+          type="button"
+          (click)="addCashOption()"
+          [disabled]="isSavingCash()"
+          class="self-start px-lg py-sm border border-outline-variant text-on-surface rounded-xl font-label-md hover:bg-surface-container-low transition-colors disabled:opacity-60"
+        >
+          {{ isSavingCash() ? 'Adding...' : '+ Add Cash Payment' }}
+        </button>
+      }
+
+      @if (!hasToyyibPayOption()) {
+        @if (!isShowingToyyibPayForm()) {
+          <button
+            type="button"
+            (click)="showToyyibPayForm()"
+            class="self-start px-lg py-sm border border-outline-variant text-on-surface rounded-xl font-label-md hover:bg-surface-container-low transition-colors"
+          >
+            + Add ToyyibPay
+          </button>
+        } @else {
+          <form
+            [formGroup]="toyyibPayForm"
+            (ngSubmit)="submitToyyibPayForm()"
+            class="flex flex-col gap-md border border-outline-variant rounded-xl p-md"
+          >
+            <div>
+              <label
+                class="block font-label-md text-label-md text-on-surface mb-xs"
+                for="categoryCode"
+                >Category Code <span class="text-error">*</span></label
+              >
+              <input
+                id="categoryCode"
+                formControlName="categoryCode"
+                type="text"
+                class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                [class.border-outline-variant]="
+                  toyyibPayForm.controls.categoryCode.valid ||
+                  toyyibPayForm.controls.categoryCode.pristine
+                "
+                [class.border-error]="
+                  toyyibPayForm.controls.categoryCode.invalid &&
+                  toyyibPayForm.controls.categoryCode.touched
+                "
+              />
+              @if (
+                toyyibPayForm.controls.categoryCode.invalid &&
+                toyyibPayForm.controls.categoryCode.touched
+              ) {
+                <p class="text-caption text-error mt-xs">Category code is required.</p>
+              }
+            </div>
+
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface mb-xs" for="secretKey"
+                >Secret Key <span class="text-error">*</span></label
+              >
+              <input
+                id="secretKey"
+                formControlName="secretKey"
+                type="password"
+                autocomplete="off"
+                class="w-full h-12 px-md border rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                [class.border-outline-variant]="
+                  toyyibPayForm.controls.secretKey.valid ||
+                  toyyibPayForm.controls.secretKey.pristine
+                "
+                [class.border-error]="
+                  toyyibPayForm.controls.secretKey.invalid &&
+                  toyyibPayForm.controls.secretKey.touched
+                "
+              />
+              @if (
+                toyyibPayForm.controls.secretKey.invalid && toyyibPayForm.controls.secretKey.touched
+              ) {
+                <p class="text-caption text-error mt-xs">Secret key is required.</p>
+              }
+              <p class="text-caption text-on-surface-variant mt-xs">
+                We verify this with ToyyibPay before saving it. It's encrypted and never shown
+                again.
+              </p>
+            </div>
+
+            <label class="flex items-center gap-sm cursor-pointer">
+              <input
+                formControlName="chargeFpxToCustomer"
+                type="checkbox"
+                class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-low"
+              />
+              <span class="font-body-md text-body-md text-on-surface-variant"
+                >Pass the FPX charge on to the customer</span
+              >
+            </label>
+
+            <label class="flex items-center gap-sm cursor-pointer">
+              <input
+                formControlName="chargeToPrepaid"
+                type="checkbox"
+                class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-low"
+              />
+              <span class="font-body-md text-body-md text-on-surface-variant"
+                >Charge to prepaid balance</span
+              >
+            </label>
+
+            <div class="flex items-center gap-md">
+              <button
+                type="submit"
+                [disabled]="isSavingToyyibPay()"
+                class="px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+              >
+                {{ isSavingToyyibPay() ? 'Saving...' : 'Save' }}
+              </button>
+              <button
+                type="button"
+                (click)="cancelToyyibPayForm()"
+                class="px-lg py-sm text-on-surface-variant rounded-xl font-label-md hover:bg-surface-container-low transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        }
+      }
+    </div>
+  }
+</div>

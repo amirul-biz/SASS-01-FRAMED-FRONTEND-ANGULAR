@@ -4,31 +4,46 @@ import { StudioShellComponent } from './layout/studio-shell/studio-shell.compone
 import { AdminShellComponent } from './layout/admin-shell/admin-shell.component';
 import { studioGuard } from './auth/studio.guard';
 import { adminGuard } from './auth/admin.guard';
-import { studioLandingGuard, profileCompleteDeactivateGuard } from './studio/profile-complete.guard';
+import {
+  studioLandingGuard,
+  profileCompleteDeactivateGuard,
+} from './studio/profile-complete.guard';
+import { paymentPlatformApprovedGuard } from './merchant-payment-platform/payment-platform-approved.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: ConsumerShellComponent,
     children: [
-      { path: '', loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent) },
+      {
+        path: '',
+        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+      },
       {
         path: 'events',
-        loadComponent: () => import('./events/events-list/events-list.component').then((m) => m.EventsListComponent),
+        loadComponent: () =>
+          import('./events/events-list/events-list.component').then((m) => m.EventsListComponent),
       },
       {
         path: 'events/:id',
-        loadComponent: () => import('./events/event-detail/event-detail.component').then((m) => m.EventDetailComponent),
+        loadComponent: () =>
+          import('./events/event-detail/event-detail.component').then(
+            (m) => m.EventDetailComponent,
+          ),
       },
       {
         path: 'photographers',
         loadComponent: () =>
-          import('./photographers/photographers-list/photographers-list.component').then((m) => m.PhotographersListComponent),
+          import('./photographers/photographers-list/photographers-list.component').then(
+            (m) => m.PhotographersListComponent,
+          ),
       },
       {
         path: 'photographers/:id',
         loadComponent: () =>
-          import('./photographers/photographer-profile/photographer-profile.component').then((m) => m.PhotographerProfileComponent),
+          import('./photographers/photographer-profile/photographer-profile.component').then(
+            (m) => m.PhotographerProfileComponent,
+          ),
       },
       {
         path: 'cart',
@@ -36,7 +51,8 @@ export const routes: Routes = [
       },
       {
         path: 'checkout',
-        loadComponent: () => import('./checkout/checkout.component').then((m) => m.CheckoutComponent),
+        loadComponent: () =>
+          import('./checkout/checkout.component').then((m) => m.CheckoutComponent),
       },
       {
         path: 'login',
@@ -53,25 +69,38 @@ export const routes: Routes = [
       {
         path: 'events',
         loadComponent: () =>
-          import('./studio/my-events/my-events-dashboard.component').then((m) => m.MyEventsDashboardComponent),
+          import('./studio/my-events/my-events-dashboard.component').then(
+            (m) => m.MyEventsDashboardComponent,
+          ),
       },
       {
         path: 'events/new',
-        loadComponent: () => import('./studio/create-event/create-event.component').then((m) => m.CreateEventComponent),
+        loadComponent: () =>
+          import('./studio/create-event/create-event.component').then(
+            (m) => m.CreateEventComponent,
+          ),
+        canActivate: [paymentPlatformApprovedGuard],
       },
       {
         path: 'events/:id/edit',
-        loadComponent: () => import('./studio/create-event/create-event.component').then((m) => m.CreateEventComponent),
+        loadComponent: () =>
+          import('./studio/create-event/create-event.component').then(
+            (m) => m.CreateEventComponent,
+          ),
       },
       {
         path: 'events/:id/upload',
         loadComponent: () =>
-          import('./studio/upload-photos/upload-photos.component').then((m) => m.UploadPhotosComponent),
+          import('./studio/upload-photos/upload-photos.component').then(
+            (m) => m.UploadPhotosComponent,
+          ),
       },
       {
         path: 'events/:id/pricing',
         loadComponent: () =>
-          import('./studio/pricing-settings/pricing-settings.component').then((m) => m.PricingSettingsComponent),
+          import('./studio/pricing-settings/pricing-settings.component').then(
+            (m) => m.PricingSettingsComponent,
+          ),
       },
       {
         path: 'pricing-bundles',
@@ -118,30 +147,40 @@ export const routes: Routes = [
       {
         path: 'vouchers',
         loadComponent: () =>
-          import('./studio/vouchers/vouchers-list/vouchers-list.component').then((m) => m.VouchersListComponent),
+          import('./studio/vouchers/vouchers-list/vouchers-list.component').then(
+            (m) => m.VouchersListComponent,
+          ),
       },
       {
         path: 'vouchers/new',
         loadComponent: () =>
-          import('./studio/vouchers/voucher-form/voucher-form.component').then((m) => m.VoucherFormComponent),
+          import('./studio/vouchers/voucher-form/voucher-form.component').then(
+            (m) => m.VoucherFormComponent,
+          ),
       },
       {
         path: 'vouchers/:id/edit',
         loadComponent: () =>
-          import('./studio/vouchers/voucher-form/voucher-form.component').then((m) => m.VoucherFormComponent),
+          import('./studio/vouchers/voucher-form/voucher-form.component').then(
+            (m) => m.VoucherFormComponent,
+          ),
       },
       {
         path: 'orders',
-        loadComponent: () => import('./studio/orders/orders-list.component').then((m) => m.OrdersListComponent),
+        loadComponent: () =>
+          import('./studio/orders/orders-list.component').then((m) => m.OrdersListComponent),
       },
       {
         path: 'earnings',
-        loadComponent: () => import('./studio/earnings/earnings.component').then((m) => m.EarningsComponent),
+        loadComponent: () =>
+          import('./studio/earnings/earnings.component').then((m) => m.EarningsComponent),
       },
       {
         path: 'profile-settings',
         loadComponent: () =>
-          import('./studio/profile-settings/profile-settings.component').then((m) => m.ProfileSettingsComponent),
+          import('./studio/profile-settings/profile-settings.component').then(
+            (m) => m.ProfileSettingsComponent,
+          ),
         canDeactivate: [profileCompleteDeactivateGuard],
       },
     ],
@@ -155,15 +194,15 @@ export const routes: Routes = [
       {
         path: 'overview',
         loadComponent: () =>
-          import('./admin/dashboard-overview/admin-dashboard-overview.component').then((m) =>
-            m.AdminDashboardOverviewComponent,
+          import('./admin/dashboard-overview/admin-dashboard-overview.component').then(
+            (m) => m.AdminDashboardOverviewComponent,
           ),
       },
       {
         path: 'photographers',
         loadComponent: () =>
-          import('./admin/photographers/admin-photographers.component').then((m) =>
-            m.AdminPhotographersComponent,
+          import('./admin/photographers/admin-photographers.component').then(
+            (m) => m.AdminPhotographersComponent,
           ),
       },
       {
@@ -176,7 +215,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/orders/admin-orders.component').then((m) => m.AdminOrdersComponent),
       },
-],
+    ],
   },
   { path: '**', redirectTo: '' },
 ];

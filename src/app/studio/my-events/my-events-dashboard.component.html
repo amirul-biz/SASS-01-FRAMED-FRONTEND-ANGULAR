@@ -1,11 +1,25 @@
 <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
     <div>
-      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">My Events</h1>
-      <p class="font-body-md text-body-md text-on-surface-variant">Manage your photography events, uploads, and pricing.</p>
+      <h1
+        class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+      >
+        My Events
+      </h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">
+        Manage your photography events, uploads, and pricing.
+      </p>
     </div>
     <a
-      routerLink="/studio/events/new"
+      [routerLink]="hasApprovedPaymentPlatform() ? '/studio/events/new' : null"
+      [class.pointer-events-none]="!hasApprovedPaymentPlatform()"
+      [class.opacity-40]="!hasApprovedPaymentPlatform()"
+      [attr.aria-disabled]="!hasApprovedPaymentPlatform()"
+      [title]="
+        hasApprovedPaymentPlatform()
+          ? null
+          : 'Add and get an approved payment method in Profile Settings before creating events'
+      "
       class="flex items-center gap-xs px-lg py-sm bg-primary text-on-primary rounded-xl font-label-md hover:bg-primary/90 transition-colors"
     >
       <span class="material-symbols-outlined text-[20px]">add</span>
@@ -17,18 +31,25 @@
     <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
   }
 
-  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
+  >
     <div class="p-md flex items-center justify-between gap-md border-b border-outline-variant">
       <div class="flex items-center gap-sm">
         <h2 class="font-headline-md text-headline-md text-on-surface">Event Roster</h2>
         @if (response()) {
-          <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ response()!.totalItemCount }} total</span>
+          <span
+            class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
+            >{{ response()!.totalItemCount }} total</span
+          >
         }
       </div>
     </div>
     <div>
       @if (isLoading()) {
-        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading your events...</p>
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+          Loading your events...
+        </p>
       } @else {
         @if (openMenuId()) {
           <div class="fixed inset-0 z-10 md:hidden" aria-hidden="true" (click)="closeMenu()"></div>
@@ -39,15 +60,26 @@
               <div class="flex items-start justify-between gap-sm">
                 <div class="flex items-center gap-sm min-w-0">
                   @if (event.coverPhotoUrl) {
-                    <img [src]="event.coverPhotoUrl" [alt]="event.title" class="w-12 h-12 rounded-lg object-cover shrink-0" />
+                    <img
+                      [src]="event.coverPhotoUrl"
+                      [alt]="event.title"
+                      class="w-12 h-12 rounded-lg object-cover shrink-0"
+                    />
                   } @else {
-                    <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0">
+                    <div
+                      class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0"
+                    >
                       <span class="material-symbols-outlined text-[20px]">image</span>
                     </div>
                   }
                   <div class="flex flex-col min-w-0">
-                    <span class="font-label-md text-label-md text-on-surface truncate">{{ event.title }}</span>
-                    <span class="font-caption text-caption text-on-surface-variant truncate">{{ formatCategory(event.category) }} &middot; {{ event.location || 'No location set' }}</span>
+                    <span class="font-label-md text-label-md text-on-surface truncate">{{
+                      event.title
+                    }}</span>
+                    <span class="font-caption text-caption text-on-surface-variant truncate"
+                      >{{ formatCategory(event.category) }} &middot;
+                      {{ event.location || 'No location set' }}</span
+                    >
                   </div>
                 </div>
 
@@ -63,7 +95,9 @@
                   </button>
 
                   @if (openMenuId() === event.id) {
-                    <div class="absolute right-0 top-full mt-xs w-48 bg-surface-container-lowest rounded-xl shadow-[0_8px_24px_rgba(20,33,61,0.16)] border border-outline-variant/50 py-xs z-20">
+                    <div
+                      class="absolute right-0 top-full mt-xs w-48 bg-surface-container-lowest rounded-xl shadow-[0_8px_24px_rgba(20,33,61,0.16)] border border-outline-variant/50 py-xs z-20"
+                    >
                       <a
                         [routerLink]="['/studio/events', event.id, 'upload']"
                         class="flex items-center gap-sm px-md py-sm text-body-md font-body-md text-on-surface hover:bg-surface-container-low transition-colors"
@@ -85,7 +119,9 @@
                         class="w-full flex items-center gap-sm px-md py-sm text-body-md font-body-md text-on-surface hover:bg-surface-container-low transition-colors text-left"
                         (click)="togglePublish(event); closeMenu()"
                       >
-                        <span class="material-symbols-outlined text-[20px]">{{ event.isPublished ? 'visibility_off' : 'visibility' }}</span>
+                        <span class="material-symbols-outlined text-[20px]">{{
+                          event.isPublished ? 'visibility_off' : 'visibility'
+                        }}</span>
                         {{ event.isPublished ? 'Unpublish' : 'Publish' }}
                       </button>
                       <button
@@ -106,13 +142,20 @@
                   @if (isSingleDay(event)) {
                     {{ event.eventStartDate | date: 'mediumDate' }}
                   } @else {
-                    {{ event.eventStartDate | date: 'mediumDate' }} &ndash; {{ event.eventEndDate | date: 'mediumDate' }}
+                    {{ event.eventStartDate | date: 'mediumDate' }} &ndash;
+                    {{ event.eventEndDate | date: 'mediumDate' }}
                   }
                 </span>
                 @if (event.isPublished) {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
+                  <span
+                    class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant"
+                    >Published</span
+                  >
                 } @else {
-                  <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
+                  <span
+                    class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant"
+                    >Draft</span
+                  >
                 }
               </div>
             </div>
@@ -120,96 +163,124 @@
         </div>
 
         <div class="hidden md:block overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
-              <th class="p-md">Event Name</th>
-              <th class="p-md">Dates</th>
-              <th class="p-md">Status</th>
-              <th class="p-md text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (event of response()?.items ?? []; track event.id) {
-              <tr class="border-b border-outline-variant last:border-0">
-                <td class="p-md">
-                  <div class="flex items-center gap-sm">
-                    @if (event.coverPhotoUrl) {
-                      <img [src]="event.coverPhotoUrl" [alt]="event.title" class="w-12 h-12 rounded-lg object-cover" />
-                    } @else {
-                      <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
-                        <span class="material-symbols-outlined text-[20px]">image</span>
-                      </div>
-                    }
-                    <div class="flex flex-col">
-                      <span class="font-label-md text-label-md text-on-surface">{{ event.title }}</span>
-                      <span class="font-caption text-caption text-on-surface-variant">{{ formatCategory(event.category) }} &middot; {{ event.location || 'No location set' }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-md font-body-md text-body-md text-on-surface">
-                  @if (isSingleDay(event)) {
-                    {{ event.eventStartDate | date: 'mediumDate' }}
-                  } @else {
-                    {{ event.eventStartDate | date: 'mediumDate' }} &ndash; {{ event.eventEndDate | date: 'mediumDate' }}
-                  }
-                </td>
-                <td class="p-md">
-                  @if (event.isPublished) {
-                    <span class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant">Published</span>
-                  } @else {
-                    <span class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant">Draft</span>
-                  }
-                </td>
-                <td class="p-md">
-                  <div class="flex items-center justify-end gap-xs">
-                    <a
-                      [routerLink]="['/studio/events', event.id, 'upload']"
-                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                      title="Upload Photos"
-                    >
-                      <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
-                    </a>
-                    <a
-                      [routerLink]="['/studio/events', event.id, 'edit']"
-                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                      title="Edit"
-                    >
-                      <span class="material-symbols-outlined text-[20px]">edit</span>
-                    </a>
-                    <button
-                      type="button"
-                      (click)="togglePublish(event)"
-                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                      [title]="event.isPublished ? 'Unpublish' : 'Publish'"
-                    >
-                      <span class="material-symbols-outlined text-[20px]">{{ event.isPublished ? 'visibility_off' : 'visibility' }}</span>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="deleteEvent(event)"
-                      class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-error transition-colors"
-                      title="Delete"
-                    >
-                      <span class="material-symbols-outlined text-[20px]">delete</span>
-                    </button>
-                  </div>
-                </td>
+          <table class="w-full text-left">
+            <thead>
+              <tr
+                class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider"
+              >
+                <th class="p-md">Event Name</th>
+                <th class="p-md">Dates</th>
+                <th class="p-md">Status</th>
+                <th class="p-md text-right">Actions</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (event of response()?.items ?? []; track event.id) {
+                <tr class="border-b border-outline-variant last:border-0">
+                  <td class="p-md">
+                    <div class="flex items-center gap-sm">
+                      @if (event.coverPhotoUrl) {
+                        <img
+                          [src]="event.coverPhotoUrl"
+                          [alt]="event.title"
+                          class="w-12 h-12 rounded-lg object-cover"
+                        />
+                      } @else {
+                        <div
+                          class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant"
+                        >
+                          <span class="material-symbols-outlined text-[20px]">image</span>
+                        </div>
+                      }
+                      <div class="flex flex-col">
+                        <span class="font-label-md text-label-md text-on-surface">{{
+                          event.title
+                        }}</span>
+                        <span class="font-caption text-caption text-on-surface-variant"
+                          >{{ formatCategory(event.category) }} &middot;
+                          {{ event.location || 'No location set' }}</span
+                        >
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-md font-body-md text-body-md text-on-surface">
+                    @if (isSingleDay(event)) {
+                      {{ event.eventStartDate | date: 'mediumDate' }}
+                    } @else {
+                      {{ event.eventStartDate | date: 'mediumDate' }} &ndash;
+                      {{ event.eventEndDate | date: 'mediumDate' }}
+                    }
+                  </td>
+                  <td class="p-md">
+                    @if (event.isPublished) {
+                      <span
+                        class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant"
+                        >Published</span
+                      >
+                    } @else {
+                      <span
+                        class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant"
+                        >Draft</span
+                      >
+                    }
+                  </td>
+                  <td class="p-md">
+                    <div class="flex items-center justify-end gap-xs">
+                      <a
+                        [routerLink]="['/studio/events', event.id, 'upload']"
+                        class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                        title="Upload Photos"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+                      </a>
+                      <a
+                        [routerLink]="['/studio/events', event.id, 'edit']"
+                        class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                        title="Edit"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                      </a>
+                      <button
+                        type="button"
+                        (click)="togglePublish(event)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                        [title]="event.isPublished ? 'Unpublish' : 'Publish'"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">{{
+                          event.isPublished ? 'visibility_off' : 'visibility'
+                        }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteEvent(event)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low hover:text-error transition-colors"
+                        title="Delete"
+                      >
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
         @if ((response()?.items?.length ?? 0) === 0) {
-          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">You haven't created any events yet.</p>
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+            You haven't created any events yet.
+          </p>
         }
       }
     </div>
 
     @if (response() && response()!.totalPageCount > 1) {
-      <div class="p-md flex flex-col sm:flex-row items-center justify-between gap-md border-t border-outline-variant">
+      <div
+        class="p-md flex flex-col sm:flex-row items-center justify-between gap-md border-t border-outline-variant"
+      >
         <div class="flex items-center gap-sm">
-          <label class="text-caption font-label-md text-on-surface-variant" for="page-size">Per page</label>
+          <label class="text-caption font-label-md text-on-surface-variant" for="page-size"
+            >Per page</label
+          >
           <select
             id="page-size"
             class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
@@ -255,7 +326,9 @@
           </button>
         </div>
 
-        <span class="text-caption font-label-md text-on-surface-variant">Page {{ pageNumber() }} of {{ response()!.totalPageCount }}</span>
+        <span class="text-caption font-label-md text-on-surface-variant"
+          >Page {{ pageNumber() }} of {{ response()!.totalPageCount }}</span
+        >
       </div>
     }
   </div>
