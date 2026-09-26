@@ -17,7 +17,7 @@ import {
   PaymentProvider,
 } from '../merchant-payment-platform.service';
 import { CashPaymentPlatformService } from '../cash-payment-platform/cash-payment-platform.service';
-import { ToyyibPayPaymentPlatformService } from '../toyyibpay-payment-platform/toyyibpay-payment-platform.service';
+import { ToyyibPayPaymentConfigService } from '../toyyibpay-payment-platform/toyyibpay-payment-config.service';
 
 const APPROVAL_STATUS_BADGE_CLASS: Record<ApprovalStatus, string> = {
   PENDING: 'bg-surface-container text-on-surface-variant',
@@ -81,7 +81,7 @@ function getErrorMessage(error: HttpErrorResponse): string {
 export class PaymentMethodsComponent {
   private readonly merchantPaymentPlatformService = inject(MerchantPaymentPlatformService);
   private readonly cashPaymentPlatformService = inject(CashPaymentPlatformService);
-  private readonly toyyibPayPaymentPlatformService = inject(ToyyibPayPaymentPlatformService);
+  private readonly toyyibPayPaymentConfigService = inject(ToyyibPayPaymentConfigService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly statusBadgeClass = APPROVAL_STATUS_BADGE_CLASS;
@@ -167,8 +167,8 @@ export class PaymentMethodsComponent {
 
     this.errorMsg.set(null);
     this.isSavingToyyibPay.set(true);
-    this.toyyibPayPaymentPlatformService
-      .createToyyibPayPaymentPlatformOption(this.toyyibPayForm.getRawValue())
+    this.toyyibPayPaymentConfigService
+      .createToyyibPayPaymentConfigOption(this.toyyibPayForm.getRawValue())
       .pipe(
         finalize(() => this.isSavingToyyibPay.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -200,7 +200,7 @@ export class PaymentMethodsComponent {
         isDefaultPaymentPlatform: true,
       });
     }
-    return this.toyyibPayPaymentPlatformService.updateToyyibPayPaymentPlatformOption(option.id, {
+    return this.toyyibPayPaymentConfigService.updateToyyibPayPaymentConfigOption(option.id, {
       isDefaultPaymentPlatform: true,
     });
   }

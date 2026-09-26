@@ -61,6 +61,17 @@ const ALL_IN_BUNDLE: IPricingBundle = {
   eventsUsingCount: 0,
 };
 
+const OPTION_ONLY_BUNDLE: IPricingBundle = {
+  id: 'option-only-bundle',
+  photographerId: 'photographer-a',
+  name: 'Option Only Bundle',
+  pricingOptions: [{ id: 'jpeg-30mp', label: '30MP JPEG', price: 12 }],
+  vouchers: [],
+  fullGalleryEnabled: false,
+  fullGalleryPrice: 0,
+  eventsUsingCount: 0,
+};
+
 describe('SelectionService', () => {
   let service: SelectionService;
 
@@ -68,6 +79,8 @@ describe('SelectionService', () => {
     localStorage.clear();
     TestBed.configureTestingModule({});
     service = TestBed.inject(SelectionService);
+    service.setBundlesForEvent('event-a', [OPTION_ONLY_BUNDLE]);
+    service.setBundlesForEvent('event-b', [OPTION_ONLY_BUNDLE]);
   });
 
   afterEach(() => {
@@ -150,12 +163,94 @@ describe('SelectionService', () => {
     expect(service.pricing().total).toBe(30);
   });
 
-  it('falls back to the standard format/price when the event has no pricing bundle attached', () => {
+  it('does not add a photo when the event has no pricing options (there is no default price)', () => {
     const p = photo('event-c', 1);
 
     service.toggle(p);
 
-    expect(service.selectedEntries()[0].formatOption.price).toBe(12);
+    expect(service.selectedCount()).toBe(0);
+    expect(service.isSelected(p.id)).toBe(false);
+    expect(service.eventCarts()).toEqual([]);
+  });
+
+  it('ignores a refused add without disturbing the active cart', () => {
+    service.toggle(photo('event-a', 1));
+
+    service.toggle(photo('event-c', 1));
+
+    expect(service.eventId()).toBe('event-a');
+    expect(service.selectedCount()).toBe(1);
+  });
+
+  it('selectWithFormat ignores a format the event does not offer', () => {
+    const p = photo('event-a', 1);
+
+    service.selectWithFormat(p, 'not-a-real-format');
+
+    expect(service.selectedCount()).toBe(0);
+  });
+
+  it('prices a photo at the photographer-defined option', () => {
+    service.toggle(photo('event-a', 1));
+
+    expect(service.selectedEntries()[0].formatOption).toEqual({ id: 'jpeg-30mp', label: '30MP JPEG', price: 12 });
+  });
+
+  describe('re-syncing a cart to the event\'s current pricing', () => {
+    const bundleWith = (id: string, label: string, price: number): IPricingBundle => ({
+      ...OPTION_ONLY_BUNDLE,
+      pricingOptions: [{ id, label, price }],
+    });
+
+    it('re-maps a stale snapshot when the option was re-created with a new id (same format)', () => {
+      service.setBundlesForEvent('event-a', [bundleWith('old-id', 'Full Resolution', 20)]);
+      service.toggle(photo('event-a', 1));
+      expect(service.selectedEntries()[0].formatId).toBe('old-id');
+
+      service.setBundlesForEvent('event-a', [bundleWith('new-id', 'Full Resolution', 20)]);
+
+      const [entry] = service.selectedEntries();
+      expect(entry.formatId).toBe('new-id');
+      expect(entry.formatOption).toEqual({ id: 'new-id', label: 'Full Resolution', price: 20 });
+    });
+
+    it('refreshes the price when the photographer changed it', () => {
+      service.setBundlesForEvent('event-a', [bundleWith('opt-1', 'Full Resolution', 20)]);
+      service.toggle(photo('event-a', 1));
+
+      service.setBundlesForEvent('event-a', [bundleWith('opt-1', 'Full Resolution', 25)]);
+
+      expect(service.selectedEntries()[0].formatOption.price).toBe(25);
+      expect(service.photosTotal()).toBe(25);
+    });
+
+    it('falls back to the first option when the snapshot\'s format no longer exists', () => {
+      service.setBundlesForEvent('event-a', [bundleWith('opt-1', 'RAW', 30)]);
+      service.toggle(photo('event-a', 1));
+
+      service.setBundlesForEvent('event-a', [bundleWith('opt-2', 'Full Resolution', 20)]);
+
+      expect(service.selectedEntries()[0].formatOption).toEqual({ id: 'opt-2', label: 'Full Resolution', price: 20 });
+    });
+
+    it('drops the photos and repoints the active cart when the event loses all pricing options', () => {
+      service.toggle(photo('event-a', 1));
+      service.toggle(photo('event-b', 1));
+
+      service.setBundlesForEvent('event-b', []);
+
+      expect(service.eventCarts().map((c) => c.eventId)).toEqual(['event-a']);
+      expect(service.eventId()).toBe('event-a');
+    });
+
+    it('leaves an up-to-date cart untouched', () => {
+      service.toggle(photo('event-a', 1));
+      const before = service.selectedEntries()[0];
+
+      service.setBundlesForEvent('event-a', [OPTION_ONLY_BUNDLE]);
+
+      expect(service.selectedEntries()[0]).toBe(before);
+    });
   });
 
   it('clear() empties only the active cart, leaving other events intact', () => {

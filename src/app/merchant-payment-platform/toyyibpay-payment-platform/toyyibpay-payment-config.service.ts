@@ -4,13 +4,13 @@ import { Observable } from 'rxjs';
 import { ENVIRONMENT } from '../../core/environment.token';
 import { MerchantPaymentPlatformOption } from '../merchant-payment-platform.service';
 
-export interface ToyyibPayPaymentPlatformOption extends MerchantPaymentPlatformOption {
+export interface ToyyibPayPaymentConfigOption extends MerchantPaymentPlatformOption {
   categoryCode: string;
   chargeFpxToCustomer: boolean;
   chargeToPrepaid: boolean;
 }
 
-export interface CreateToyyibPayPaymentPlatformOptionDto {
+export interface CreateToyyibPayPaymentConfigOptionDto {
   categoryCode: string;
   secretKey: string;
   chargeFpxToCustomer?: boolean;
@@ -18,7 +18,7 @@ export interface CreateToyyibPayPaymentPlatformOptionDto {
   isDefaultPaymentPlatform?: boolean;
 }
 
-export interface UpdateToyyibPayPaymentPlatformOptionDto {
+export interface UpdateToyyibPayPaymentConfigOptionDto {
   categoryCode?: string;
   secretKey?: string;
   chargeFpxToCustomer?: boolean;
@@ -27,25 +27,25 @@ export interface UpdateToyyibPayPaymentPlatformOptionDto {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ToyyibPayPaymentPlatformService {
+export class ToyyibPayPaymentConfigService {
   private readonly http = inject(HttpClient);
   private readonly env = inject(ENVIRONMENT);
 
-  createToyyibPayPaymentPlatformOption(
-    dto: CreateToyyibPayPaymentPlatformOptionDto,
-  ): Observable<ToyyibPayPaymentPlatformOption> {
-    return this.http.post<ToyyibPayPaymentPlatformOption>(
-      `${this.env.apiUrl}/toyyibpay-payment-platform`,
+  createToyyibPayPaymentConfigOption(
+    dto: CreateToyyibPayPaymentConfigOptionDto,
+  ): Observable<ToyyibPayPaymentConfigOption> {
+    return this.http.post<ToyyibPayPaymentConfigOption>(
+      `${this.env.apiUrl}/toyyibpay-config`,
       dto,
     );
   }
 
-  updateToyyibPayPaymentPlatformOption(
+  updateToyyibPayPaymentConfigOption(
     id: string,
-    dto: UpdateToyyibPayPaymentPlatformOptionDto,
-  ): Observable<ToyyibPayPaymentPlatformOption> {
-    return this.http.patch<ToyyibPayPaymentPlatformOption>(
-      `${this.env.apiUrl}/toyyibpay-payment-platform/${id}`,
+    dto: UpdateToyyibPayPaymentConfigOptionDto,
+  ): Observable<ToyyibPayPaymentConfigOption> {
+    return this.http.patch<ToyyibPayPaymentConfigOption>(
+      `${this.env.apiUrl}/toyyibpay-config/${id}`,
       dto,
     );
   }

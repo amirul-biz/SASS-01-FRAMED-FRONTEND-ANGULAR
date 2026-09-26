@@ -58,6 +58,13 @@ export const routes: Routes = [
         path: 'login',
         loadComponent: () => import('./auth/login/login.component').then((m) => m.LoginComponent),
       },
+      {
+        path: 'toyyib-payment-return-url',
+        loadComponent: () =>
+          import('./checkout/toyyib-payment-return-url/toyyib-payment-return-url.component').then(
+            (m) => m.ToyyibPaymentReturnUrlComponent,
+          ),
+      },
     ],
   },
   {

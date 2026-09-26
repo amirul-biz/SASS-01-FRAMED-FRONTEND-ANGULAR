@@ -85,13 +85,22 @@
             <p class="font-body-md text-body-md text-on-surface-variant mb-lg">
               Online payment is coming soon — for now, payment is arranged with the photographer via WhatsApp.
             </p>
+            @if (submitError(); as error) {
+              <p class="text-caption text-error mb-md" role="alert">{{ error }}</p>
+            }
             <button
               type="button"
               (click)="completePurchase()"
-              class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] hover:scale-[1.01] flex items-center justify-center gap-sm"
+              [disabled]="isSubmitting()"
+              class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] hover:scale-[1.01] flex items-center justify-center gap-sm disabled:opacity-60 disabled:pointer-events-none"
             >
-              Complete Purchase
-              <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+              @if (isSubmitting()) {
+                <span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                Placing order...
+              } @else {
+                Complete Purchase
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+              }
             </button>
             <div class="mt-md flex items-center justify-center gap-sm text-on-surface-variant opacity-80">
               <span class="material-symbols-outlined text-[16px]">chat</span>

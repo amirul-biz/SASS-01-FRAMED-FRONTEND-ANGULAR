@@ -47,6 +47,7 @@
               <th class="p-md hidden md:table-cell">Customer</th>
               <th class="p-md hidden md:table-cell">Photos</th>
               <th class="p-md text-right">Total</th>
+              <th class="p-md">Payment</th>
               <th class="p-md"></th>
             </tr>
           </thead>
@@ -71,6 +72,21 @@
                 </td>
                 <td class="p-md font-body-md text-body-md text-on-surface hidden md:table-cell">{{ order.items.length }}</td>
                 <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
+                <td class="p-md whitespace-nowrap">
+                  @if (order.payment; as payment) {
+                    <div class="flex flex-wrap items-center gap-xs">
+                      <span class="inline-flex items-center gap-xs px-sm py-0.5 rounded-full border border-outline-variant font-caption text-caption text-on-surface">
+                        <span class="material-symbols-outlined text-[14px]">{{ paymentProviderIcon[payment.provider] }}</span>
+                        {{ paymentProviderLabel[payment.provider] }}
+                      </span>
+                      <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="paymentStatusBadgeClass[payment.status]">
+                        {{ paymentStatusLabel[payment.status] }}
+                      </span>
+                    </div>
+                  } @else {
+                    <span class="font-caption text-caption text-on-surface-variant">—</span>
+                  }
+                </td>
                 <td class="p-md text-right">
                   <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
                     expand_more
@@ -79,90 +95,8 @@
               </tr>
               @if (isExpanded(order.id)) {
                 <tr class="bg-surface-container-low">
-                  <td colspan="6" class="p-md">
-                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_8px_rgba(20,33,61,0.06)]">
-                      <!-- Panel header -->
-                      <div class="flex flex-wrap items-center justify-between gap-sm px-lg py-md border-b border-outline-variant bg-surface-container rounded-t-xl">
-                        <div class="flex items-center gap-sm">
-                          <span class="material-symbols-outlined text-[20px] text-secondary">receipt_long</span>
-                          <span class="font-label-md text-label-md text-on-surface">Order Details</span>
-                          <span class="text-caption font-label-md text-on-surface-variant">· {{ order.createdAt | date: 'mediumDate' }}</span>
-                        </div>
-                      </div>
-
-                      <div class="flex flex-col lg:flex-row">
-                        <!-- Ordered items -->
-                        <div class="flex-1 min-w-0 px-lg py-md">
-                          <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">
-                            Photos ({{ order.items.length }})
-                          </p>
-                          <div class="flex flex-col gap-sm">
-                            @for (item of order.items; track item.id) {
-                              <button
-                                type="button"
-                                (click)="openPhotoPreview(item)"
-                                class="w-full flex items-center gap-md p-sm rounded-lg bg-surface-container-low text-left hover:bg-surface-container transition-colors"
-                              >
-                                <img
-                                  [src]="item.photoUrl"
-                                  [alt]="item.photoName"
-                                  loading="lazy"
-                                  class="w-9 h-9 shrink-0 rounded-md object-cover bg-surface-container-high"
-                                />
-                                <div class="flex-1 min-w-0">
-                                  <p class="font-label-md text-label-md text-on-surface truncate">{{ item.photoName }}</p>
-                                  <span class="inline-block mt-xs px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-caption text-caption">
-                                    {{ item.formatLabel }}
-                                  </span>
-                                </div>
-                                <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">{{ formatCurrency(item.price) }}</span>
-                              </button>
-                            }
-                          </div>
-                        </div>
-
-                        <!-- Customer + totals -->
-                        <div class="lg:w-80 shrink-0 px-lg py-md border-t lg:border-t-0 lg:border-l border-outline-variant flex flex-col gap-md">
-                          <div>
-                            <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Customer</p>
-                            <div class="flex items-center gap-sm mb-xs">
-                              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span>
-                              <span class="font-body-md text-body-md text-on-surface break-all">{{ order.email }}</span>
-                            </div>
-                            <div class="flex items-center gap-sm">
-                              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">call</span>
-                              <span class="font-body-md text-body-md text-on-surface">{{ customerPhone(order) }}</span>
-                            </div>
-                          </div>
-
-                          <div class="border-t border-outline-variant pt-md flex flex-col gap-xs">
-                            @if (order.voucherName) {
-                              <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
-                                <span class="flex items-center gap-xs">
-                                  <span class="material-symbols-outlined text-[16px] text-secondary">local_activity</span>
-                                  {{ order.voucherName }}
-                                </span>
-                                <span class="text-secondary">-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
-                              </div>
-                            }
-                            <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
-                              <span>Subtotal</span>
-                              <span>{{ formatCurrency(order.priceBreakdown.subtotal) }}</span>
-                            </div>
-                            @if (order.priceBreakdown.discountAmount > 0 && !order.voucherName) {
-                              <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
-                                <span>Discount</span>
-                                <span>-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
-                              </div>
-                            }
-                            <div class="flex items-center justify-between border-t border-outline-variant pt-sm mt-xs font-headline-md text-body-lg text-on-surface">
-                              <span>Total</span>
-                              <span>{{ formatCurrency(order.priceBreakdown.total) }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <td colspan="7" class="p-md">
+                    <ng-container *ngTemplateOutlet="orderDetails; context: { $implicit: order }" />
                   </td>
                 </tr>
               }
@@ -171,7 +105,7 @@
         </table>
         @if ((response()?.items?.length ?? 0) === 0) {
           <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
-            {{ hasActiveFilters() ? 'No orders match these filters.' : "You haven't received any orders yet." }}
+            {{ hasActiveFilters() ? 'No orders match these filters.' : isLegacyOrdersPresent() ? 'No orders with payment tracking yet.' : "You haven't received any orders yet." }}
           </p>
         }
       }
@@ -230,6 +164,431 @@
       </div>
     }
   </div>
+
+  @if (isLegacyOrdersPresent()) {
+    <section class="mt-xl" aria-labelledby="legacy-orders-title">
+      <div class="mb-md">
+        <h2 id="legacy-orders-title" class="font-headline-md text-headline-md text-on-background mb-xs">Legacy orders</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">
+          Placed before payment tracking was introduced. Payment for these was arranged over WhatsApp and isn't tracked here yet.
+        </p>
+      </div>
+
+      @if (legacyErrorMsg()) {
+        <p class="text-caption text-error mb-md">{{ legacyErrorMsg() }}</p>
+      }
+
+      <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+        <div class="overflow-x-auto">
+          @if (isLegacyLoading()) {
+            <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading legacy orders...</p>
+          } @else {
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+                  <th class="p-md">Date</th>
+                  <th class="p-md">Event</th>
+                  <th class="p-md hidden md:table-cell">Customer</th>
+                  <th class="p-md hidden md:table-cell">Photos</th>
+                  <th class="p-md text-right">Total</th>
+                  <th class="p-md"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of legacyResponse()?.items ?? []; track order.id) {
+                  <tr
+                    class="border-b border-outline-variant last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors"
+                    (click)="toggleExpanded(order.id)"
+                  >
+                    <td class="p-md whitespace-nowrap">
+                      <div class="flex flex-col">
+                        <span class="font-body-md text-body-md text-on-surface">{{ order.createdAt | date: 'mediumDate' }}</span>
+                        <span class="font-caption text-caption text-on-surface-variant">{{ order.createdAt | date: 'h:mm a' }}</span>
+                      </div>
+                    </td>
+                    <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
+                    <td class="p-md hidden md:table-cell">
+                      <div class="flex flex-col">
+                        <span class="font-label-md text-label-md text-on-surface">{{ order.email }}</span>
+                        <span class="font-caption text-caption text-on-surface-variant">{{ customerPhone(order) }}</span>
+                      </div>
+                    </td>
+                    <td class="p-md font-body-md text-body-md text-on-surface hidden md:table-cell">{{ order.items.length }}</td>
+                    <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
+                    <td class="p-md text-right">
+                      <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
+                        expand_more
+                      </span>
+                    </td>
+                  </tr>
+                  @if (isExpanded(order.id)) {
+                    <tr class="bg-surface-container-low">
+                      <td colspan="6" class="p-md">
+                        <ng-container *ngTemplateOutlet="orderDetails; context: { $implicit: order }" />
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        @if (legacyResponse()!.totalPageCount > 1) {
+          <div class="p-md border-t border-outline-variant">
+            <app-paginator
+              [pageNumber]="legacyPageNumber()"
+              [totalPageCount]="legacyResponse()!.totalPageCount"
+              [pageSize]="legacyPageSize()"
+              [pageSizeOptions]="pageSizeOptions"
+              (pageNumberChange)="onLegacyPageNumberChange($event)"
+              (pageSizeChange)="onLegacyPageSizeChange($event)"
+            />
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <ng-template #orderDetails let-order>
+
+                      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_8px_rgba(20,33,61,0.06)]">
+                        <!-- Panel header -->
+                        <div class="flex flex-wrap items-center justify-between gap-sm px-lg py-md border-b border-outline-variant bg-surface-container rounded-t-xl">
+                          <div class="flex items-center gap-sm">
+                            <span class="material-symbols-outlined text-[20px] text-secondary">receipt_long</span>
+                            <span class="font-label-md text-label-md text-on-surface">Order Details</span>
+                            <span class="text-caption font-label-md text-on-surface-variant">· {{ order.createdAt | date: 'mediumDate' }}</span>
+                            <span class="text-caption font-label-md text-on-surface-variant">· Order #{{ orderReference(order.id) }}</span>
+                          </div>
+                          <div class="flex flex-wrap items-center gap-sm">
+                            @if (getPaymentProviderLabel(order); as providerLabel) {
+                              <span class="inline-flex items-center gap-xs px-sm py-0.5 rounded-full border border-outline-variant font-caption text-caption text-on-surface">
+                                <span class="material-symbols-outlined text-[14px]">{{ getPaymentProviderIcon(order) }}</span>
+                                {{ providerLabel }}
+                              </span>
+                            }
+                            <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="getStatusBadgeClass(order)">
+                              {{ getStatusLabel(order) }}
+                            </span>
+                            @if (order.payment) {
+                              <button
+                                type="button"
+                                (click)="openHistory(order)"
+                                class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs"
+                              >
+                                <span class="material-symbols-outlined text-[18px]">history</span>
+                                History
+                              </button>
+                            }
+                            @if (isCashPaymentPending(order)) {
+                              <button
+                                type="button"
+                                (click)="openMarkAsPaid(order)"
+                                class="px-md py-sm bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-secondary-container hover:text-on-secondary-container transition-colors flex items-center gap-xs"
+                              >
+                                <span class="material-symbols-outlined text-[18px]">payments</span>
+                                Mark as paid
+                              </button>
+                            }
+                            @if (isToyyibPayPaymentOpen(order)) {
+                              <button
+                                type="button"
+                                (click)="syncToyyibPayPayment(order)"
+                                [disabled]="isSyncingPayment(order)"
+                                class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs disabled:opacity-60"
+                              >
+                                @if (isSyncingPayment(order)) {
+                                  <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                                  Checking...
+                                } @else {
+                                  <span class="material-symbols-outlined text-[18px]">sync</span>
+                                  Sync payment
+                                }
+                              </button>
+                            }
+                          </div>
+                        </div>
+                        @if (getSyncFeedback(order); as syncFeedback) {
+                          <p
+                            class="px-lg pt-sm text-caption"
+                            [class]="syncFeedback.isError ? 'text-error' : 'text-on-surface-variant'"
+                            role="status"
+                          >
+                            {{ syncFeedback.message }}
+                          </p>
+                        }
+
+                        <div class="flex flex-col lg:flex-row">
+                          <!-- Ordered items -->
+                          <div class="flex-1 min-w-0 px-lg py-md">
+                            <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">
+                              Photos ({{ order.items.length }})
+                            </p>
+                            <div class="flex flex-col gap-sm">
+                              @for (item of order.items; track item.id) {
+                                <button
+                                  type="button"
+                                  (click)="openPhotoPreview(item)"
+                                  class="w-full flex items-center gap-md p-sm rounded-lg bg-surface-container-low text-left hover:bg-surface-container transition-colors"
+                                >
+                                  <img
+                                    [src]="item.photoUrl"
+                                    [alt]="item.photoName"
+                                    loading="lazy"
+                                    class="w-9 h-9 shrink-0 rounded-md object-cover bg-surface-container-high"
+                                  />
+                                  <div class="flex-1 min-w-0">
+                                    <p class="font-label-md text-label-md text-on-surface truncate">{{ item.photoName }}</p>
+                                    <span class="inline-block mt-xs px-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-caption text-caption">
+                                      {{ item.formatLabel }}
+                                    </span>
+                                  </div>
+                                  <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">{{ formatCurrency(item.price) }}</span>
+                                </button>
+                              }
+                            </div>
+                          </div>
+  
+                          <!-- Customer + totals -->
+                          <div class="lg:w-80 shrink-0 px-lg py-md border-t lg:border-t-0 lg:border-l border-outline-variant flex flex-col gap-md">
+                            <div>
+                              <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Customer</p>
+                              <div class="flex items-center gap-sm mb-xs">
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span>
+                                <span class="font-body-md text-body-md text-on-surface break-all">{{ order.email }}</span>
+                              </div>
+                              <div class="flex items-center gap-sm">
+                                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">call</span>
+                                <span class="font-body-md text-body-md text-on-surface">{{ customerPhone(order) }}</span>
+                              </div>
+                            </div>
+  
+                            <div class="border-t border-outline-variant pt-md flex flex-col gap-xs">
+                              @if (order.voucherName) {
+                                <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                                  <span class="flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-[16px] text-secondary">local_activity</span>
+                                    {{ order.voucherName }}
+                                  </span>
+                                  <span class="text-secondary">-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+                                </div>
+                              }
+                              <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                                <span>Subtotal</span>
+                                <span>{{ formatCurrency(order.priceBreakdown.subtotal) }}</span>
+                              </div>
+                              @if (order.priceBreakdown.discountAmount > 0 && !order.voucherName) {
+                                <div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+                                  <span>Discount</span>
+                                  <span>-{{ formatCurrency(order.priceBreakdown.discountAmount) }}</span>
+                                </div>
+                              }
+                              <div class="flex items-center justify-between border-t border-outline-variant pt-sm mt-xs font-headline-md text-body-lg text-on-surface">
+                                <span>Total</span>
+                                <span>{{ formatCurrency(order.priceBreakdown.total) }}</span>
+                              </div>
+                            </div>
+
+                            @if (order.payment?.commission; as commission) {
+                              <div class="border-t border-outline-variant pt-md">
+                                <p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Commission</p>
+                                <app-order-commission [commission]="commission" />
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+  </ng-template>
+
+  @if (historyOrder(); as order) {
+    <div
+      class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="history-title"
+      (click)="closeHistory()"
+    >
+      <div
+        class="w-full max-w-[32rem] max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-xl p-lg flex flex-col gap-md shadow-[0_8px_32px_rgba(20,33,61,0.24)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-start justify-between gap-sm">
+          <div class="flex items-start gap-sm">
+            <span class="material-symbols-outlined text-secondary text-[28px]">history</span>
+            <div>
+              <h3 id="history-title" class="font-headline-md text-headline-md text-on-surface">Payment history</h3>
+              <p class="text-caption text-on-surface-variant mt-xs">
+                Order #{{ orderReference(order.id) }} · {{ order.email }} · {{ formatCurrency(order.total) }}
+              </p>
+              @if (history()?.billCode; as billCode) {
+                <p class="text-caption text-on-surface-variant mt-xs">ToyyibPay bill: {{ billCode }}</p>
+              }
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Close history"
+            (click)="closeHistory()"
+            class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors"
+          >
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        @if (isHistoryLoading()) {
+          <p class="text-body-md font-body-md text-on-surface-variant text-center py-lg">Loading history...</p>
+        } @else if (historyError(); as error) {
+          <p class="text-caption text-error" role="alert">{{ error }}</p>
+        } @else if (history(); as history) {
+          <ol class="flex flex-col">
+            <li class="flex gap-md">
+              <div class="flex flex-col items-center">
+                <span class="w-3 h-3 mt-xs rounded-full bg-on-surface-variant"></span>
+                @if (history.entries.length > 0) {
+                  <span class="w-px flex-1 bg-outline-variant"></span>
+                }
+              </div>
+              <div class="pb-md">
+                <p class="font-label-md text-label-md text-on-surface">Order placed</p>
+                <p class="font-caption text-caption text-on-surface-variant">{{ history.orderCreatedAt | date: 'MMM d, y, h:mm a' }}</p>
+                <p class="font-caption text-caption text-on-surface-variant mt-xs">
+                  @if (order.payment; as payment) {
+                    Payment: {{ paymentProviderLabel[payment.provider] }} · Unpaid
+                  }
+                </p>
+              </div>
+            </li>
+
+            @for (entry of history.entries; track entry.id; let isLast = $last) {
+              <li class="flex gap-md">
+                <div class="flex flex-col items-center">
+                  <span class="w-3 h-3 mt-xs rounded-full bg-secondary"></span>
+                  @if (!isLast || history.commission) {
+                    <span class="w-px flex-1 bg-outline-variant"></span>
+                  }
+                </div>
+                <div class="pb-md min-w-0">
+                  <p class="font-label-md text-label-md text-on-surface">{{ getHistoryTitle(entry) }}</p>
+                  <p class="font-caption text-caption text-on-surface-variant">{{ entry.createdAt | date: 'MMM d, y, h:mm a' }}</p>
+                  <div class="flex flex-wrap items-center gap-xs mt-xs">
+                    <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="paymentStatusBadgeClass[entry.toPaymentStatus]">
+                      {{ entry.fromPaymentStatus ? paymentStatusLabel[entry.fromPaymentStatus] + ' → ' : '' }}{{ paymentStatusLabel[entry.toPaymentStatus] }}
+                    </span>
+                    <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="statusBadgeClass[entry.toOrderStatus]">
+                      Order: {{ entry.fromOrderStatus ? statusLabel[entry.fromOrderStatus] + ' → ' : '' }}{{ statusLabel[entry.toOrderStatus] }}
+                    </span>
+                  </div>
+                  <p class="font-caption text-caption text-on-surface-variant mt-xs">
+                    {{ transitionSourceLabel[entry.source] }}@if (entry.recordedBy) { by {{ entry.recordedBy }} }
+                  </p>
+                  @if (entry.note) {
+                    <p class="font-body-md text-body-md text-on-surface mt-xs break-words">"{{ entry.note }}"</p>
+                  }
+                </div>
+              </li>
+            }
+
+            @if (history.commission; as commission) {
+              <li class="flex gap-md">
+                <div class="flex flex-col items-center">
+                  <span class="w-3 h-3 mt-xs rounded-full bg-secondary"></span>
+                </div>
+                <div class="pb-md min-w-0 flex-1">
+                  <p class="font-label-md text-label-md text-on-surface">Commission imposed</p>
+                  <p class="font-caption text-caption text-on-surface-variant mb-xs">{{ commission.commissionImposedAt | date: 'MMM d, y, h:mm a' }}</p>
+                  <app-order-commission [commission]="commission" />
+                </div>
+              </li>
+            }
+          </ol>
+
+          @if (history.entries.length === 0) {
+            <p class="font-caption text-caption text-on-surface-variant">
+              No changes yet. Anything that happens to this payment will be recorded here.
+            </p>
+          }
+        }
+
+        <div class="flex justify-end">
+          <button
+            type="button"
+            (click)="closeHistory()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (orderBeingMarkedPaid(); as order) {
+    <div
+      class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mark-paid-title"
+      (click)="closeMarkAsPaid()"
+    >
+      <div
+        class="w-full max-w-[28rem] bg-surface-container-lowest rounded-xl p-lg flex flex-col gap-md shadow-[0_8px_32px_rgba(20,33,61,0.24)]"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-start gap-sm">
+          <span class="material-symbols-outlined text-secondary text-[28px]">payments</span>
+          <div>
+            <h3 id="mark-paid-title" class="font-headline-md text-headline-md text-on-surface">Mark order as paid</h3>
+            <p class="text-caption text-on-surface-variant mt-xs">
+              Only confirm this once you've received {{ formatCurrency(order.total) }} in cash from {{ order.email }} (Order #{{ orderReference(order.id) }}). This marks the order as delivered and can't be undone.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="payment-notes">Note (optional)</label>
+          <textarea
+            id="payment-notes"
+            rows="2"
+            maxlength="500"
+            placeholder="e.g. Received cash at the event"
+            [value]="paymentNotes()"
+            (input)="onPaymentNotesInput($event)"
+            class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline"
+          ></textarea>
+        </div>
+
+        @if (markPaidError(); as error) {
+          <p class="text-caption text-error" role="alert">{{ error }}</p>
+        }
+
+        <div class="flex justify-end gap-sm">
+          <button
+            type="button"
+            (click)="closeMarkAsPaid()"
+            [disabled]="isMarkingPaid()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmMarkAsPaid()"
+            [disabled]="isMarkingPaid()"
+            class="px-md py-sm bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-secondary-container hover:text-on-secondary-container transition-colors disabled:opacity-60 flex items-center gap-xs"
+          >
+            @if (isMarkingPaid()) {
+              <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+              Saving...
+            } @else {
+              <span class="material-symbols-outlined text-[18px]">check</span>
+              Yes, I've been paid
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (previewItem(); as item) {
     <div

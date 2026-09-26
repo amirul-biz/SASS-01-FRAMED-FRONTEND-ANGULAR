@@ -14,7 +14,7 @@ import { FilterByAreaComponent } from './filter-by-area/filter-by-area.component
 import { PhotoCardComponent } from './photo-card/photo-card.component';
 import { SelectionBarComponent } from './selection-bar/selection-bar.component';
 import { PhotoPreviewModalComponent } from './photo-preview-modal/photo-preview-modal.component';
-import { IPhotoFormatOption, STANDARD_FORMAT_OPTION } from '../../pricing/pricing-options.service';
+import { IPhotoFormatOption } from '../../pricing/pricing-options.service';
 
 type EventDetail = IEvent & { description: string | null; albumCoverPhotoUrls: string[] };
 
@@ -213,12 +213,9 @@ export class EventDetailComponent {
     this.armCoverTimer(this.heroImageUrls().length);
   }
 
-  // Falls back to the standard option when the event has no pricing bundle attached yet,
-  // so the format picker and price badges are never left with nothing to show.
-  readonly formatOptions = computed(() => {
-    const options = this.allPricingOptions();
-    return options.length > 0 ? options : [STANDARD_FORMAT_OPTION];
-  });
+  readonly formatOptions = computed(() => this.allPricingOptions());
+
+  readonly isPricingAvailable = computed(() => this.formatOptions().length > 0);
 
   readonly photos = computed(() => {
     const eventId = this.id();
@@ -234,7 +231,7 @@ export class EventDetailComponent {
     const options = this.formatOptions();
     return this.photos().map((photo) => {
       const formatId = this.selection.formatIdFor(photo.id) ?? options[0]?.id;
-      const price = options.find((o) => o.id === formatId)?.price ?? STANDARD_FORMAT_OPTION.price;
+      const price = options.find((o) => o.id === formatId)?.price ?? null;
       return { photo, price, selected: this.selection.isSelected(photo.id) };
     });
   });
@@ -269,9 +266,7 @@ export class EventDetailComponent {
 
   readonly previewFormatId = computed(
     () =>
-      this.selection.formatIdFor(this.previewPhoto()?.id ?? '') ??
-      this.formatOptions()[0]?.id ??
-      STANDARD_FORMAT_OPTION.id,
+      this.selection.formatIdFor(this.previewPhoto()?.id ?? '') ?? this.formatOptions()[0]?.id ?? '',
   );
 
   openPreview(photo: IPhoto): void {

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output } from '@angular/core';
 import { IPhoto } from '../../events.service';
-import { IPhotoFormatOption, STANDARD_FORMAT_OPTION } from '../../../pricing/pricing-options.service';
+import { IPhotoFormatOption } from '../../../pricing/pricing-options.service';
 import { formatCurrency } from '../../../pricing/currency.util';
 
 @Component({
@@ -16,8 +16,8 @@ import { formatCurrency } from '../../../pricing/currency.util';
 })
 export class PhotoPreviewModalComponent {
   photo = input.required<IPhoto>();
-  formatOptions = input<IPhotoFormatOption[]>([STANDARD_FORMAT_OPTION]);
-  initialFormatId = input<string>(STANDARD_FORMAT_OPTION.id);
+  formatOptions = input<IPhotoFormatOption[]>([]);
+  initialFormatId = input<string>('');
   hasPrev = input(false);
   hasNext = input(false);
   /** True while a neighbouring page is loading, so arrows don't queue up multiple page jumps. */
@@ -37,6 +37,8 @@ export class PhotoPreviewModalComponent {
     const { width, height } = this.photo();
     return width && height ? `${width} / ${height}` : '1 / 1';
   });
+
+  readonly isFormatOptionsAvailable = computed(() => this.formatOptions().length > 0);
 
   // Resets whenever `initialFormatId` changes (modal reopened for a different photo),
   // but stays put once the rider manually picks a different format for this photo.

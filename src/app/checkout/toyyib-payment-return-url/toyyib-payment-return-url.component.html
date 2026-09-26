@@ -1,0 +1,93 @@
+<div class="flex flex-col w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+  <div class="flex flex-col items-center text-center gap-md py-xl">
+    @switch (pageStatus()) {
+      @case ('verifying') {
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px] animate-spin">progress_activity</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          Confirming your payment…
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          Please wait a moment while we check with ToyyibPay.
+        </p>
+      }
+      @case ('paid') {
+        <span class="material-symbols-outlined text-secondary text-[64px]">check_circle</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          Thank you for your order!
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          We're finishing up — your photos will be emailed to you shortly.
+        </p>
+      }
+      @case ('failed') {
+        <span class="material-symbols-outlined text-error text-[64px]">cancel</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          Your payment could not be completed
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          Your order was not charged. Please try checking out again.
+        </p>
+      }
+      @case ('pending') {
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px]">hourglass_top</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          Still confirming your payment
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          This can take a moment — please check again shortly.
+        </p>
+      }
+      @case ('error') {
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px]">help</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          We couldn't verify your payment right now
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          If you believe you were charged, please check your email or contact support.
+        </p>
+      }
+    }
+
+    @if (pageStatus() === 'failed') {
+      <button
+        type="button"
+        routerLink="/cart"
+        class="mt-md px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+      >
+        Back to Cart
+      </button>
+    } @else if (pageStatus() !== 'verifying') {
+      <button
+        type="button"
+        routerLink="/events"
+        class="mt-md px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+      >
+        Back to Events
+      </button>
+    }
+
+    @if (pageStatus() === 'paid') {
+      <div class="mt-lg pt-lg border-t border-outline-variant w-full max-w-[28rem]">
+        <button
+          type="button"
+          (click)="retryConfirmation()"
+          [disabled]="retrying()"
+          class="font-label-md text-body-md text-primary underline hover:text-primary/80 transition-colors disabled:opacity-50"
+        >
+          {{ retrying() ? 'Checking…' : "Didn't receive your order via email? Click here" }}
+        </button>
+      </div>
+    } @else if (pageStatus() === 'pending' || pageStatus() === 'error') {
+      <div class="mt-lg pt-lg border-t border-outline-variant w-full max-w-[28rem]">
+        <button
+          type="button"
+          (click)="retryConfirmation()"
+          [disabled]="retrying()"
+          class="font-label-md text-body-md text-primary underline hover:text-primary/80 transition-colors disabled:opacity-50"
+        >
+          {{ retrying() ? 'Checking…' : 'Check again' }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

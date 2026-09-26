@@ -6,13 +6,15 @@ import { AdminEvent, AdminOrder, AdminOrderStatus, AdminService } from '../admin
 
 const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
   PENDING_CONFIRMATION: 'bg-surface-container text-on-surface-variant',
-  CONFIRMED: 'bg-secondary-container text-on-secondary-container',
+  PROCESSING: 'bg-surface-container text-on-surface-variant',
+  DELIVERED: 'bg-secondary-container text-on-secondary-container',
   CANCELLED: 'bg-error-container text-error',
 };
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   PENDING_CONFIRMATION: 'Pending confirmation',
-  CONFIRMED: 'Confirmed',
+  PROCESSING: 'Processing',
+  DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
 };
 
@@ -29,7 +31,8 @@ export class AdminOrdersComponent {
   readonly statusOptions: { value: AdminOrderStatus | ''; label: string }[] = [
     { value: '', label: 'All statuses' },
     { value: 'PENDING_CONFIRMATION', label: 'Pending confirmation' },
-    { value: 'CONFIRMED', label: 'Confirmed' },
+    { value: 'PROCESSING', label: 'Processing' },
+    { value: 'DELIVERED', label: 'Delivered' },
     { value: 'CANCELLED', label: 'Cancelled' },
   ];
   readonly statusBadgeClass = STATUS_BADGE_CLASS;
