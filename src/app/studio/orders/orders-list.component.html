@@ -33,6 +33,20 @@
           <option [value]="event.id">{{ event.title }}</option>
         }
       </select>
+      <input
+        type="text"
+        placeholder="Search by order ID..."
+        class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        [value]="orderIdFilter()"
+        (change)="onOrderIdFilterChange($event)"
+      />
+      <input
+        type="text"
+        placeholder="Search by email..."
+        class="h-9 px-sm border border-outline-variant rounded-lg font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        [value]="emailFilter()"
+        (change)="onEmailFilterChange($event)"
+      />
     </div>
 
     <div class="overflow-x-auto">
@@ -307,6 +321,22 @@
                                 }
                               </button>
                             }
+                            @if (canResendDeliveryEmail(order)) {
+                              <button
+                                type="button"
+                                (click)="resendDeliveryEmail(order)"
+                                [disabled]="isResendingEmail(order)"
+                                class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs disabled:opacity-60"
+                              >
+                                @if (isResendingEmail(order)) {
+                                  <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                                  Resending...
+                                } @else {
+                                  <span class="material-symbols-outlined text-[18px]">forward_to_inbox</span>
+                                  Resend email
+                                }
+                              </button>
+                            }
                           </div>
                         </div>
                         @if (getSyncFeedback(order); as syncFeedback) {
@@ -316,6 +346,15 @@
                             role="status"
                           >
                             {{ syncFeedback.message }}
+                          </p>
+                        }
+                        @if (getResendFeedback(order); as resendFeedback) {
+                          <p
+                            class="px-lg pt-sm text-caption"
+                            [class]="resendFeedback.isError ? 'text-error' : 'text-on-surface-variant'"
+                            role="status"
+                          >
+                            {{ resendFeedback.message }}
                           </p>
                         }
 
@@ -472,9 +511,11 @@
                   <p class="font-label-md text-label-md text-on-surface">{{ getHistoryTitle(entry) }}</p>
                   <p class="font-caption text-caption text-on-surface-variant">{{ entry.createdAt | date: 'MMM d, y, h:mm a' }}</p>
                   <div class="flex flex-wrap items-center gap-xs mt-xs">
-                    <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="paymentStatusBadgeClass[entry.toPaymentStatus]">
-                      {{ entry.fromPaymentStatus ? paymentStatusLabel[entry.fromPaymentStatus] + ' → ' : '' }}{{ paymentStatusLabel[entry.toPaymentStatus] }}
-                    </span>
+                    @if (entry.fromPaymentStatus !== entry.toPaymentStatus) {
+                      <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="paymentStatusBadgeClass[entry.toPaymentStatus]">
+                        {{ entry.fromPaymentStatus ? paymentStatusLabel[entry.fromPaymentStatus] + ' → ' : '' }}{{ paymentStatusLabel[entry.toPaymentStatus] }}
+                      </span>
+                    }
                     <span class="inline-block px-sm py-0.5 rounded-full font-caption text-caption" [class]="statusBadgeClass[entry.toOrderStatus]">
                       Order: {{ entry.fromOrderStatus ? statusLabel[entry.fromOrderStatus] + ' → ' : '' }}{{ statusLabel[entry.toOrderStatus] }}
                     </span>

@@ -115,6 +115,8 @@ export class OrdersListComponent {
   readonly pageSize = signal(PAGE_SIZE_OPTIONS[0]);
   readonly eventFilter = signal<string>('');
   readonly statusFilter = signal<OrderStatus | ''>('');
+  readonly orderIdFilter = signal<string>('');
+  readonly emailFilter = signal<string>('');
   readonly response = signal<PaginatedOrders | null>(null);
   readonly isLoading = signal(true);
   readonly errorMsg = signal<string | null>(null);
@@ -142,6 +144,9 @@ export class OrdersListComponent {
   readonly syncingPaymentId = signal<string | null>(null);
   readonly syncFeedback = signal<{ paymentId: string; message: string; isError: boolean } | null>(null);
 
+  readonly resendingOrderId = signal<string | null>(null);
+  readonly resendFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
+
   constructor() {
     this.loadTrigger$
       .pipe(
@@ -155,6 +160,8 @@ export class OrdersListComponent {
               eventId: this.eventFilter() || undefined,
               status: this.statusFilter() || undefined,
               paymentTracking: 'TRACKED',
+              orderIdSearch: this.orderIdFilter() || undefined,
+              emailSearch: this.emailFilter() || undefined,
             })
             .pipe(finalize(() => this.isLoading.set(false)));
         }),
@@ -210,6 +217,18 @@ export class OrdersListComponent {
     this.loadTrigger$.next();
   }
 
+  onOrderIdFilterChange(event: globalThis.Event): void {
+    this.orderIdFilter.set((event.target as HTMLInputElement).value.trim());
+    this.pageNumber.set(1);
+    this.loadTrigger$.next();
+  }
+
+  onEmailFilterChange(event: globalThis.Event): void {
+    this.emailFilter.set((event.target as HTMLInputElement).value.trim());
+    this.pageNumber.set(1);
+    this.loadTrigger$.next();
+  }
+
   onPageNumberChange(pageNumber: number): void {
     this.pageNumber.set(pageNumber);
     this.loadTrigger$.next();
@@ -255,7 +274,12 @@ export class OrdersListComponent {
   }
 
   hasActiveFilters(): boolean {
-    return this.eventFilter() !== '' || this.statusFilter() !== '';
+    return (
+      this.eventFilter() !== '' ||
+      this.statusFilter() !== '' ||
+      this.orderIdFilter() !== '' ||
+      this.emailFilter() !== ''
+    );
   }
 
   customerPhone(order: StudioOrder): string {
@@ -310,6 +334,11 @@ export class OrdersListComponent {
   }
 
   getHistoryTitle(entry: OrderHistoryEntry): string {
+    const isOrderStatusOnlyEvent = entry.fromPaymentStatus === entry.toPaymentStatus;
+    if (isOrderStatusOnlyEvent && entry.toOrderStatus === 'DELIVERED') {
+      return 'Order delivered';
+    }
+
     switch (entry.toPaymentStatus) {
       case 'PAID':
         return entry.source === 'MANUAL' ? 'Marked as paid' : 'Payment received';
@@ -419,5 +448,51 @@ export class OrdersListComponent {
   private getSyncErrorMessage(error: unknown): string {
     const backendMessage = (error as { error?: { message?: string } })?.error?.message;
     return backendMessage || 'Could not check this payment right now. Please try again.';
+  }
+
+  canResendDeliveryEmail(order: StudioOrder): boolean {
+    return order.status === 'DELIVERED' && order.payment?.provider === 'TOYYIBPAY';
+  }
+
+  isResendingEmail(order: StudioOrder): boolean {
+    return this.resendingOrderId() === order.id;
+  }
+
+  getResendFeedback(order: StudioOrder): { message: string; isError: boolean } | null {
+    const feedback = this.resendFeedback();
+    const hasFeedbackForThisOrder = feedback?.orderId === order.id;
+    return hasFeedbackForThisOrder ? { message: feedback.message, isError: feedback.isError } : null;
+  }
+
+  resendDeliveryEmail(order: StudioOrder): void {
+    const isResendUnavailable = !this.canResendDeliveryEmail(order) || this.resendingOrderId() !== null;
+    if (isResendUnavailable) {
+      return;
+    }
+
+    this.resendingOrderId.set(order.id);
+    this.resendFeedback.set(null);
+    this.ordersService
+      .resendDeliveryEmail(order.id)
+      .pipe(finalize(() => this.resendingOrderId.set(null)))
+      .subscribe({
+        next: () =>
+          this.resendFeedback.set({
+            orderId: order.id,
+            message: 'Email resent.',
+            isError: false,
+          }),
+        error: (error: unknown) =>
+          this.resendFeedback.set({
+            orderId: order.id,
+            message: this.getResendErrorMessage(error),
+            isError: true,
+          }),
+      });
+  }
+
+  private getResendErrorMessage(error: unknown): string {
+    const backendMessage = (error as { error?: { message?: string } })?.error?.message;
+    return backendMessage || 'Could not resend the email right now. Please try again.';
   }
 }

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { toWhatsAppNumber } from '../../shared/whatsapp-number.util';
+import { getOrderReference } from '../order-reference.util';
 import { ConfirmToyyibPayReturnResult, OrderService, PaymentStatus } from '../order.service';
 
 // Landing page for ToyyibPay's billReturnUrl redirect (see TOYYIBPAY_RETURN_URL) — this is the
@@ -35,6 +37,9 @@ export class ToyyibPaymentReturnUrlComponent implements OnInit {
   // conclusive until it responds, so a genuinely failed payment never gets shown a thank-you.
   readonly pageStatus = signal<ReturnPageStatus>('verifying');
   readonly retrying = signal(false);
+  // Null when the photographer has no contact number on file — the WhatsApp fallback link only
+  // shows when there's actually somewhere to send the customer.
+  readonly whatsappUrl = signal<string | null>(null);
 
   ngOnInit(): void {
     const queryParamMap = this.route.snapshot.queryParamMap;
@@ -62,9 +67,14 @@ export class ToyyibPaymentReturnUrlComponent implements OnInit {
       return;
     }
 
+    // Only the "didn't receive it?" click on an already-confirmed PAID payment should force a
+    // resend — the "Check again" button on pending/error states is just re-checking payment
+    // status, with nothing confirmed paid yet to resend anything for.
+    const resendEmail = this.pageStatus() === 'paid';
+
     this.retrying.set(true);
     this.orderService
-      .confirmToyyibPayReturn(this.paymentId!, this.billCode!)
+      .confirmToyyibPayReturn(this.paymentId!, this.billCode!, resendEmail)
       .pipe(finalize(() => this.retrying.set(false)))
       .subscribe({
         next: (result) => this.applyResult(result),
@@ -74,5 +84,16 @@ export class ToyyibPaymentReturnUrlComponent implements OnInit {
 
   private applyResult(result: ConfirmToyyibPayReturnResult): void {
     this.pageStatus.set(PAYMENT_STATUS_TO_PAGE_STATUS[result.paymentStatus]);
+    this.whatsappUrl.set(this.buildWhatsAppUrl(result));
+  }
+
+  private buildWhatsAppUrl(result: ConfirmToyyibPayReturnResult): string | null {
+    const digits = (result.photographerContactNo ?? result.photographerPhone ?? '').replace(/\D/g, '');
+    if (!digits) {
+      return null;
+    }
+
+    const message = `Hi, I made a payment for order #${getOrderReference(result.orderId)} but haven't received my photos yet.`;
+    return `https://wa.me/${toWhatsAppNumber(digits)}?text=${encodeURIComponent(message)}`;
   }
 }

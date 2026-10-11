@@ -65,6 +65,20 @@ export const routes: Routes = [
             (m) => m.ToyyibPaymentReturnUrlComponent,
           ),
       },
+      {
+        path: 'order-receipt',
+        loadComponent: () =>
+          import('./checkout/order-receipt/order-receipt.component').then(
+            (m) => m.OrderReceiptComponent,
+          ),
+      },
+      {
+        path: 'order-images',
+        loadComponent: () =>
+          import('./checkout/order-images/order-images.component').then(
+            (m) => m.OrderImagesComponent,
+          ),
+      },
     ],
   },
   {

@@ -67,7 +67,7 @@
     }
 
     @if (pageStatus() === 'paid') {
-      <div class="mt-lg pt-lg border-t border-outline-variant w-full max-w-[28rem]">
+      <div class="mt-lg pt-lg border-t border-outline-variant w-full max-w-[28rem] flex flex-col gap-sm">
         <button
           type="button"
           (click)="retryConfirmation()"
@@ -76,6 +76,16 @@
         >
           {{ retrying() ? 'Checking…' : "Didn't receive your order via email? Click here" }}
         </button>
+        @if (whatsappUrl(); as whatsappUrl) {
+          <a
+            [href]="whatsappUrl"
+            target="_blank"
+            rel="noopener"
+            class="font-label-md text-body-md text-primary underline hover:text-primary/80 transition-colors"
+          >
+            Still didn't get it? Contact the photographer on WhatsApp
+          </a>
+        }
       </div>
     } @else if (pageStatus() === 'pending' || pageStatus() === 'error') {
       <div class="mt-lg pt-lg border-t border-outline-variant w-full max-w-[28rem]">

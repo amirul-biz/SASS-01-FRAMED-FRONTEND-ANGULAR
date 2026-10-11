@@ -69,17 +69,33 @@ export interface PriceBreakdown {
   total: number;
 }
 
-export interface OrderResponse extends Omit<CreateOrderPayload, 'voucherId' | 'idempotencyKey'> {
+export interface OrderResponseItem {
+  id: string;
+  photoId: string;
+  photoName: string;
+  photoUrl: string;
+  formatLabel: string;
+  price: number;
+}
+
+export interface OrderResponse
+  extends Omit<CreateOrderPayload, 'voucherId' | 'idempotencyKey' | 'items'> {
   id: string;
   priceBreakdown: PriceBreakdown;
   voucherId: string | null;
   status: OrderStatus;
   payment: OrderPayment | null;
+  items: OrderResponseItem[];
   createdAt: string;
 }
 
 export interface ConfirmToyyibPayReturnResult {
   paymentStatus: PaymentStatus;
+  orderId: string;
+  // For the return-URL page's WhatsApp fallback — both null when the photographer has no contact
+  // number on file either way.
+  photographerContactNo: string | null;
+  photographerPhone: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,11 +109,23 @@ export class OrderService {
 
   // Called from the ToyyibPay return-URL landing page as a safety net, in case the server-to-server
   // webhook never arrives — billCode is what ToyyibPay's own redirect carries, and the backend uses
-  // it as this anonymous customer's proof they're the real payer for this paymentId.
-  confirmToyyibPayReturn(paymentId: string, billCode: string): Observable<ConfirmToyyibPayReturnResult> {
+  // it as this anonymous customer's proof they're the real payer for this paymentId. resendEmail
+  // should only ever be true on the page's explicit "didn't receive it?" retry — the automatic
+  // landing-page check never sets it, so a duplicate email only happens when the customer asks.
+  confirmToyyibPayReturn(
+    paymentId: string,
+    billCode: string,
+    resendEmail = false,
+  ): Observable<ConfirmToyyibPayReturnResult> {
     return this.http.post<ConfirmToyyibPayReturnResult>(
       `${this.env.apiUrl}/toyyibpay-order-payment/post-payment/${paymentId}/confirm-return`,
-      { billCode },
+      { billCode, resendEmail },
     );
+  }
+
+  // Called from the receipt and image-gallery pages linked in the delivery email — public,
+  // unauthenticated. The backend 400s if the order was never paid.
+  getOrderReceipt(orderId: string): Observable<OrderResponse> {
+    return this.http.get<OrderResponse>(`${this.env.apiUrl}/orders/${orderId}/receipt`);
   }
 }
