@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, finalize, switchMap } from 'rxjs';
 import { RangePipe } from '../../shared/pipes/range.pipe';
+import { MerchantPaymentPlatformService } from '../../merchant-payment-platform/merchant-payment-platform.service';
 import { Event, PaginatedResponse, StudioEventsService } from '../studio-events.service';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -16,8 +17,11 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50];
 })
 export class MyEventsDashboardComponent {
   private readonly eventsService = inject(StudioEventsService);
+  private readonly paymentPlatformService = inject(MerchantPaymentPlatformService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly loadTrigger$ = new Subject<void>();
+
+  readonly hasApprovedPaymentPlatform = this.paymentPlatformService.hasApprovedPaymentPlatform;
 
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly pageNumber = signal(1);
@@ -43,8 +47,7 @@ export class MyEventsDashboardComponent {
       )
       .subscribe({
         next: (response) => this.response.set(response),
-        error: () =>
-          this.errorMsg.set('Failed to load your events. Please try again.'),
+        error: () => this.errorMsg.set('Failed to load your events. Please try again.'),
       });
 
     this.loadTrigger$.next();
@@ -75,8 +78,7 @@ export class MyEventsDashboardComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.loadTrigger$.next(),
-        error: () =>
-          this.errorMsg.set('Failed to update the event. Please try again.'),
+        error: () => this.errorMsg.set('Failed to update the event. Please try again.'),
       });
   }
 
@@ -90,8 +92,7 @@ export class MyEventsDashboardComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.loadTrigger$.next(),
-        error: () =>
-          this.errorMsg.set('Failed to delete the event. Please try again.'),
+        error: () => this.errorMsg.set('Failed to delete the event. Please try again.'),
       });
   }
 

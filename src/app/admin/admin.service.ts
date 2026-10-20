@@ -41,7 +41,7 @@ export interface AdminOrderItem {
   price: number;
 }
 
-export type AdminOrderStatus = 'PENDING_CONFIRMATION' | 'CONFIRMED' | 'CANCELLED';
+export type AdminOrderStatus = 'PENDING_CONFIRMATION' | 'PROCESSING' | 'DELIVERED' | 'CANCELLED';
 
 export interface AdminOrder {
   id: string;

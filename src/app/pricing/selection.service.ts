@@ -2,7 +2,6 @@ import { Injectable, WritableSignal, computed, effect, linkedSignal, signal } fr
 import { IPhoto } from '../events/events.service';
 import { IBundlePricingOptionSummary, IPricingBundle } from './pricing-bundles.service';
 import { IVoucherLike, QualifyingMatch, calculatePricing, qualifyingConditions } from './pricing.util';
-import { STANDARD_FORMAT_OPTION } from './pricing-options.service';
 import { loadCarts, saveCarts } from './cart-storage';
 
 export interface SelectedEntry {
@@ -55,6 +54,7 @@ export class SelectionService {
 
   setBundlesForEvent(eventId: string, bundles: IPricingBundle[]): void {
     this.eventBundles.update((map) => new Map(map).set(eventId, bundles));
+    this.reconcileCartWithPricing(eventId);
   }
 
   hasBundlesFor(eventId: string): boolean {
@@ -160,25 +160,28 @@ export class SelectionService {
   }
 
   toggle(photo: IPhoto): void {
-    this.updateCartFor(photo.eventId, (items) => {
-      const next = new Map(items);
-      if (next.has(photo.id)) {
-        next.delete(photo.id);
-      } else {
-        const formatId = this.defaultFormatIdFor(photo);
-        next.set(photo.id, { photo, formatId, formatOption: this.resolveFormatOption(photo.eventId, formatId) });
-      }
-      return next;
-    });
-    // The bucket may have just been deleted (its last photo was removed) — repoint at whatever's
-    // left rather than making the now-empty event "active" with nothing to show for it.
-    this.activeId.set(this.carts().has(photo.eventId) ? photo.eventId : this.firstRemainingEventId());
+    const isAlreadySelected = this.isSelectedInEvent(photo);
+    if (isAlreadySelected) {
+      this.removePhoto(photo);
+      return;
+    }
+
+    const defaultFormatOption = this.optionsForEvent(photo.eventId)[0];
+    if (!defaultFormatOption) {
+      return;
+    }
+    this.selectWithFormat(photo, defaultFormatOption.id);
   }
 
   selectWithFormat(photo: IPhoto, formatId: string): void {
+    const formatOption = this.optionsForEvent(photo.eventId).find((option) => option.id === formatId);
+    if (!formatOption) {
+      return;
+    }
+
     this.updateCartFor(photo.eventId, (items) => {
       const next = new Map(items);
-      next.set(photo.id, { photo, formatId, formatOption: this.resolveFormatOption(photo.eventId, formatId) });
+      next.set(photo.id, { photo, formatId, formatOption });
       return next;
     });
     this.activeId.set(photo.eventId);
@@ -233,16 +236,63 @@ export class SelectionService {
     });
   }
 
-  private defaultFormatIdFor(photo: IPhoto): string {
-    return this.optionsForEvent(photo.eventId)[0]?.id ?? STANDARD_FORMAT_OPTION.id;
+  private reconcileCartWithPricing(eventId: string): void {
+    const cart = this.carts().get(eventId);
+    if (!cart) {
+      return;
+    }
+
+    const options = this.optionsForEvent(eventId);
+    const reconciledItems = new Map<string, SelectedEntry>();
+    let isCartChanged = false;
+    for (const [photoId, entry] of cart.items) {
+      const currentOption = this.getCurrentOptionFor(entry, options);
+      if (!currentOption) {
+        isCartChanged = true;
+        continue;
+      }
+      const isSnapshotCurrent =
+        entry.formatId === currentOption.id &&
+        entry.formatOption.label === currentOption.label &&
+        entry.formatOption.price === currentOption.price;
+      isCartChanged = isCartChanged || !isSnapshotCurrent;
+      reconciledItems.set(photoId, { ...entry, formatId: currentOption.id, formatOption: currentOption });
+    }
+
+    if (!isCartChanged) {
+      return;
+    }
+    this.updateCartFor(eventId, () => reconciledItems);
+    const isActiveCartGone = this.activeId() === eventId && !this.carts().has(eventId);
+    if (isActiveCartGone) {
+      this.activeId.set(this.firstRemainingEventId());
+    }
   }
 
-  private resolveFormatOption(eventId: string, formatId: string): IBundlePricingOptionSummary {
-    return this.optionsForEvent(eventId).find((o) => o.id === formatId) ?? STANDARD_FORMAT_OPTION;
+  private getCurrentOptionFor(
+    entry: SelectedEntry,
+    options: IBundlePricingOptionSummary[],
+  ): IBundlePricingOptionSummary | undefined {
+    const sameId = options.find((option) => option.id === entry.formatId);
+    const sameLabel = options.find((option) => option.label === entry.formatOption.label);
+    return sameId ?? sameLabel ?? options[0];
   }
 
-  // Every pricing option across every bundle attached to the event, flattened — the same "first
-  // available option, else Standard" pool the event-detail page's own formatOptions() uses.
+  private isSelectedInEvent(photo: IPhoto): boolean {
+    return this.carts().get(photo.eventId)?.items.has(photo.id) ?? false;
+  }
+
+  private removePhoto(photo: IPhoto): void {
+    this.updateCartFor(photo.eventId, (items) => {
+      const next = new Map(items);
+      next.delete(photo.id);
+      return next;
+    });
+    // The bucket may have just been deleted (its last photo was removed) — repoint at whatever's
+    // left rather than making the now-empty event "active" with nothing to show for it.
+    this.activeId.set(this.carts().has(photo.eventId) ? photo.eventId : this.firstRemainingEventId());
+  }
+
   private optionsForEvent(eventId: string): IBundlePricingOptionSummary[] {
     const bundles = this.eventBundles().get(eventId) ?? [];
     return bundles.flatMap((bundle) => bundle.pricingOptions);

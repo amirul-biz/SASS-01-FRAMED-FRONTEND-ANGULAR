@@ -1,0 +1,18 @@
+@switch (commission().commissionType) {
+  @case ('PERCENTAGE_PER_TRANSACTION') {
+    <app-percentage-per-transaction-commission [commission]="commission()" />
+  }
+  @case ('AMOUNT_PER_TRANSACTION') {
+    <app-amount-per-transaction-commission [commission]="commission()" />
+  }
+  @case ('PERCENTAGE_PER_UNIT') {
+    <app-percentage-per-unit-commission [commission]="commission()" />
+  }
+  @case ('AMOUNT_PER_UNIT') {
+    <app-amount-per-unit-commission [commission]="commission()" />
+  }
+}
+<div class="flex items-center justify-between mt-xs font-caption text-caption text-on-surface-variant">
+  <span>You keep</span>
+  <span>{{ formatCurrency(amountKept()) }}</span>
+</div>

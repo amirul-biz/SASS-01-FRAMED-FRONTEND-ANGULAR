@@ -1,0 +1,18 @@
+<div class="flex items-start justify-between gap-sm">
+  <p class="font-body-md text-body-md text-on-surface">Percentage per transaction</p>
+  <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">-{{ formatCurrency(commission().commissionAmount) }}</span>
+</div>
+<dl class="mt-xs space-y-xs font-caption text-caption text-on-surface-variant">
+    <div class="flex justify-between gap-sm">
+      <dt>Amount paid</dt>
+      <dd class="text-on-surface">&nbsp;{{ formatCurrency(commission().originalPaymentAmount) }}</dd>
+    </div>
+    <div class="flex justify-between gap-sm">
+      <dt>Commission rate</dt>
+      <dd class="text-on-surface">&nbsp;{{ commission().percentageRateApplied }}%</dd>
+    </div>
+    <div class="flex justify-between gap-sm">
+      <dt>Commission</dt>
+      <dd class="text-on-surface">&nbsp;{{ formatCurrency(commission().commissionAmount) }}</dd>
+    </div>
+</dl>

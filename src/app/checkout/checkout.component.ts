@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { SelectionService } from '../pricing/selection.service';
 import { IBundleVoucherSummary } from '../pricing/pricing-bundles.service';
 import { ClientService } from '../client/client.service';
+import { toSelectionBundles } from '../client/client-event.util';
 import { OrderSummaryComponent } from './order-summary/order-summary.component';
-import { CreateOrderPayload, OrderService } from './order.service';
+import { CreateOrderPayload, OrderResponse, OrderService } from './order.service';
+import { getOrderReference } from './order-reference.util';
 import { formatCurrency } from '../pricing/currency.util';
 import { COUNTRY_DIAL_CODE, CountryCode } from './country-code.constants';
 import { toWhatsAppNumber } from '../shared/whatsapp-number.util';
@@ -28,10 +31,17 @@ export class CheckoutComponent {
   readonly selection = inject(SelectionService);
 
   readonly orderPlaced = signal(false);
+  readonly isSubmitting = signal(false);
+  readonly submitError = signal<string | null>(null);
   // WhatsApp-able digits from the event photographer's profile settings (contactNo, falling back
   // to phone). Falls back to the platform number while the profile has no number set.
   private readonly photographerWhatsAppNumber = signal<string | null>(null);
   private readonly loadedEventId = signal<string | null>(null);
+  // Generated once for this checkout screen and reused on every retry (network failure, timeout)
+  // so a resubmission returns the original order instead of creating a duplicate. Not regenerated
+  // per click — a fresh key only makes sense for a fresh CheckoutComponent instance, which normal
+  // Angular routing already gives on the next visit to this screen.
+  private readonly idempotencyKey = crypto.randomUUID();
 
   constructor() {
     effect(() => {
@@ -42,6 +52,7 @@ export class CheckoutComponent {
       this.loadedEventId.set(eventId);
       this.clientService.getEvent(eventId).subscribe({
         next: (event) => {
+          this.selection.setBundlesForEvent(eventId, toSelectionBundles(event));
           const digits = (event.photographerContactNo ?? event.photographerPhone ?? '')
             .replace(/\D/g, '');
           if (digits) {
@@ -61,25 +72,64 @@ export class CheckoutComponent {
 
   completePurchase(): void {
     this.contactForm.markAllAsTouched();
-    if (this.contactForm.invalid || this.selection.selectedCount() === 0) {
+    const isFormInvalid = this.contactForm.invalid;
+    const isSelectionEmpty = this.selection.selectedCount() === 0;
+    const isAlreadySubmitting = this.isSubmitting();
+
+    const isPurchaseBlocked = isFormInvalid || isSelectionEmpty || isAlreadySubmitting;
+    if (isPurchaseBlocked) {
       return;
     }
 
-    // Best-effort: no payment gateway is captured by this app yet, so a failed save should never
-    // block the existing WhatsApp-confirm flow riders already rely on.
-    this.orderService.createOrder(this.buildOrderPayload()).subscribe({ error: () => {} });
+    this.submitError.set(null);
+    this.isSubmitting.set(true);
 
-    const message = this.buildWhatsAppMessage();
-    const targetNumber = toWhatsAppNumber(this.photographerWhatsAppNumber() ?? WHATSAPP_NUMBER);
-    const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`;
     // Handing the URL to window.open() directly is unreliable on mobile: the OS's wa.me → app
     // handoff often keeps just the phone number and drops the ?text= query for a window.open-
     // spawned context. Opening a blank tab synchronously (still same click tick, so not popup-
     // blocked) and navigating *that* tab via location.href makes it a real top-level navigation,
     // which mobile OSes carry through to the app intact.
-    const target = window.open('', '_blank');
-    if (target) {
-      target.location.href = whatsappUrl;
+    const whatsappTab = window.open('', '_blank');
+
+    this.orderService
+      .createOrder(this.buildOrderPayload())
+      .pipe(finalize(() => this.isSubmitting.set(false)))
+      .subscribe({
+        next: (order) => this.handleOrderCreated(order, whatsappTab),
+        error: (error: unknown) => {
+          whatsappTab?.close();
+          this.submitError.set(this.getSubmitErrorMessage(error));
+        },
+      });
+  }
+
+  backToEvents(): void {
+    this.router.navigate(['/events']);
+  }
+
+  private handleOrderCreated(order: OrderResponse, whatsappTab: Window | null): void {
+    const paymentUrl = order.payment?.paymentUrl;
+    const hasPaymentRedirect = paymentUrl != null;
+    if (hasPaymentRedirect) {
+      // A real payment gateway redirect is a normal top-level navigation, not the WhatsApp
+      // deep-link handoff below — the blank tab was only opened defensively before we knew
+      // which path this order would take.
+      whatsappTab?.close();
+      this.orderPlaced.set(true);
+      this.selection.clear();
+      window.location.href = paymentUrl;
+      return;
+    }
+    this.handOffToWhatsApp(order, whatsappTab);
+  }
+
+  private handOffToWhatsApp(order: OrderResponse, whatsappTab: Window | null): void {
+    const message = this.buildWhatsAppMessage(order);
+    const targetNumber = toWhatsAppNumber(this.photographerWhatsAppNumber() ?? WHATSAPP_NUMBER);
+    const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`;
+
+    if (whatsappTab) {
+      whatsappTab.location.href = whatsappUrl;
     } else {
       window.location.href = whatsappUrl;
     }
@@ -88,8 +138,10 @@ export class CheckoutComponent {
     this.selection.clear();
   }
 
-  backToEvents(): void {
-    this.router.navigate(['/events']);
+  private getSubmitErrorMessage(error: unknown): string {
+    const backendMessage = (error as { error?: { message?: string | string[] } })?.error?.message;
+    const firstMessage = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage;
+    return firstMessage || 'We could not place your order. Please try again.';
   }
 
   private buildOrderPayload(): CreateOrderPayload {
@@ -104,8 +156,10 @@ export class CheckoutComponent {
       email,
       countryCode,
       phone,
+      idempotencyKey: this.idempotencyKey,
       items: entries.map((entry) => ({
         photoId: entry.photo.id,
+        pricingOptionId: entry.formatOption.id,
         formatLabel: entry.formatOption.label,
         price: entry.formatOption.price,
       })),
@@ -117,7 +171,7 @@ export class CheckoutComponent {
     };
   }
 
-  private buildWhatsAppMessage(): string {
+  private buildWhatsAppMessage(order: OrderResponse): string {
     const { email, countryCode, phone } = this.contactForm.getRawValue();
     const entries = this.selection.selectedEntries();
     const pricing = this.selection.pricing();
@@ -125,7 +179,14 @@ export class CheckoutComponent {
     const voucher = match?.voucher as IBundleVoucherSummary | undefined;
 
     const dialCode = COUNTRY_DIAL_CODE[countryCode];
-    const lines: string[] = ['New PICSWEEP Order', '', `Contact: ${email} (${dialCode} ${phone})`, '', `Photos (${entries.length}):`];
+    const lines: string[] = [
+      'New PICSWEEP Order',
+      `Order: #${getOrderReference(order.id)}`,
+      '',
+      `Contact: ${email} (${dialCode} ${phone})`,
+      '',
+      `Photos (${entries.length}):`,
+    ];
 
     entries.forEach((entry, index) => {
       lines.push(

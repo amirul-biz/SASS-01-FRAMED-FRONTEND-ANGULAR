@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { MerchantPaymentPlatformService } from '../../merchant-payment-platform/merchant-payment-platform.service';
 import { StudioProfileService } from '../../studio/studio-profile.service';
 
 @Component({
@@ -13,11 +14,13 @@ import { StudioProfileService } from '../../studio/studio-profile.service';
 export class StudioShellComponent {
   readonly auth = inject(AuthService);
   private readonly profileService = inject(StudioProfileService);
+  private readonly paymentPlatformService = inject(MerchantPaymentPlatformService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profileImageUrl = signal<string | null>(null);
   readonly profileComplete = this.profileService.isProfileComplete;
   readonly missingProfileFields = this.profileService.missingProfileFields;
+  readonly hasApprovedPaymentPlatform = this.paymentPlatformService.hasApprovedPaymentPlatform;
 
   // Mobile sidebar drawer — hidden off-canvas below md, always visible above it (see the
   // template's md:translate-x-0). Same plain-signal pattern as layout/header's mobile menu.
@@ -39,6 +42,7 @@ export class StudioShellComponent {
       });
 
     this.profileService.refreshProfileCompleteness();
+    this.paymentPlatformService.refreshPaymentPlatformOptions();
   }
 
   togglePricing(): void {

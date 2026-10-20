@@ -11,13 +11,6 @@ export interface IPhotoFormatOption {
   price: number;
 }
 
-export const STANDARD_FORMAT_OPTION: IPhotoFormatOption = {
-  id: 'standard',
-  photographerId: '',
-  label: 'Standard',
-  price: 12,
-};
-
 function seedOptionsFor(photographerId: string): IPhotoFormatOption[] {
   return [
     { id: `${photographerId}-jpeg-30mp`, photographerId, label: '30MP JPEG', price: 12 },

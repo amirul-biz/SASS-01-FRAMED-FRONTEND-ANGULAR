@@ -114,12 +114,22 @@
           }
         }
 
+        @if (!isPricingAvailable()) {
+          <div class="flex items-start gap-sm p-md mb-md rounded-xl bg-surface-container text-on-surface-variant" role="status">
+            <span class="material-symbols-outlined text-[20px]">info</span>
+            <p class="font-body-md text-body-md">
+              Pricing for this event hasn't been set up yet, so photos can't be added to the cart. Please check back soon.
+            </p>
+          </div>
+        }
+
         <div class="grid grid-cols-2 md:grid-cols-3 gap-md" [class.opacity-50]="isLoadingPhotos()">
           @for (row of photoRows(); track row.photo.id) {
             <app-photo-card
               [photo]="row.photo"
               [selected]="row.selected"
               [price]="row.price"
+              [isSelectable]="isPricingAvailable()"
               (toggleSelect)="onTogglePhoto(row.photo)"
               (previewPhoto)="openPreview(row.photo)"
             />

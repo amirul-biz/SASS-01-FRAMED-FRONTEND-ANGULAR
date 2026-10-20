@@ -1,0 +1,84 @@
+<div class="flex flex-col w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+  @switch (status()) {
+    @case ('loading') {
+      <div class="flex flex-col items-center text-center gap-md py-xl">
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px] animate-spin">progress_activity</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">Loading your receipt…</p>
+      </div>
+    }
+    @case ('unavailable') {
+      <div class="flex flex-col items-center text-center gap-md py-xl">
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px]">receipt_long</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          This receipt isn't available
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          The link may be incorrect, or this order hasn't been paid yet.
+        </p>
+        <button
+          type="button"
+          routerLink="/events"
+          class="mt-md px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+        >
+          Back to Events
+        </button>
+      </div>
+    }
+    @case ('ready') {
+      @if (order(); as order) {
+        <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex flex-col gap-lg">
+          <div class="flex flex-col gap-xs">
+            <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Receipt</h1>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">
+              Order #{{ orderReference(order.id) }} · {{ order.createdAt | date: 'MMM d, y' }}
+            </p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">{{ order.email }}</p>
+          </div>
+
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-outline-variant">
+                <th class="font-label-md text-label-md text-on-surface-variant py-sm">Photo</th>
+                <th class="font-label-md text-label-md text-on-surface-variant py-sm">Format</th>
+                <th class="font-label-md text-label-md text-on-surface-variant py-sm text-right">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of order.items; track item.id) {
+                <tr class="border-b border-outline-variant">
+                  <td class="font-body-md text-body-md text-on-background py-sm">{{ item.photoName }}</td>
+                  <td class="font-body-md text-body-md text-on-surface-variant py-sm">{{ item.formatLabel }}</td>
+                  <td class="font-body-md text-body-md text-on-background py-sm text-right">{{ formatCurrency(item.price) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="flex flex-col gap-xs items-end">
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Subtotal: {{ formatCurrency(order.subtotal) }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Discount: {{ formatCurrency(order.discountAmount) }}</p>
+            <p class="font-headline-md text-headline-md text-on-background">Total: {{ formatCurrency(order.total) }}</p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-sm">
+            <button
+              type="button"
+              (click)="downloadPdf()"
+              class="px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+            >
+              Download PDF
+            </button>
+            <button
+              type="button"
+              routerLink="/order-images"
+              [queryParams]="{ orderId: order.id }"
+              class="px-lg py-md border-2 border-primary text-primary font-label-md rounded-xl hover:bg-primary/5 transition-colors"
+            >
+              View Your Photos
+            </button>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

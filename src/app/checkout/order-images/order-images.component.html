@@ -1,0 +1,67 @@
+<div class="flex flex-col w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl">
+  @switch (status()) {
+    @case ('loading') {
+      <div class="flex flex-col items-center text-center gap-md py-xl">
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px] animate-spin">progress_activity</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">Loading your photos…</p>
+      </div>
+    }
+    @case ('unavailable') {
+      <div class="flex flex-col items-center text-center gap-md py-xl">
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px]">image</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          These photos aren't available
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          The link may be incorrect, or this order hasn't been paid yet.
+        </p>
+        <button
+          type="button"
+          routerLink="/events"
+          class="mt-md px-lg py-md bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors"
+        >
+          Back to Events
+        </button>
+      </div>
+    }
+    @case ('ready') {
+      @if (order(); as order) {
+        <div class="flex flex-col gap-lg">
+          <div class="flex flex-col gap-xs">
+            <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Your Photos</h1>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Order #{{ orderReference(order.id) }}</p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-md">
+            @for (item of order.items; track item.id) {
+              <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_12px_rgba(20,33,61,0.08)] flex flex-col">
+                <img [src]="item.photoUrl" [alt]="item.photoName" class="w-full aspect-square object-cover" />
+                <div class="p-sm flex flex-col gap-xs">
+                  <p class="font-caption text-caption text-on-surface-variant truncate">{{ item.formatLabel }}</p>
+                  <a
+                    [href]="item.photoUrl"
+                    download
+                    target="_blank"
+                    rel="noopener"
+                    class="font-label-md text-body-sm text-primary underline hover:text-primary/80 transition-colors"
+                  >
+                    Download
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
+
+          <button
+            type="button"
+            routerLink="/order-receipt"
+            [queryParams]="{ orderId: order.id }"
+            class="self-start px-lg py-md border-2 border-primary text-primary font-label-md rounded-xl hover:bg-primary/5 transition-colors"
+          >
+            View Receipt
+          </button>
+        </div>
+      }
+    }
+  }
+</div>

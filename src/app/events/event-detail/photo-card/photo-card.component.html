@@ -17,6 +17,7 @@
         fetchpriority="low"
       />
     </button>
+    @if (isSelectable()) {
     <div
       class="absolute inset-0 bg-primary/20 flex flex-col justify-between p-sm transition-opacity opacity-100 lg:opacity-0 lg:group-hover:opacity-100 pointer-events-none"
       [class.lg:opacity-100]="selected()"
@@ -40,12 +41,15 @@
         {{ selected() ? 'Selected' : 'Select' }}
       </button>
     </div>
+    }
   </div>
   <div class="p-md">
     <span class="block text-caption font-label-md text-on-surface truncate mb-xs">{{ photo().label }}</span>
     <div class="flex justify-between items-center gap-sm">
       <span class="text-caption text-on-surface-variant">{{ photo().capturedAt }}</span>
-      <span class="text-label-md font-label-md text-secondary shrink-0">{{ formatCurrency(price()) }}</span>
+      @if (price() !== null) {
+        <span class="text-label-md font-label-md text-secondary shrink-0">{{ formatCurrency(price()!) }}</span>
+      }
     </div>
   </div>
 </div>
