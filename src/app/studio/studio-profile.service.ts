@@ -37,6 +37,32 @@ export interface PresignProfileImageUploadResponse {
   expiresIn: number;
 }
 
+export interface PhotographerDashboardTopEvent {
+  eventId: string;
+  title: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface PhotographerDashboard {
+  totalEvents: number;
+  liveEvents: number;
+  draftEvents: number;
+  inactiveEvents: number;
+  photoCount: number;
+  storageBytes: number;
+  ordersByStatus: Record<
+    'PENDING_CONFIRMATION' | 'PROCESSING' | 'DELIVERED' | 'CANCELLED',
+    number
+  >;
+  photosSold: number;
+  grossRevenue: number;
+  pendingRevenue: number;
+  totalCommission: number;
+  netProfit: number;
+  topEvents: PhotographerDashboardTopEvent[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class StudioProfileService {
   private readonly http = inject(HttpClient);
@@ -97,6 +123,12 @@ export class StudioProfileService {
     return this.http.post<PresignProfileImageUploadResponse>(
       `${this.env.apiUrl}/photographer/profile/image/presign`,
       { fileName, mimeType },
+    );
+  }
+
+  getDashboard(): Observable<PhotographerDashboard> {
+    return this.http.get<PhotographerDashboard>(
+      `${this.env.apiUrl}/photographer/dashboard`,
     );
   }
 

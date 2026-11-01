@@ -58,6 +58,7 @@ export interface ClientEventVoucherCondition {
 export interface ClientEventVoucher {
   id: string;
   name: string;
+  description: string | null;
   discountType: 'flat-tier' | 'percent-tier';
   conditions: ClientEventVoucherCondition[];
 }

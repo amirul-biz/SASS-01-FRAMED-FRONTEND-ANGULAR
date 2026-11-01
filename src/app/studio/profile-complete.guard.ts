@@ -14,7 +14,7 @@ export const studioLandingGuard: CanActivateFn = async () => {
       profileService.getProfileCompleteness(),
     );
     return router.createUrlTree([
-      isComplete ? '/studio/events' : '/studio/profile-settings',
+      isComplete ? '/studio/dashboard' : '/studio/profile-settings',
     ]);
   } catch {
     return router.createUrlTree(['/studio/events']);

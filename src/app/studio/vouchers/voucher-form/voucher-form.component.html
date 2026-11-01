@@ -33,6 +33,20 @@
     </div>
 
     <div>
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="voucher-description">Description <span class="text-on-surface-variant font-body-md">(shown to customers)</span></label>
+      <textarea
+        id="voucher-description"
+        rows="3"
+        maxlength="500"
+        placeholder="e.g. Valid for one order only. Cannot be combined with other offers."
+        class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+        [value]="draft().description"
+        (input)="setDescription($any($event.target).value)"
+      ></textarea>
+      <p class="text-caption text-on-surface-variant mt-xs text-right">{{ draft().description.length }}/500</p>
+    </div>
+
+    <div>
       <span class="block font-label-md text-label-md text-on-surface mb-xs">Discount Type</span>
       <div class="flex gap-sm">
         <button

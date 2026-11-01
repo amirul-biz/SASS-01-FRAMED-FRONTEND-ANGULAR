@@ -34,9 +34,26 @@
   <div
     class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
   >
-    <div class="p-md flex items-center justify-between gap-md border-b border-outline-variant">
+    <div class="p-md flex flex-wrap items-center justify-between gap-md border-b border-outline-variant">
+      <div role="tablist" class="flex gap-xs bg-surface-container rounded-xl p-xs">
+        @for (tab of [{ id: 'active', label: 'Active' }, { id: 'inactive', label: 'Inactive' }]; track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="status() === tab.id"
+            (click)="setStatus($any(tab.id))"
+            class="px-md py-xs rounded-lg font-label-md text-label-md transition-colors"
+            [class.bg-surface-container-lowest]="status() === tab.id"
+            [class.text-primary]="status() === tab.id"
+            [class.shadow-sm]="status() === tab.id"
+            [class.text-on-surface-variant]="status() !== tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </div>
       <div class="flex items-center gap-sm">
-        <h2 class="font-headline-md text-headline-md text-on-surface">Event Roster</h2>
+        <h2 class="sr-only">Event Roster</h2>
         @if (response()) {
           <span
             class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
@@ -83,6 +100,7 @@
                   </div>
                 </div>
 
+                @if (status() === 'active') {
                 <div class="relative shrink-0">
                   <button
                     type="button"
@@ -135,6 +153,7 @@
                     </div>
                   }
                 </div>
+                }
               </div>
 
               <div class="flex items-center justify-between gap-sm">
@@ -146,10 +165,15 @@
                     {{ event.eventEndDate | date: 'mediumDate' }}
                   }
                 </span>
-                @if (event.isPublished) {
+                @if (event.deletedAt) {
+                  <span
+                    class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant"
+                    >Deleted {{ event.deletedAt | date: 'mediumDate' }}</span
+                  >
+                } @else if (event.isPublished) {
                   <span
                     class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant"
-                    >Published</span
+                    >Published{{ event.publishUntil ? ' until ' + (event.publishUntil | date: 'MMM d') : '' }}</span
                   >
                 } @else {
                   <span
@@ -212,10 +236,15 @@
                     }
                   </td>
                   <td class="p-md">
-                    @if (event.isPublished) {
+                    @if (event.deletedAt) {
+                      <span
+                        class="px-sm py-xs rounded-full text-caption font-label-md bg-surface-variant text-on-surface-variant"
+                        >Deleted {{ event.deletedAt | date: 'mediumDate' }}</span
+                      >
+                    } @else if (event.isPublished) {
                       <span
                         class="px-sm py-xs rounded-full text-caption font-label-md bg-secondary-fixed-dim text-on-secondary-fixed-variant"
-                        >Published</span
+                        >Published{{ event.publishUntil ? ' until ' + (event.publishUntil | date: 'MMM d') : '' }}</span
                       >
                     } @else {
                       <span
@@ -225,6 +254,7 @@
                     }
                   </td>
                   <td class="p-md">
+                    @if (status() === 'active') {
                     <div class="flex items-center justify-end gap-xs">
                       <a
                         [routerLink]="['/studio/events', event.id, 'upload']"
@@ -259,6 +289,9 @@
                         <span class="material-symbols-outlined text-[20px]">delete</span>
                       </button>
                     </div>
+                    } @else {
+                      <p class="text-caption text-on-surface-variant text-right">Read-only</p>
+                    }
                   </td>
                 </tr>
               }
@@ -267,7 +300,7 @@
         </div>
         @if ((response()?.items?.length ?? 0) === 0) {
           <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
-            You haven't created any events yet.
+            {{ status() === 'active' ? "You haven't created any events yet." : 'No inactive events. Deleted events appear here and keep their orders.' }}
           </p>
         }
       }

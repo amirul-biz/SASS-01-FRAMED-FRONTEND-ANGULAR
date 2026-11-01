@@ -1,0 +1,190 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Commission Report</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      Commission charged per photographer, recomputed from each charge's stored rate to check it reconciles.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  <div class="flex gap-sm mb-md">
+    @for (tab of tabs; track tab.value) {
+      <button
+        type="button"
+        (click)="selectProvider(tab.value)"
+        class="h-10 px-lg rounded-xl font-label-md text-label-md border transition-colors"
+        [class.bg-secondary-container]="provider() === tab.value"
+        [class.text-on-secondary-container]="provider() === tab.value"
+        [class.border-outline-variant]="provider() !== tab.value"
+        [class.text-on-surface-variant]="provider() !== tab.value"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  @if (report(); as r) {
+    @if (r.periodCheck.isReconciled) {
+      <p class="mb-md px-md py-sm rounded-xl bg-green-100 text-green-900 font-label-md text-label-md">
+        ✓ Reconciles: rows match the database totals ({{ formatCurrency(r.periodCheck.grossFromDb) }} paid,
+        {{ formatCurrency(r.periodCheck.commissionFromDb) }} commission).
+      </p>
+    } @else {
+      <p class="mb-md px-md py-sm rounded-xl bg-error-container text-on-error-container font-label-md text-label-md">
+        ✗ Does not reconcile: off by {{ formatCurrency(r.periodCheck.delta) }}. Rows show
+        {{ formatCurrency(r.periodCheck.grossFromRows) }} paid / {{ formatCurrency(r.periodCheck.commissionFromRows) }} commission,
+        the database shows {{ formatCurrency(r.periodCheck.grossFromDb) }} / {{ formatCurrency(r.periodCheck.commissionFromDb) }}.
+      </p>
+    }
+    @if (r.duplicatePaidOrderIds.length > 0) {
+      <p class="mb-md px-md py-sm rounded-xl bg-error-container text-on-error-container font-label-md text-label-md">
+        ✗ Possible double-count: {{ r.duplicatePaidOrderIds.length }} order(s) have more than one PAID payment
+        ({{ r.duplicatePaidOrderIds.join(', ') }}).
+      </p>
+    }
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center gap-sm border-b border-outline-variant">
+      <label class="flex items-center gap-xs font-caption text-caption text-on-surface-variant">
+        From
+        <input
+          type="date"
+          [value]="from()"
+          (change)="onFromChange($event)"
+          class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        />
+      </label>
+      <label class="flex items-center gap-xs font-caption text-caption text-on-surface-variant">
+        To
+        <input
+          type="date"
+          [value]="to()"
+          (change)="onToChange($event)"
+          class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        />
+      </label>
+      <select
+        class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        (change)="onPhotographerChange($event)"
+      >
+        <option value="" [selected]="photographerFilter() === ''">All photographers</option>
+        @for (row of report()?.rows ?? []; track row.photographerId) {
+          <option [value]="row.photographerId" [selected]="row.photographerId === photographerFilter()">{{ row.name }}</option>
+        }
+      </select>
+      <button
+        type="button"
+        (click)="exportCsv()"
+        [disabled]="rows().length === 0"
+        class="ml-auto h-10 px-lg border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+      >
+        Export CSV
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading report...</p>
+    } @else if (rows().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No paid payments match these filters.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Photographer</th>
+              <th class="p-md text-right">Orders</th>
+              <th class="p-md text-right">Gross paid</th>
+              <th class="p-md text-right">Commission</th>
+              <th class="p-md text-center">Reconciles</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.photographerId) {
+              <tr
+                class="border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer"
+                (click)="toggleExpanded(row.photographerId)"
+              >
+                <td class="p-md font-label-md text-label-md text-on-surface">
+                  <span class="material-symbols-outlined align-middle text-[18px] mr-xs">{{
+                    expandedId() === row.photographerId ? 'expand_less' : 'expand_more'
+                  }}</span>
+                  {{ row.name }}
+                </td>
+                <td class="p-md text-right font-body-md text-body-md">{{ row.orderCount }}</td>
+                <td class="p-md text-right font-body-md text-body-md">{{ formatCurrency(row.grossPaid) }}</td>
+                <td class="p-md text-right font-body-md text-body-md">{{ formatCurrency(row.commission) }}</td>
+                <td class="p-md text-center">
+                  @if (row.isReconciled) {
+                    <span class="text-secondary font-label-md text-label-md">✓</span>
+                  } @else {
+                    <span class="text-error font-label-md text-label-md">✗ {{ formatCurrency(row.delta) }}</span>
+                  }
+                </td>
+              </tr>
+              @if (expandedId() === row.photographerId) {
+                <tr class="border-b border-outline-variant bg-surface-container-low">
+                  <td colspan="5" class="p-md">
+                    <div class="overflow-x-auto">
+                      <table class="w-full text-left">
+                        <thead>
+                          <tr class="text-caption font-label-md text-on-surface-variant">
+                            <th class="py-xs pr-md">Paid</th>
+                            <th class="py-xs pr-md">Event</th>
+                            <th class="py-xs pr-md">Plan</th>
+                            <th class="py-xs pr-md text-right">Paid amount</th>
+                            <th class="py-xs pr-md text-right">Base</th>
+                            <th class="py-xs pr-md text-right">Stored</th>
+                            <th class="py-xs pr-md text-right">Recomputed</th>
+                            <th class="py-xs text-center">OK</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (charge of row.charges; track charge.paymentId) {
+                            <tr class="text-caption text-on-surface">
+                              <td class="py-xs pr-md">{{ charge.paidAt | date: 'dd MMM y, HH:mm' }}</td>
+                              <td class="py-xs pr-md">{{ charge.eventTitle }}</td>
+                              <td class="py-xs pr-md">
+                                {{ charge.planName ?? 'No commission' }}
+                                @if (charge.commissionType) {
+                                  <span class="text-on-surface-variant">({{ typeLabel[charge.commissionType] }})</span>
+                                }
+                              </td>
+                              <td class="py-xs pr-md text-right">{{ formatCurrency(charge.paidAmount) }}</td>
+                              <td class="py-xs pr-md text-right">{{ formatCurrency(charge.baseAmount) }}</td>
+                              <td class="py-xs pr-md text-right">{{ formatCurrency(charge.commissionAmount) }}</td>
+                              <td class="py-xs pr-md text-right">{{ formatCurrency(charge.recomputedAmount) }}</td>
+                              <td class="py-xs text-center">
+                                @if (charge.isReconciled) {
+                                  <span class="text-secondary">✓</span>
+                                } @else {
+                                  <span class="text-error">✗ {{ formatCurrency(charge.delta) }}</span>
+                                }
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr class="font-label-md text-label-md text-on-surface">
+              <td class="p-md">Total</td>
+              <td class="p-md"></td>
+              <td class="p-md text-right">{{ formatCurrency(totalGrossPaid()) }}</td>
+              <td class="p-md text-right">{{ formatCurrency(totalCommission()) }}</td>
+              <td class="p-md"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </div>
+</div>

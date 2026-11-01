@@ -1,11 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { formatCurrency } from '../../pricing/currency.util';
 import { getOrderReference } from '../order-reference.util';
 import { OrderResponse, OrderService } from '../order.service';
+import { downloadReceiptPdf } from '../receipt-pdf.util';
 
 type ReceiptPageStatus = 'loading' | 'ready' | 'unavailable';
 
@@ -50,30 +49,6 @@ export class OrderReceiptComponent implements OnInit {
       return;
     }
 
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('FRAMED — Receipt', 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Order #${this.orderReference(order.id)}`, 14, 26);
-    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 14, 32);
-    doc.text(`Email: ${order.email}`, 14, 38);
-
-    autoTable(doc, {
-      startY: 46,
-      head: [['Photo', 'Format', 'Price']],
-      body: order.items.map((item) => [
-        item.photoName,
-        item.formatLabel,
-        this.formatCurrency(item.price),
-      ]),
-    });
-
-    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
-    doc.text(`Subtotal: ${this.formatCurrency(order.subtotal)}`, 14, finalY + 10);
-    doc.text(`Discount: ${this.formatCurrency(order.discountAmount)}`, 14, finalY + 16);
-    doc.setFontSize(12);
-    doc.text(`Total: ${this.formatCurrency(order.total)}`, 14, finalY + 24);
-
-    doc.save(`framed-receipt-${this.orderReference(order.id)}.pdf`);
+    downloadReceiptPdf(order);
   }
 }

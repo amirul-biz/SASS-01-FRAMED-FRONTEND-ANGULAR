@@ -32,6 +32,20 @@ function dateRangeValidator(group: AbstractControl): ValidationErrors | null {
   return new Date(end) >= new Date(start) ? null : { dateRangeInvalid: true };
 }
 
+function publishUntilValidator(group: AbstractControl): ValidationErrors | null {
+  const start = group.get('eventStartDate')?.value;
+  const until = group.get('publishUntil')?.value;
+  if (!start || !until) {
+    return null;
+  }
+  return new Date(until) >= new Date(start) ? null : { publishUntilInvalid: true };
+}
+
+// Date-only input -> end of that local day, so "until 31 Oct" keeps the event on sale all day.
+function endOfLocalDayIso(date: string): string {
+  return new Date(`${date}T23:59:59`).toISOString();
+}
+
 @Component({
   selector: 'app-create-event',
   imports: [ReactiveFormsModule, RouterLink, SearchableSelectComponent],
@@ -63,8 +77,9 @@ export class CreateEventComponent {
       description: [''],
       eventStartDate: ['', Validators.required],
       eventEndDate: ['', Validators.required],
+      publishUntil: [''],
     },
-    { validators: dateRangeValidator },
+    { validators: [dateRangeValidator, publishUntilValidator] },
   );
 
   readonly isMultiDay = signal(false);
@@ -109,6 +124,8 @@ export class CreateEventComponent {
               description: event.description ?? '',
               eventStartDate: startDate,
               eventEndDate: endDate,
+              // sv-SE gives yyyy-mm-dd in the browser's local time zone.
+              publishUntil: event.publishUntil ? new Date(event.publishUntil).toLocaleDateString('sv-SE') : '',
             });
             this.coverPhotoUrl.set(event.coverPhotoUrl);
             this.selectedBundleIds.set(new Set(event.pricingBundleIds));
@@ -238,7 +255,7 @@ export class CreateEventComponent {
       return;
     }
 
-    const { title, category, location, description, eventStartDate, eventEndDate } =
+    const { title, category, location, description, eventStartDate, eventEndDate, publishUntil } =
       this.form.getRawValue();
     const payload = {
       title,
@@ -247,6 +264,7 @@ export class CreateEventComponent {
       description: description || undefined,
       eventStartDate,
       eventEndDate,
+      publishUntil: publishUntil ? endOfLocalDayIso(publishUntil) : null,
       coverPhotoKey: this.coverPhotoKey(),
       pricingBundleIds: [...this.selectedBundleIds()],
     };

@@ -22,6 +22,8 @@ export class PhotoPreviewModalComponent {
   hasNext = input(false);
   /** True while a neighbouring page is loading, so arrows don't queue up multiple page jumps. */
   isNavigating = input(false);
+  /** View-only (e.g. from the cart): hides the format picker and Add to Cart. */
+  readOnly = input(false);
 
   closed = output<void>();
   addToCart = output<{ photo: IPhoto; formatId: string }>();

@@ -1,0 +1,190 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Commission Plans</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Reusable commission rates the platform takes per payment channel.</p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center justify-between gap-sm border-b border-outline-variant">
+      <span class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full">{{ plans().length }} plans</span>
+      <button
+        type="button"
+        (click)="openCreate()"
+        class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center gap-xs"
+      >
+        <span class="material-symbols-outlined text-[20px]">add</span>
+        New Plan
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading plans...</p>
+    } @else if (plans().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No commission plans yet.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Name</th>
+              <th class="p-md">Type</th>
+              <th class="p-md">Provider</th>
+              <th class="p-md text-right">Value</th>
+              <th class="p-md text-center">Default</th>
+              <th class="p-md text-center">Active</th>
+              <th class="p-md text-center">Assigned</th>
+              <th class="p-md text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of plans(); track plan.id) {
+              <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors">
+                <td class="p-md font-label-md text-label-md text-on-surface">{{ plan.name }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ typeLabel[plan.type] }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface-variant">{{ providerLabel(plan.provider) }}</td>
+                <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ valueLabel(plan) }}</td>
+                <td class="p-md text-center">
+                  @if (plan.isDefault) {
+                    <span class="material-symbols-outlined text-[18px] text-secondary">star</span>
+                  } @else {
+                    <span class="text-caption text-on-surface-variant">—</span>
+                  }
+                </td>
+                <td class="p-md text-center">
+                  <span
+                    class="inline-flex items-center px-md py-xs rounded-full font-label-md text-caption border border-outline-variant"
+                    [class]="plan.isActive ? 'bg-surface-container text-on-surface-variant' : 'bg-error-container text-error'"
+                  >
+                    {{ plan.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="p-md text-center font-body-md text-body-md text-on-surface">{{ plan.assignmentCount }}</td>
+                <td class="p-md text-right">
+                  <button
+                    type="button"
+                    (click)="openEdit(plan)"
+                    class="h-9 px-md border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (isModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg" role="dialog" aria-modal="true" (click)="closeModal()">
+    <div class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)] max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <h2 class="font-headline-md text-headline-md text-primary mb-sm">{{ editingId() ? 'Edit Commission Plan' : 'New Commission Plan' }}</h2>
+      <p class="text-caption text-on-surface-variant mb-lg">
+        @if (editingId()) {
+          Type and provider are fixed once created — assignments and past charges reference them.
+        } @else {
+          Percentage types take 0.01–100; amount types take an RM value.
+        }
+      </p>
+
+      <div class="flex flex-col gap-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-name">Name <span class="text-error">*</span></label>
+          <input
+            id="plan-name"
+            type="text"
+            placeholder="e.g. Standard Platform Commission"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            [value]="name()"
+            (input)="name.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (editingId() === null) {
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-type">Type <span class="text-error">*</span></label>
+            <select
+              id="plan-type"
+              class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+              (change)="type.set($any($event.target).value)"
+            >
+              @for (option of typeOptions; track option.value) {
+                <option [value]="option.value" [selected]="option.value === type()">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-provider">Provider</label>
+            <select
+              id="plan-provider"
+              class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+              (change)="provider.set($any($event.target).value)"
+            >
+              <option value="" [selected]="provider() === ''">Any provider</option>
+              <option value="TOYYIBPAY" [selected]="provider() === 'TOYYIBPAY'">ToyyibPay</option>
+              <option value="STRIPE" [selected]="provider() === 'STRIPE'">Stripe</option>
+              <option value="CASH" [selected]="provider() === 'CASH'">Cash</option>
+            </select>
+          </div>
+        }
+
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-value">Value <span class="text-error">*</span></label>
+          <input
+            id="plan-value"
+            type="number"
+            min="0.01"
+            step="0.01"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            [value]="value()"
+            (input)="value.set($any($event.target).value)"
+          />
+        </div>
+
+        <label class="flex items-center gap-sm cursor-pointer">
+          <input type="checkbox" class="accent-primary w-4 h-4" [checked]="isDefault()" (change)="isDefault.set($any($event.target).checked)" />
+          <span class="font-body-md text-body-md text-on-surface">Default plan for this provider</span>
+        </label>
+
+        @if (editingId() !== null) {
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input type="checkbox" class="accent-primary w-4 h-4" [checked]="isActive()" (change)="isActive.set($any($event.target).checked)" />
+            <span class="font-body-md text-body-md text-on-surface">Active</span>
+          </label>
+        }
+
+        @if (formError()) {
+          <p class="text-caption text-error">{{ formError() }}</p>
+        }
+
+        <div class="flex justify-end gap-sm mt-sm">
+          <button
+            type="button"
+            (click)="closeModal()"
+            [disabled]="isSaving()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submit()"
+            [disabled]="isSaving()"
+            class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {{ isSaving() ? 'Saving...' : editingId() ? 'Save Changes' : 'Create Plan' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -40,7 +40,7 @@
         <div class="flex flex-col gap-xs">
           <div class="flex justify-between items-center">
             <label class="font-label-md text-label-md text-on-surface-variant" for="password">Password</label>
-            <span class="font-label-md text-label-md text-primary">Forgot password?</span>
+            <button type="button" (click)="forgotPassword()" class="font-label-md text-label-md text-primary hover:underline">Forgot password?</button>
           </div>
           <div class="relative">
             <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant/50">lock</span>
@@ -64,6 +64,9 @@
           <input id="remember" formControlName="remember" type="checkbox" class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-low" />
           <label class="font-body-md text-body-md text-on-surface-variant" for="remember">Remember me for 30 days</label>
         </div>
+        @if (resetMsg(); as message) {
+          <p class="font-body-md text-body-md text-secondary" role="status">{{ message }}</p>
+        }
         @if (errorMsg(); as message) {
           <p class="font-body-md text-body-md text-error" role="alert">{{ message }}</p>
         }

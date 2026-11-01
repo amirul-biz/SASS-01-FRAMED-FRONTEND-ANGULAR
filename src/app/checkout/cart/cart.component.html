@@ -54,7 +54,7 @@
       </aside>
 
       <div class="w-full lg:w-2/3 flex flex-col gap-lg">
-        <app-order-summary [removable]="true" [fullWidth]="true" />
+        <app-order-summary [removable]="true" [fullWidth]="true" [previewable]="true" />
         <a
           routerLink="/checkout"
           class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] flex items-center justify-center gap-sm"
@@ -66,7 +66,7 @@
     </div>
   } @else {
     <div class="max-w-2xl mx-auto w-full flex flex-col gap-lg">
-      <app-order-summary [removable]="true" [fullWidth]="true" />
+      <app-order-summary [removable]="true" [fullWidth]="true" [previewable]="true" />
       <a
         routerLink="/checkout"
         class="w-full h-14 bg-secondary text-on-secondary font-headline-md text-body-lg rounded-xl hover:bg-secondary-container hover:text-on-secondary-container transition-colors shadow-[0_4px_12px_rgba(20,33,61,0.08)] hover:shadow-[0_8px_24px_rgba(20,33,61,0.12)] flex items-center justify-center gap-sm"

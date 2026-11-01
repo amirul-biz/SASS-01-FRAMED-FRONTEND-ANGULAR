@@ -1,0 +1,118 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <a routerLink="/admin/photographers" class="inline-flex items-center gap-xs text-caption font-label-md text-on-surface-variant hover:text-primary transition-colors mb-md">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    Back to Photographers
+  </a>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  @if (isLoading()) {
+    <p class="text-body-md font-body-md text-on-surface-variant">Loading photographer...</p>
+  } @else if (photographer(); as p) {
+    <div class="flex flex-wrap items-center gap-md mb-xl">
+      @if (p.profileImageUrl) {
+        <img [src]="p.profileImageUrl" [alt]="p.name" class="w-16 h-16 rounded-full object-cover" />
+      } @else {
+        <span class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-surface-variant text-[28px]">person</span>
+        </span>
+      }
+      <div>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">{{ p.name }}</h1>
+        <p class="font-body-md text-body-md text-on-surface-variant">{{ p.email }}</p>
+      </div>
+      <span
+        class="inline-flex items-center gap-xs px-md py-xs rounded-full font-label-md text-caption border border-outline-variant"
+        [class]="p.isActive ? 'bg-surface-container text-on-surface-variant' : 'bg-error-container text-error'"
+      >
+        <span class="w-1.5 h-1.5 rounded-full" [class]="p.isActive ? 'bg-secondary' : 'bg-error'"></span>
+        {{ p.isActive ? 'Active' : 'Inactive' }}
+      </span>
+      <span class="text-caption text-on-surface-variant">Joined {{ p.createdAt | date: 'mediumDate' }}</span>
+      <button
+        type="button"
+        (click)="toggleStatus()"
+        [disabled]="isToggling()"
+        class="h-9 px-md border rounded-xl font-label-md text-label-md transition-colors disabled:opacity-40 md:ml-auto"
+        [class.border-outline-variant]="p.isActive"
+        [class.text-on-surface-variant]="p.isActive"
+        [class.hover:bg-surface-container-low]="p.isActive"
+        [class.border-secondary]="!p.isActive"
+        [class.text-secondary]="!p.isActive"
+      >
+        {{ isToggling() ? 'Saving...' : p.isActive ? 'Deactivate account' : 'Activate account' }}
+      </button>
+    </div>
+
+    @if (stats(); as s) {
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-md mb-xl">
+        <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="material-symbols-outlined text-secondary text-[24px]">photo_library</span>
+          <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.photoCount }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Photos Uploaded</span>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="material-symbols-outlined text-secondary text-[24px]">database</span>
+          <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ formatBytes(s.storageBytes) }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Storage Used</span>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="material-symbols-outlined text-secondary text-[24px]">event_available</span>
+          <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.publishedEventCount }} <span class="text-caption font-label-md text-on-surface-variant">/ {{ s.eventCount }}</span></span>
+          <span class="text-caption font-label-md text-on-surface-variant">Events Published / Total</span>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="material-symbols-outlined text-secondary text-[24px]">receipt_long</span>
+          <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ s.orderCount }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Orders Placed</span>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+          <span class="material-symbols-outlined text-secondary text-[24px]">payments</span>
+          <span class="block font-headline-md text-headline-md text-primary mt-xs">{{ formatCurrency(s.orderTotalValue) }}</span>
+          <span class="text-caption font-label-md text-on-surface-variant">Order Value</span>
+        </div>
+      </div>
+    }
+
+    <div class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem]">
+      <h2 class="font-headline-md text-headline-md text-on-background mb-xs">Reset Password</h2>
+      <p class="text-caption text-on-surface-variant mb-md">
+        Generates a Firebase password-reset link for this account. Copy it and send it to the photographer yourself — no email is sent automatically.
+      </p>
+
+      <button
+        type="button"
+        (click)="resetPassword()"
+        [disabled]="isResetting()"
+        class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center gap-xs"
+      >
+        <span class="material-symbols-outlined text-[18px]">lock_reset</span>
+        {{ isResetting() ? 'Generating...' : 'Generate Reset Link' }}
+      </button>
+
+      @if (resetError()) {
+        <p class="text-caption text-error mt-md">{{ resetError() }}</p>
+      }
+
+      @if (resetLink(); as link) {
+        <div class="flex items-center gap-sm mt-md">
+          <input
+            type="text"
+            readonly
+            [value]="link"
+            class="flex-1 h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface text-on-surface-variant"
+          />
+          <button
+            type="button"
+            (click)="copyResetLink()"
+            class="h-10 px-md border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors shrink-0"
+          >
+            {{ copied() ? 'Copied!' : 'Copy' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

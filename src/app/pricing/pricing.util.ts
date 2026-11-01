@@ -7,6 +7,8 @@ export interface IVoucherCondition {
 }
 
 export interface IVoucherLike {
+  name?: string;
+  description?: string | null;
   discountType: VoucherDiscountType;
   conditions: IVoucherCondition[];
 }

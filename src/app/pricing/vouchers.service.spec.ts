@@ -13,6 +13,7 @@ describe('VouchersService', () => {
     id: 'voucher-1',
     photographerId: 'photographer-1',
     name: 'Group Discount',
+    description: null,
     discountType: 'percent-tier',
     conditions: [
       { minPhotos: 3, maxPhotos: 5, value: 50 },

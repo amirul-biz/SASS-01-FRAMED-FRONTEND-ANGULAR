@@ -1,0 +1,144 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1
+      class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+    >
+      Dashboard
+    </h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      A quick look at your events, storage, orders and earnings.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+
+  @if (isLoading()) {
+    <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+      Loading your dashboard...
+    </p>
+  } @else if (stats(); as s) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-xl">
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+          <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+          <span class="font-label-md text-label-md">Published events</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ s.liveEvents }}<span class="text-on-surface-variant text-body-md"> / {{ s.totalEvents }}</span>
+        </p>
+        <p class="font-caption text-caption text-on-surface-variant mt-xs">
+          {{ s.draftEvents }} draft · {{ s.inactiveEvents }} inactive
+        </p>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+          <span class="material-symbols-outlined text-[20px]">cloud</span>
+          <span class="font-label-md text-label-md">Storage used</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ formatStorage(s.storageBytes) }}
+        </p>
+        <p class="font-caption text-caption text-on-surface-variant mt-xs">
+          {{ s.photoCount }} photos uploaded
+        </p>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+          <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+          <span class="font-label-md text-label-md">Orders</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ paidOrderCount(s) }}<span class="text-on-surface-variant text-body-md"> paid / {{ totalOrderCount(s) }}</span>
+        </p>
+        <p class="font-caption text-caption text-on-surface-variant mt-xs">
+          {{ s.photosSold }} photos sold
+        </p>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+          <span class="material-symbols-outlined text-[20px]">hourglass_top</span>
+          <span class="font-label-md text-label-md">Pending revenue</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ formatCurrency(s.pendingRevenue) }}
+        </p>
+        <p class="font-caption text-caption text-on-surface-variant mt-xs">
+          Awaiting payment confirmation
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-xl">
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <p class="font-label-md text-label-md text-on-surface-variant mb-sm">Gross revenue</p>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ formatCurrency(s.grossRevenue) }}
+        </p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <p class="font-label-md text-label-md text-on-surface-variant mb-sm">Platform commission charges</p>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+          {{ formatCurrency(s.totalCommission) }}
+        </p>
+      </div>
+      <div class="bg-secondary-container rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)]">
+        <p class="font-label-md text-label-md text-on-secondary-container mb-sm">Net profit</p>
+        <p class="font-headline-lg text-headline-lg-mobile text-on-secondary-container">
+          {{ formatCurrency(s.netProfit) }}
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] p-lg mb-xl">
+      <h2 class="font-label-md text-label-md text-on-surface mb-md">Orders by status</h2>
+      <div class="flex flex-wrap gap-sm">
+        @for (chip of orderStatusChips; track chip.key) {
+          <span
+            class="font-caption text-caption text-on-surface-variant bg-surface-container px-md py-xs rounded-full"
+          >
+            {{ chip.label }}: <strong class="text-on-surface">{{ s.ordersByStatus[chip.key] }}</strong>
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+      <h2 class="font-label-md text-label-md text-on-surface p-md border-b border-outline-variant">
+        Top events by revenue
+      </h2>
+      @if (s.topEvents.length === 0) {
+        <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+          No paid orders yet.
+        </p>
+      } @else {
+        <table class="w-full text-left">
+          <thead>
+            <tr class="font-caption text-caption text-on-surface-variant border-b border-outline-variant">
+              <th class="p-md">Event</th>
+              <th class="p-md text-right">Orders</th>
+              <th class="p-md text-right">Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of s.topEvents; track event.eventId) {
+              <tr class="border-b border-outline-variant last:border-b-0">
+                <td class="p-md font-body-md text-body-md">
+                  <a [routerLink]="['/studio/events', event.eventId, 'edit']" class="text-primary hover:underline">{{
+                    event.title
+                  }}</a>
+                </td>
+                <td class="p-md text-right font-body-md text-body-md">{{ event.orderCount }}</td>
+                <td class="p-md text-right font-body-md text-body-md">{{ formatCurrency(event.revenue) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</div>

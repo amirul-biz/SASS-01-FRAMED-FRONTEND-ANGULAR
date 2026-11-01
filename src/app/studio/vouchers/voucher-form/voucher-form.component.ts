@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { IVoucherCondition, VouchersService, WireVoucherDiscountType } from '../../../pricing/vouchers.service';
 
-type DraftVoucher = { name: string; discountType: WireVoucherDiscountType; conditions: IVoucherCondition[] };
+type DraftVoucher = { name: string; description: string; discountType: WireVoucherDiscountType; conditions: IVoucherCondition[] };
 
 @Component({
   selector: 'app-voucher-form',
@@ -29,10 +29,10 @@ export class VoucherFormComponent {
   readonly draft = linkedSignal<DraftVoucher>(() => {
     this.id();
     this.loaded();
-    const blank: DraftVoucher = { name: '', discountType: 'percent-tier', conditions: [] };
+    const blank: DraftVoucher = { name: '', description: '', discountType: 'percent-tier', conditions: [] };
     const existing = untracked(() => this.existingVoucher());
     return existing
-      ? { name: existing.name, discountType: existing.discountType, conditions: structuredClone(existing.conditions) }
+      ? { name: existing.name, description: existing.description ?? '', discountType: existing.discountType, conditions: structuredClone(existing.conditions) }
       : blank;
   });
 
@@ -47,6 +47,10 @@ export class VoucherFormComponent {
 
   setName(value: string): void {
     this.draft.update((d) => ({ ...d, name: value }));
+  }
+
+  setDescription(value: string): void {
+    this.draft.update((d) => ({ ...d, description: value }));
   }
 
   setDiscountType(type: WireVoucherDiscountType): void {

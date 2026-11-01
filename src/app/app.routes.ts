@@ -88,6 +88,13 @@ export const routes: Routes = [
     children: [
       { path: '', canActivate: [studioLandingGuard], pathMatch: 'full', children: [] },
       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./studio/dashboard/studio-dashboard.component').then(
+            (m) => m.StudioDashboardComponent,
+          ),
+      },
+      {
         path: 'events',
         loadComponent: () =>
           import('./studio/my-events/my-events-dashboard.component').then(
@@ -227,16 +234,58 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'photographers/:id',
+        loadComponent: () =>
+          import('./admin/photographers/photographer-detail/admin-photographer-detail.component').then(
+            (m) => m.AdminPhotographerDetailComponent,
+          ),
+      },
+      {
         path: 'events',
         loadComponent: () =>
           import('./admin/events/admin-events.component').then((m) => m.AdminEventsComponent),
       },
-      {
-        path: 'orders',
-        loadComponent: () =>
-          import('./admin/orders/admin-orders.component').then((m) => m.AdminOrdersComponent),
-      },
-    ],
+        {
+          path: 'orders',
+          loadComponent: () =>
+            import('./admin/orders/admin-orders.component').then((m) => m.AdminOrdersComponent),
+        },
+        {
+          path: 'payment-approvals',
+          loadComponent: () =>
+            import('./admin/payments/admin-payment-approvals.component').then(
+              (m) => m.AdminPaymentApprovalsComponent,
+            ),
+        },
+        {
+          path: 'system-accounts',
+          loadComponent: () =>
+            import('./admin/payments/admin-system-accounts.component').then(
+              (m) => m.AdminSystemAccountsComponent,
+            ),
+        },
+        {
+          path: 'commission-plans',
+          loadComponent: () =>
+            import('./admin/payments/admin-commission-plans.component').then(
+              (m) => m.AdminCommissionPlansComponent,
+            ),
+        },
+        {
+          path: 'commission-report',
+          loadComponent: () =>
+            import('./admin/payments/admin-commission-report.component').then(
+              (m) => m.AdminCommissionReportComponent,
+            ),
+        },
+        {
+          path: 'commission-assignments',
+          loadComponent: () =>
+            import('./admin/payments/admin-commission-assignments.component').then(
+              (m) => m.AdminCommissionAssignmentsComponent,
+            ),
+        },
+      ],
   },
   { path: '**', redirectTo: '' },
 ];

@@ -48,6 +48,61 @@
       <span class="material-symbols-outlined mr-md">receipt_long</span>
       <span class="font-label-md text-label-md">Orders</span>
     </a>
+    <button
+      type="button"
+      (click)="togglePayments()"
+      class="flex items-center justify-between w-full px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all text-left"
+    >
+      <span class="flex items-center">
+        <span class="material-symbols-outlined mr-md">payments</span>
+        <span class="font-label-md text-label-md">Payments</span>
+      </span>
+      <span class="material-symbols-outlined transition-transform" [class.rotate-180]="paymentsExpanded()">expand_more</span>
+    </button>
+    @if (paymentsExpanded()) {
+      <div class="flex flex-col gap-xs pl-md">
+        <a
+          routerLink="/admin/payment-approvals"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+        >
+          <span class="material-symbols-outlined mr-md text-[18px]">fact_check</span>
+          <span class="font-label-md text-label-md">Approvals</span>
+        </a>
+        <a
+          routerLink="/admin/system-accounts"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+        >
+          <span class="material-symbols-outlined mr-md text-[18px]">account_balance</span>
+          <span class="font-label-md text-label-md">System Accounts</span>
+        </a>
+        <a
+          routerLink="/admin/commission-plans"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+        >
+          <span class="material-symbols-outlined mr-md text-[18px]">percent</span>
+          <span class="font-label-md text-label-md">Plans</span>
+        </a>
+        <a
+          routerLink="/admin/commission-assignments"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+        >
+          <span class="material-symbols-outlined mr-md text-[18px]">assignment</span>
+          <span class="font-label-md text-label-md">Assignments</span>
+        </a>
+        <a
+          routerLink="/admin/commission-report"
+          routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+          class="flex items-center px-md py-sm rounded-lg text-on-primary/70 hover:bg-on-primary/10 hover:text-on-primary transition-all"
+        >
+          <span class="material-symbols-outlined mr-md text-[18px]">fact_check</span>
+          <span class="font-label-md text-label-md">Commission Report</span>
+        </a>
+      </div>
+    }
     <span class="flex items-center px-md py-sm rounded-lg text-on-primary/40 cursor-not-allowed" title="Coming soon">
       <span class="material-symbols-outlined mr-md">manage_accounts</span>
       <span class="font-label-md text-label-md">Accounts</span>

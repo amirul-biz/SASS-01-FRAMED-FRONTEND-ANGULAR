@@ -44,6 +44,7 @@ export class AdminOrdersComponent {
   readonly errorMsg = signal<string | null>(null);
   readonly eventFilter = signal<string>('');
   readonly statusFilter = signal<AdminOrderStatus | ''>('');
+  readonly isCashAgingFilter = signal(false);
 
   constructor() {
     this.load();
@@ -63,6 +64,7 @@ export class AdminOrdersComponent {
       .getOrders({
         eventId: this.eventFilter() || undefined,
         status: this.statusFilter() || undefined,
+        isCashAging: this.isCashAgingFilter(),
         pageSize: 100,
       })
       .pipe(
@@ -82,6 +84,11 @@ export class AdminOrdersComponent {
 
   onStatusFilterChange(event: globalThis.Event): void {
     this.statusFilter.set((event.target as HTMLSelectElement).value as AdminOrderStatus | '');
+    this.load();
+  }
+
+  onCashAgingFilterChange(event: globalThis.Event): void {
+    this.isCashAgingFilter.set((event.target as HTMLInputElement).checked);
     this.load();
   }
 }

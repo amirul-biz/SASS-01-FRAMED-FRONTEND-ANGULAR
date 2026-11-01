@@ -36,6 +36,15 @@
   </div>
   <nav class="flex-1 px-md flex flex-col gap-xs">
     <a
+      routerLink="/studio/dashboard"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+      (click)="closeSidebar()"
+    >
+      <span class="material-symbols-outlined mr-md">dashboard</span>
+      <span class="font-label-md text-label-md">Dashboard</span>
+    </a>
+    <a
       routerLink="/studio/events"
       routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
       class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"

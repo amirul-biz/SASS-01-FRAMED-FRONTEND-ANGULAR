@@ -153,7 +153,7 @@ export class StudioOrdersService {
   // Closes the gap resyncToyyibPayPayment has for an already-DELIVERED order — that call no-ops
   // since there's nothing left to sync, so it can never resend the email. This bypasses that
   // guard directly, for when a customer contacts the photographer saying they never got it.
-  resendDeliveryEmail(orderId: string): Observable<{ resent: true }> {
-    return this.http.post<{ resent: true }>(`${this.env.apiUrl}/orders/${orderId}/resend-email`, {});
+  resendDeliveryEmail(orderId: string, email: string): Observable<{ resent: true }> {
+    return this.http.post<{ resent: true }>(`${this.env.apiUrl}/orders/${orderId}/resend-email`, { email });
   }
 }

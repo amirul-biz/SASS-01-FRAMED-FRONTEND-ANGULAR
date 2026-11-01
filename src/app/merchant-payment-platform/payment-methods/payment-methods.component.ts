@@ -21,7 +21,7 @@ import { ToyyibPayPaymentConfigService } from '../toyyibpay-payment-platform/toy
 
 const APPROVAL_STATUS_BADGE_CLASS: Record<ApprovalStatus, string> = {
   PENDING: 'bg-surface-container text-on-surface-variant',
-  APPROVED: 'bg-secondary-container text-on-secondary-container',
+  APPROVED: 'bg-green-100 text-green-800',
   REJECTED: 'bg-error-container text-error',
 };
 

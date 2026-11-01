@@ -42,6 +42,27 @@ export class ProfileSettingsComponent {
   readonly isUploadingBanner = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
+  readonly accountEmail = this.auth.currentUser()?.email ?? '';
+  readonly isSendingReset = signal(false);
+  readonly resetMsg = signal<string | null>(null);
+  readonly resetFailed = signal(false);
+
+  sendPasswordReset(): void {
+    this.isSendingReset.set(true);
+    this.resetMsg.set(null);
+    this.auth
+      .sendPasswordReset(this.accountEmail)
+      .then(() => {
+        this.resetFailed.set(false);
+        this.resetMsg.set('Reset link sent. Check your inbox.');
+      })
+      .catch((error: unknown) => {
+        this.resetFailed.set(true);
+        this.resetMsg.set(error instanceof Error ? error.message : 'Could not send the reset email.');
+      })
+      .finally(() => this.isSendingReset.set(false));
+  }
+
   readonly form = createProfileSettingsForm(this.auth.currentUser()?.email ?? '');
 
   private readonly contactNoValue = toSignal(this.form.controls.contactNo.valueChanges, {

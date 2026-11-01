@@ -23,6 +23,8 @@ export interface Event {
   eventEndDate: string;
   isPublished: boolean;
   publishedAt: string | null;
+  publishUntil: string | null;
+  deletedAt: string | null;
   coverPhotoUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +38,7 @@ export interface CreateEventDto {
   location?: string;
   eventStartDate: string;
   eventEndDate: string;
+  publishUntil?: string | null;
   coverPhotoKey?: string;
   pricingBundleIds?: string[];
 }
@@ -47,6 +50,7 @@ export interface UpdateEventDto {
   location?: string;
   eventStartDate?: string;
   eventEndDate?: string;
+  publishUntil?: string | null;
   coverPhotoKey?: string;
   isPublished?: boolean;
   pricingBundleIds?: string[];
@@ -76,10 +80,11 @@ export class StudioEventsService {
   listMyEvents(
     pageNumber: number,
     pageSize: number,
+    status: 'active' | 'inactive' = 'active',
   ): Observable<PaginatedResponse<Event>> {
     return this.http.get<PaginatedResponse<Event>>(
       `${this.env.apiUrl}/events`,
-      { params: { pageNumber, pageSize } },
+      { params: { pageNumber, pageSize, status } },
     );
   }
 

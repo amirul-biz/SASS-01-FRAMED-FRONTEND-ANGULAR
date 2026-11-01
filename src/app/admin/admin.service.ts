@@ -51,6 +51,7 @@ export interface AdminOrder {
   voucherName: string | null;
   status: AdminOrderStatus;
   total: number;
+  isCashAging: boolean;
   items: AdminOrderItem[];
   createdAt: string;
 }
@@ -75,13 +76,19 @@ export interface AdminStats {
   daily: AdminDailyStat[];
 }
 
+export interface AdminPhotographerStats {
+  photoCount: number;
+  storageBytes: number;
+  eventCount: number;
+  publishedEventCount: number;
+  orderCount: number;
+  orderTotalValue: number;
+}
+
 export interface AdminRegisterPhotographerPayload {
   email: string;
   password: string;
   name: string;
-  companyName?: string;
-  phone?: string;
-  bio?: string;
 }
 
 export interface AdminListParams {
@@ -119,6 +126,17 @@ export class AdminService {
     );
   }
 
+  getPhotographerStats(id: string): Observable<AdminPhotographerStats> {
+    return this.http.get<AdminPhotographerStats>(`${this.env.apiUrl}/admin/photographers/${id}/stats`);
+  }
+
+  resetPhotographerPassword(id: string): Observable<{ resetLink: string }> {
+    return this.http.post<{ resetLink: string }>(
+      `${this.env.apiUrl}/admin/photographers/${id}/reset-password`,
+      {},
+    );
+  }
+
   getEvents(
     params: { search?: string; photographerId?: string; pageNumber?: number; pageSize?: number } = {},
   ): Observable<AdminPaginated<AdminEvent>> {
@@ -133,12 +151,19 @@ export class AdminService {
   }
 
   getOrders(
-    params: { eventId?: string; status?: AdminOrderStatus; pageNumber?: number; pageSize?: number } = {},
+    params: {
+      eventId?: string;
+      status?: AdminOrderStatus;
+      isCashAging?: boolean;
+      pageNumber?: number;
+      pageSize?: number;
+    } = {},
   ): Observable<AdminPaginated<AdminOrder>> {
     return this.http.get<AdminPaginated<AdminOrder>>(`${this.env.apiUrl}/admin/orders`, {
       params: {
         ...(params.eventId && { eventId: params.eventId }),
         ...(params.status && { status: params.status }),
+        ...(params.isCashAging && { isCashAging: true }),
         pageNumber: params.pageNumber ?? 1,
         pageSize: params.pageSize ?? 50,
       },

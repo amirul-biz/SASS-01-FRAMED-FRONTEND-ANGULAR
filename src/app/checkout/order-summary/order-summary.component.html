@@ -9,10 +9,21 @@
   </h2>
 
   <div class="flex flex-col gap-md mb-lg max-h-none lg:max-h-[409px] overflow-y-auto pr-sm custom-scrollbar">
-    @for (entry of selection.selectedEntries(); track entry.photo.id) {
+    @for (entry of selection.selectedEntries(); track entry.photo.id; let i = $index) {
       <div class="flex items-center justify-between gap-sm p-md bg-surface-container-low rounded-lg">
         <div class="flex items-center gap-sm min-w-0 flex-1">
-          <img [src]="entry.photo.imageUrl" [alt]="entry.photo.label" class="w-10 h-10 rounded-md object-cover shrink-0" />
+          @if (previewable()) {
+            <button
+              type="button"
+              (click)="openPreview(i)"
+              class="shrink-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              [attr.aria-label]="'Preview ' + entry.photo.label"
+            >
+              <img [src]="entry.photo.imageUrl" [alt]="entry.photo.label" class="w-10 h-10 rounded-md object-cover hover:opacity-80 transition-opacity cursor-zoom-in" />
+            </button>
+          } @else {
+            <img [src]="entry.photo.imageUrl" [alt]="entry.photo.label" class="w-10 h-10 rounded-md object-cover shrink-0" />
+          }
           <div class="flex flex-col min-w-0">
             <span class="font-label-md text-label-md text-on-surface truncate">{{ entry.photo.label }}</span>
             <span class="text-caption text-on-surface-variant">{{ entry.formatOption.label }}</span>
@@ -59,30 +70,42 @@
       </label>
       @for (offer of selection.voucherOffers(); track offer.condition.minPhotos + ':' + offer.condition.maxPhotos) {
         <label
-          class="flex items-center justify-between gap-sm p-sm rounded-lg border-2 cursor-pointer transition-all"
+          class="flex flex-col gap-xs p-sm rounded-lg border-2 cursor-pointer transition-all"
           [class.border-primary]="selection.selectedTier() === offer"
           [class.bg-surface-container-low]="selection.selectedTier() === offer"
           [class.border-outline-variant]="selection.selectedTier() !== offer"
         >
-          <span class="flex items-center gap-sm">
-            <input
-              type="radio"
-              name="bundle-tier"
-              class="accent-primary"
-              [checked]="selection.selectedTier() === offer"
-              (change)="selection.chooseTier(offer)"
-            />
-            <span class="font-label-md text-label-md text-on-surface">
-              {{ offer.condition.minPhotos }}{{ offer.condition.maxPhotos === null ? '+' : '-' + offer.condition.maxPhotos }} photos
-              @if (selection.selectedTier() === offer && selection.pricing().extraCount > 0) {
-                + {{ selection.pricing().extraCount }} extra
+          <span class="flex items-center justify-between gap-sm">
+            <span class="flex items-center gap-sm">
+              <input
+                type="radio"
+                name="bundle-tier"
+                class="accent-primary"
+                [checked]="selection.selectedTier() === offer"
+                (change)="selection.chooseTier(offer)"
+              />
+              <span class="font-label-md text-label-md text-on-surface">
+                {{ offer.condition.minPhotos }}{{ offer.condition.maxPhotos === null ? '+' : '-' + offer.condition.maxPhotos }} photos
+                @if (selection.selectedTier() === offer && selection.pricing().extraCount > 0) {
+                  + {{ selection.pricing().extraCount }} extra
+                }
+              </span>
+            </span>
+            @if (offer.voucher.discountType === 'percent-tier') {
+              <span class="font-label-md text-label-md text-on-surface-variant">{{ offer.condition.value }}% off each</span>
+            } @else {
+              <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(offer)) }}/photo</span>
+            }
+          </span>
+          @if (offer.voucher.name || offer.voucher.description) {
+            <span class="pl-lg text-caption text-on-surface-variant">
+              @if (offer.voucher.name) {
+                <span class="font-label-md text-on-surface">{{ offer.voucher.name }}</span>
+              }
+              @if (offer.voucher.description) {
+                — {{ offer.voucher.description }}
               }
             </span>
-          </span>
-          @if (offer.voucher.discountType === 'percent-tier') {
-            <span class="font-label-md text-label-md text-on-surface-variant">{{ offer.condition.value }}% off each</span>
-          } @else {
-            <span class="font-label-md text-label-md text-on-surface-variant">{{ formatCurrency(selection.tierPricePerPhoto(offer)) }}/photo</span>
           }
         </label>
       }
@@ -116,3 +139,15 @@
     </div>
   </div>
 </aside>
+
+@if (previewPhoto(); as photo) {
+  <app-photo-preview-modal
+    [photo]="photo"
+    [readOnly]="true"
+    [hasPrev]="(previewIndex() ?? 0) > 0"
+    [hasNext]="(previewIndex() ?? 0) < selection.selectedCount() - 1"
+    (prev)="showPreviewAt(-1)"
+    (next)="showPreviewAt(1)"
+    (closed)="closePreview()"
+  />
+}

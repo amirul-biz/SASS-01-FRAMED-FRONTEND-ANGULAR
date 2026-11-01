@@ -1,0 +1,166 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs">Commission Assignments</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Which commission plan applies to each photographer's payment channel.</p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden">
+    <div class="p-md flex flex-wrap items-center gap-sm border-b border-outline-variant">
+      <select
+        class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+        (change)="onProviderFilterChange($event)"
+      >
+        @for (option of providerOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === providerFilter()">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading assignments...</p>
+    } @else if (rows().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">No payment channels match this filter.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
+              <th class="p-md">Photographer</th>
+              <th class="p-md">Provider</th>
+              <th class="p-md text-center">Approval</th>
+              <th class="p-md">Plan</th>
+              <th class="p-md">Split To</th>
+              <th class="p-md text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.paymentPlatformOptionId) {
+              <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors">
+                <td class="p-md">
+                  <span class="block font-label-md text-label-md text-on-surface">{{ row.photographerName ?? '—' }}</span>
+                  <span class="text-caption text-on-surface-variant">{{ row.photographerEmail }}</span>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ providerLabel(row.provider) }}</td>
+                <td class="p-md text-center">
+                  <span class="inline-flex items-center px-md py-xs rounded-full font-label-md text-caption border border-outline-variant {{ approvalBadgeClass(row.approvalStatus) }}">
+                    {{ row.approvalStatus === 'PENDING' ? 'Pending' : row.approvalStatus === 'APPROVED' ? 'Approved' : 'Rejected' }}
+                  </span>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ row.commissionPlanName ?? '—' }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface">{{ row.splitUsername ?? '—' }}</td>
+                <td class="p-md text-right">
+                  <div class="flex justify-end gap-sm">
+                    @if (row.commissionPlanId) {
+                      <button
+                        type="button"
+                        (click)="removeAssignment(row)"
+                        [disabled]="isSaving()"
+                        class="h-9 px-md border border-error text-error rounded-xl font-label-md text-label-md hover:bg-error-container transition-colors disabled:opacity-40"
+                      >
+                        Remove
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      (click)="openAssignModal(row)"
+                      class="h-9 px-md bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors"
+                    >
+                      {{ row.commissionPlanId ? 'Change' : 'Assign' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (isAssignModalOpen()) {
+  @if (editingRow(); as row) {
+    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg" role="dialog" aria-modal="true" (click)="closeAssignModal()">
+      <div class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)]" (click)="$event.stopPropagation()">
+        <h2 class="font-headline-md text-headline-md text-primary mb-sm">Assign Commission Plan</h2>
+        <p class="text-caption text-on-surface-variant mb-lg">{{ row.photographerEmail }} — {{ providerLabel(row.provider) }}</p>
+
+        <div class="flex flex-col gap-md">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-plan">Commission Plan <span class="text-error">*</span></label>
+            <select
+              id="assign-plan"
+              class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+              (change)="selectedPlanId.set($any($event.target).value)"
+            >
+              <option value="" [selected]="selectedPlanId() === ''">Select a plan...</option>
+              @for (plan of plans(); track plan.id) {
+                @if (plan.isActive) {
+                  <option [value]="plan.id" [selected]="plan.id === selectedPlanId()">
+                    {{ plan.name }} ({{ plan.provider ? providerLabel(plan.provider) : 'Any provider' }})
+                  </option>
+                }
+              }
+            </select>
+          </div>
+
+          @if (row.provider === 'TOYYIBPAY') {
+            <label class="flex items-center gap-sm cursor-pointer">
+              <input type="checkbox" class="accent-primary w-4 h-4" [checked]="splitEnabled()" (change)="splitEnabled.set($any($event.target).checked)" />
+              <span class="font-body-md text-body-md text-on-surface">Split commission to a system account</span>
+            </label>
+            @if (splitEnabled()) {
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-split">Split Account <span class="text-error">*</span></label>
+                <select
+                  id="assign-split"
+                  class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+                  (change)="selectedSplitAccountId.set($any($event.target).value)"
+                >
+                  <option value="" [selected]="selectedSplitAccountId() === ''">Select an account...</option>
+                  @for (account of toyyibPayAccounts(); track account.id) {
+                    <option [value]="account.id" [selected]="account.id === selectedSplitAccountId()">
+                      {{ account.username ?? account.accountId }}{{ account.isDefault ? ' (default)' : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+          } @else {
+            <p class="text-caption text-on-surface-variant">Commission splitting is only available on ToyyibPay channels.</p>
+          }
+
+          @if (formError()) {
+            <p class="text-caption text-error">{{ formError() }}</p>
+          }
+
+          <div class="flex justify-end gap-sm mt-sm">
+            <button
+              type="button"
+              (click)="closeAssignModal()"
+              [disabled]="isSaving()"
+              class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              (click)="submitAssignment()"
+              [disabled]="isSaving()"
+              class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {{ isSaving() ? 'Saving...' : 'Save Assignment' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}

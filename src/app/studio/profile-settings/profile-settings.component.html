@@ -253,5 +253,25 @@
     }
   </div>
 
+  <section class="bg-surface-container-lowest rounded-xl p-md md:p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] max-w-[36rem] mt-lg flex flex-col gap-sm">
+    <h2 class="font-headline-md text-headline-md text-on-surface">Password</h2>
+    <p class="text-caption text-on-surface-variant">
+      We'll email a reset link to {{ accountEmail }}. Open it to choose a new password.
+    </p>
+    <div class="flex items-center gap-md">
+      <button
+        type="button"
+        (click)="sendPasswordReset()"
+        [disabled]="isSendingReset()"
+        class="px-lg py-sm border border-outline-variant text-primary rounded-xl font-label-md hover:bg-surface-container-low transition-colors disabled:opacity-60"
+      >
+        {{ isSendingReset() ? 'Sending...' : 'Email me a reset link' }}
+      </button>
+      @if (resetMsg(); as message) {
+        <span class="text-caption font-label-md" [class.text-secondary]="!resetFailed()" [class.text-error]="resetFailed()">{{ message }}</span>
+      }
+    </div>
+  </section>
+
   <app-payment-methods />
 </div>

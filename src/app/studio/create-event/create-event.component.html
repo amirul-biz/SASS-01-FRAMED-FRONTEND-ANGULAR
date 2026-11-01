@@ -131,6 +131,20 @@
       <p class="text-caption text-error -mt-sm">End date must be on or after the start date.</p>
     }
 
+    <div class="sm:max-w-[50%]">
+      <label class="block font-label-md text-label-md text-on-surface mb-xs" for="event-publish-until">Publish Until <span class="text-on-surface-variant font-body-md">(optional)</span></label>
+      <input
+        id="event-publish-until"
+        formControlName="publishUntil"
+        type="date"
+        class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
+      <p class="text-caption text-on-surface-variant mt-xs">After this date the event is automatically unpublished. Leave blank to keep it published until you unpublish it.</p>
+      @if (form.errors?.['publishUntilInvalid']) {
+        <p class="text-caption text-error mt-xs">Publish-until date must be on or after the event start date.</p>
+      }
+    </div>
+
     <div>
       <span class="block font-label-md text-label-md text-on-surface mb-xs">Pricing Bundles</span>
       <p class="text-caption text-on-surface-variant mb-sm">Check every voucher that can apply to this event — riders get whichever gives the best discount.</p>

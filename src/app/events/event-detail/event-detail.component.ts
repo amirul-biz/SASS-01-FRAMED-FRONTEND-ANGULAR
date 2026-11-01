@@ -213,6 +213,22 @@ export class EventDetailComponent {
     this.armCoverTimer(this.heroImageUrls().length);
   }
 
+  previousCover(): void {
+    const count = this.heroImageUrls().length;
+    if (count < 2) {
+      return;
+    }
+    this.goToCover((this.activeCoverIndex() - 1 + count) % count);
+  }
+
+  nextCover(): void {
+    const count = this.heroImageUrls().length;
+    if (count < 2) {
+      return;
+    }
+    this.goToCover((this.activeCoverIndex() + 1) % count);
+  }
+
   readonly formatOptions = computed(() => this.allPricingOptions());
 
   readonly isPricingAvailable = computed(() => this.formatOptions().length > 0);

@@ -20,7 +20,15 @@
       }
       <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent"></div>
       @if (heroImageUrls().length > 1) {
-        <div class="absolute bottom-sm right-sm md:bottom-md md:right-md z-20 flex items-center">
+        <div class="absolute bottom-sm right-sm md:bottom-md md:right-md z-20 flex items-center gap-xs">
+          <button
+            type="button"
+            (click)="previousCover()"
+            class="w-8 h-8 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            aria-label="Previous cover photo"
+          >
+            <span class="material-symbols-outlined text-[22px]">chevron_left</span>
+          </button>
           @for (url of heroImageUrls(); track url; let i = $index) {
             <button
               type="button"
@@ -48,6 +56,14 @@
               ></span>
             </button>
           }
+          <button
+            type="button"
+            (click)="nextCover()"
+            class="w-8 h-8 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            aria-label="Next cover photo"
+          >
+            <span class="material-symbols-outlined text-[22px]">chevron_right</span>
+          </button>
         </div>
       }
       <div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop h-full flex flex-col justify-end pb-xl relative z-10">

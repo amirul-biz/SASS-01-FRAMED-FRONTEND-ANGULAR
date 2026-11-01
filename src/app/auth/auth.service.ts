@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   type User as FirebaseUser,
@@ -74,6 +75,20 @@ export class AuthService {
       password,
     );
     return this.loadCurrentUser(credential.user);
+  }
+
+  /**
+   * Emails a Firebase password-reset link. Resolves the same way whether or not the account
+   * exists (no account enumeration); only rate-limiting is surfaced to the caller.
+   */
+  async sendPasswordReset(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(this.auth, email);
+    } catch (error) {
+      if ((error as { code?: string }).code === 'auth/too-many-requests') {
+        throw new Error('Too many attempts. Please wait a few minutes and try again.');
+      }
+    }
   }
 
   async logout(): Promise<void> {

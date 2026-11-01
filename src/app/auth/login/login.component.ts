@@ -28,6 +28,28 @@ export class LoginComponent {
     this.showPassword.update((v) => !v);
   }
 
+  readonly resetMsg = signal<string | null>(null);
+
+  forgotPassword(): void {
+    const email = this.form.controls.email;
+    if (email.invalid) {
+      email.markAsTouched();
+      this.resetMsg.set(null);
+      this.errorMsg.set('Enter your email address above, then click "Forgot password?".');
+      return;
+    }
+    this.errorMsg.set(null);
+    this.auth
+      .sendPasswordReset(email.value)
+      .then(() =>
+        this.resetMsg.set('If an account exists for that email, a password reset link has been sent.'),
+      )
+      .catch((error: unknown) => {
+        this.resetMsg.set(null);
+        this.errorMsg.set(error instanceof Error ? error.message : 'Could not send the reset email.');
+      });
+  }
+
   submit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) {

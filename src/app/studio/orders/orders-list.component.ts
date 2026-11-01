@@ -8,6 +8,7 @@ import { formatCurrency } from '../../pricing/currency.util';
 import { COUNTRY_DIAL_CODE } from '../../checkout/country-code.constants';
 import { PaymentProvider, PaymentStatus } from '../../checkout/order.service';
 import { getOrderReference } from '../../checkout/order-reference.util';
+import { downloadReceiptPdf } from '../../checkout/receipt-pdf.util';
 import { OrderCommissionComponent } from './commission/order-commission.component';
 import { Event, StudioEventsService } from '../studio-events.service';
 import {
@@ -131,6 +132,8 @@ export class OrdersListComponent {
   readonly legacyErrorMsg = signal<string | null>(null);
   readonly isLegacyOrdersPresent = computed(() => (this.legacyResponse()?.totalItemCount ?? 0) > 0);
 
+  readonly receiptOrder = signal<StudioOrder | null>(null);
+
   readonly historyOrder = signal<StudioOrder | null>(null);
   readonly history = signal<OrderHistory | null>(null);
   readonly isHistoryLoading = signal(false);
@@ -146,6 +149,9 @@ export class OrdersListComponent {
 
   readonly resendingOrderId = signal<string | null>(null);
   readonly resendFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
+  readonly orderBeingResent = signal<StudioOrder | null>(null);
+  readonly resendEmail = signal('');
+  readonly resendError = signal<string | null>(null);
 
   constructor() {
     this.loadTrigger$
@@ -309,6 +315,22 @@ export class OrdersListComponent {
     return isCashPayment && isAwaitingPayment;
   }
 
+  isOrderPaid(order: StudioOrder): boolean {
+    return order.payment?.status === 'PAID';
+  }
+
+  openReceipt(order: StudioOrder): void {
+    this.receiptOrder.set(order);
+  }
+
+  closeReceipt(): void {
+    this.receiptOrder.set(null);
+  }
+
+  downloadReceipt(order: StudioOrder): void {
+    downloadReceiptPdf({ ...order, ...order.priceBreakdown });
+  }
+
   openHistory(order: StudioOrder): void {
     this.historyOrder.set(order);
     this.history.set(null);
@@ -464,30 +486,47 @@ export class OrdersListComponent {
     return hasFeedbackForThisOrder ? { message: feedback.message, isError: feedback.isError } : null;
   }
 
-  resendDeliveryEmail(order: StudioOrder): void {
-    const isResendUnavailable = !this.canResendDeliveryEmail(order) || this.resendingOrderId() !== null;
+  openResendEmail(order: StudioOrder): void {
+    this.resendEmail.set(order.email);
+    this.resendError.set(null);
+    this.orderBeingResent.set(order);
+  }
+
+  closeResendEmail(): void {
+    if (this.resendingOrderId() !== null) {
+      return;
+    }
+    this.orderBeingResent.set(null);
+  }
+
+  onResendEmailInput(event: globalThis.Event): void {
+    this.resendEmail.set((event.target as HTMLInputElement).value);
+  }
+
+  confirmResendEmail(): void {
+    const order = this.orderBeingResent();
+    const email = this.resendEmail().trim();
+    const isResendUnavailable = !order || !email || this.resendingOrderId() !== null;
     if (isResendUnavailable) {
       return;
     }
 
     this.resendingOrderId.set(order.id);
     this.resendFeedback.set(null);
+    this.resendError.set(null);
     this.ordersService
-      .resendDeliveryEmail(order.id)
+      .resendDeliveryEmail(order.id, email)
       .pipe(finalize(() => this.resendingOrderId.set(null)))
       .subscribe({
-        next: () =>
+        next: () => {
+          this.orderBeingResent.set(null);
           this.resendFeedback.set({
             orderId: order.id,
-            message: 'Email resent.',
+            message: `Email resent to ${email}.`,
             isError: false,
-          }),
-        error: (error: unknown) =>
-          this.resendFeedback.set({
-            orderId: order.id,
-            message: this.getResendErrorMessage(error),
-            isError: true,
-          }),
+          });
+        },
+        error: (error: unknown) => this.resendError.set(this.getResendErrorMessage(error)),
       });
   }
 

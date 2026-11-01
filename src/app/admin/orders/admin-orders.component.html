@@ -27,6 +27,10 @@
           <option [value]="option.value">{{ option.label }}</option>
         }
       </select>
+      <label class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+        <input type="checkbox" [checked]="isCashAgingFilter()" (change)="onCashAgingFilterChange($event)" />
+        Cash unconfirmed over 3 days
+      </label>
     </div>
 
     @if (isLoading()) {
@@ -62,6 +66,9 @@
                   <span class="inline-flex items-center px-md py-xs rounded-full font-label-md text-caption border border-outline-variant {{ statusBadgeClass[order.status] }}">
                     {{ statusLabel[order.status] }}
                   </span>
+                  @if (order.isCashAging) {
+                    <span class="block mt-xs font-label-md text-caption text-error">Cash &gt; 3 days</span>
+                  }
                 </td>
                 <td class="p-md text-right font-label-md text-label-md text-on-surface">RM {{ order.total.toFixed(2) }}</td>
               </tr>

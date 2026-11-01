@@ -69,6 +69,7 @@
   --spacing-margin-mobile: 16px;
   --spacing-margin-desktop: 64px;
   --spacing-md: 16px;
+  --max-width-md: 28rem; /* keep max-w-md a real width; --spacing-md would otherwise win */
 
   /* font families */
   --font-label-md: 'Inter', sans-serif;

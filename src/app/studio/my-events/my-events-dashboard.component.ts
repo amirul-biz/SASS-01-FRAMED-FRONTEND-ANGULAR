@@ -27,6 +27,7 @@ export class MyEventsDashboardComponent {
   readonly pageNumber = signal(1);
   readonly pageSize = signal(PAGE_SIZE_OPTIONS[0]);
   readonly response = signal<PaginatedResponse<Event> | null>(null);
+  readonly status = signal<'active' | 'inactive'>('active');
   readonly isLoading = signal(true);
   readonly errorMsg = signal<string | null>(null);
 
@@ -40,7 +41,7 @@ export class MyEventsDashboardComponent {
           this.isLoading.set(true);
           this.errorMsg.set(null);
           return this.eventsService
-            .listMyEvents(this.pageNumber(), this.pageSize())
+            .listMyEvents(this.pageNumber(), this.pageSize(), this.status())
             .pipe(finalize(() => this.isLoading.set(false)));
         }),
         takeUntilDestroyed(this.destroyRef),
@@ -50,6 +51,16 @@ export class MyEventsDashboardComponent {
         error: () => this.errorMsg.set('Failed to load your events. Please try again.'),
       });
 
+    this.loadTrigger$.next();
+  }
+
+  setStatus(status: 'active' | 'inactive'): void {
+    if (this.status() === status) {
+      return;
+    }
+    this.status.set(status);
+    this.pageNumber.set(1);
+    this.closeMenu();
     this.loadTrigger$.next();
   }
 
@@ -83,7 +94,7 @@ export class MyEventsDashboardComponent {
   }
 
   deleteEvent(event: Event): void {
-    if (!confirm(`Delete "${event.title}"? This can't be undone.`)) {
+    if (!confirm(`Move "${event.title}" to Inactive events? It will be unpublished, but its orders are kept.`)) {
       return;
     }
 

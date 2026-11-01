@@ -1,15 +1,17 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subject, finalize, switchMap } from 'rxjs';
+import { finalize } from 'rxjs';
 import { AdminPhotographer, AdminService } from '../admin.service';
+import { ResetPasswordDialogComponent } from './reset-password-dialog/reset-password-dialog.component';
 
 const SEARCH_DEBOUNCE_MS = 400;
 
 @Component({
   selector: 'app-admin-photographers',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, ResetPasswordDialogComponent],
   templateUrl: './admin-photographers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -17,7 +19,6 @@ export class AdminPhotographersComponent {
   private readonly adminService = inject(AdminService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly searchTrigger$ = new Subject<string>();
   private searchTimer?: ReturnType<typeof setTimeout>;
   private lastSearch = '';
 
@@ -36,30 +37,11 @@ export class AdminPhotographersComponent {
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    companyName: [''],
-    phone: [''],
-    bio: [''],
   });
 
   constructor() {
     this.load();
-
-    this.searchTrigger$
-      .pipe(
-        switchMap(() => {
-          this.isLoading.set(true);
-          return this.adminService
-            .getPhotographers({ search: this.searchDraft().trim() || undefined })
-            .pipe(finalize(() => this.isLoading.set(false)));
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (response) => this.photographers.set(response.items),
-        error: () => this.errorMsg.set('Failed to load photographers. Please try again.'),
-      });
   }
-
 
   load(): void {
     this.isLoading.set(true);
@@ -127,6 +109,44 @@ export class AdminPhotographersComponent {
           this.formError.set(detail ?? 'Registration failed. Please try again.');
         },
       });
+  }
+
+  readonly resetTarget = signal<AdminPhotographer | null>(null);
+  readonly isResetting = signal(false);
+  readonly resetLink = signal<string | null>(null);
+  readonly resetError = signal<string | null>(null);
+  readonly copied = signal(false);
+
+  // Opens the dialog and generates the link straight away — the link is only shown to this admin.
+  openResetPassword(photographer: AdminPhotographer): void {
+    this.resetTarget.set(photographer);
+    this.resetLink.set(null);
+    this.resetError.set(null);
+    this.copied.set(false);
+    this.isResetting.set(true);
+    this.adminService
+      .resetPhotographerPassword(photographer.id)
+      .pipe(
+        finalize(() => this.isResetting.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => this.resetLink.set(res.resetLink),
+        error: () => this.resetError.set('Failed to generate a reset link. Please try again.'),
+      });
+  }
+
+  closeResetPassword(): void {
+    this.resetTarget.set(null);
+  }
+
+  copyResetLink(): void {
+    const link = this.resetLink();
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2000);
+    });
   }
 
   toggleStatus(photographer: AdminPhotographer): void {

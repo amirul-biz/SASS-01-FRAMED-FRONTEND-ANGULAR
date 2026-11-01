@@ -15,12 +15,13 @@ export interface IVoucher {
   id: string;
   photographerId: string;
   name: string;
+  description: string | null;
   discountType: WireVoucherDiscountType;
   conditions: IVoucherCondition[];
   bundlesUsingCount: number;
 }
 
-export type VoucherInput = { name: string; discountType: WireVoucherDiscountType; conditions: IVoucherCondition[] };
+export type VoucherInput = { name: string; description?: string; discountType: WireVoucherDiscountType; conditions: IVoucherCondition[] };
 export type VoucherChanges = Partial<VoucherInput>;
 
 /** Human-readable rule text for a voucher, e.g. "2-5 photos: RM20 flat, 6+ photos: RM35 flat". */
