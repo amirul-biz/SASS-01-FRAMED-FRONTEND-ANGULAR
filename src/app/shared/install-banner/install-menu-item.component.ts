@@ -22,11 +22,16 @@ import { InstallPromptService } from '../../core/install-prompt.service';
           Install: tap <strong>Share</strong>, then
           <strong>Add to Home Screen</strong>
         </p>
-      } @else {
+      } @else if (canOneTap()) {
         <button type="button" class="install-row" (click)="install()">
           <span class="material-symbols-outlined row-icon">install_mobile</span>
           <span class="row-label">Install App</span>
         </button>
+      } @else {
+        <p class="ios-hint" aria-label="How to install">
+          Install: open the browser menu, then
+          <strong>Install app</strong> / <strong>Add to Home Screen</strong>
+        </p>
       }
     }
   `,
@@ -78,6 +83,11 @@ export class InstallMenuItemComponent {
 
   visible(): boolean {
     return this.prompt.visible();
+  }
+
+  /** True only when the browser gave us an event we can actually fire. */
+  canOneTap(): boolean {
+    return this.prompt.canInstallInOneTap();
   }
 
   async install(): Promise<void> {

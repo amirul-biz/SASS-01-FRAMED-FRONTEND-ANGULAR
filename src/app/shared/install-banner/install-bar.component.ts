@@ -24,10 +24,11 @@ import { InstallPromptService } from '../../core/install-prompt.service';
           <p class="copy">
             <strong>Install Picsweep</strong> — faster access to your event photos.
           </p>
-          <button type="button" class="install" (click)="install()">Install</button>
-          <button type="button" class="dismiss" (click)="dismiss()" aria-label="Dismiss">
-            <span class="material-symbols-outlined">close</span>
-          </button>
+          @if (canOneTap()) {
+            <button type="button" class="install" (click)="install()">Install</button>
+          } @else {
+            <span class="hint">Use your browser menu → <strong>Install app</strong></span>
+          }
         </div>
       </div>
     }
@@ -83,6 +84,14 @@ import { InstallPromptService } from '../../core/install-prompt.service';
         cursor: pointer;
         flex-shrink: 0;
       }
+      .hint {
+        font-size: 0.8125rem;
+        color: rgba(255, 255, 255, 0.72);
+        flex-shrink: 0;
+      }
+      .hint strong {
+        color: #ffffff;
+      }
       .dismiss {
         background: transparent;
         border: 0;
@@ -121,9 +130,14 @@ export class InstallBarComponent {
   }
 
   visible(): boolean {
-    // Desktop bar only when a real native prompt exists — iOS has no prompt,
-    // and the manual hint belongs in the mobile menu, not a desktop bar.
-    return this.canPrompt() && !this.prompt.isStandalone();
+    // Permanent, per arfan: the install entry point stays up whether or not the app
+    // is already installed. Desktop/tablet only — mobile uses the hamburger row.
+    return this.prompt.visible();
+  }
+
+  /** True only when the browser gave us an event we can actually fire. */
+  canOneTap(): boolean {
+    return this.prompt.canInstallInOneTap();
   }
 
   async install(): Promise<void> {

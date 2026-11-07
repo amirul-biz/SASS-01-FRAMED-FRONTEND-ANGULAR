@@ -210,9 +210,10 @@ export class CheckoutComponent {
     lines.push('');
     lines.push('Please confirm my order and arrange payment. Thank you!');
     lines.push('');
-    // Studio-facing link so the photographer can open the order directly
-    // instead of hunting for it. Same route the studio "Copy link" uses.
-    lines.push(`View order: ${globalThis.location.origin}/order-images?orderId=${order.id}`);
+    // Studio-facing link: the photographer opens Studio → Orders with this order already
+    // filtered, then marks it paid from the order table. studioGuard bounces a logged-out
+    // photographer through login and returns them here via ?redirectTo.
+    lines.push(`View order: ${globalThis.location.origin}/studio/orders?orderId=${order.id}`);
 
     return lines.join('\n');
   }

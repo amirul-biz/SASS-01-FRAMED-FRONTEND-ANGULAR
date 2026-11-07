@@ -24,7 +24,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = 'picsweep.installPromptDismissedAt';
-const DISMISS_COOLDOWN_DAYS = 14;
+/** Kept only so previously-stored dismissal flags are ignored rather than read. */
+const DISMISS_COOLDOWN_DAYS = 0;
 
 /** Set by an inline script in index.html if the event fires before we load. */
 declare global {
@@ -80,9 +81,7 @@ export class InstallPromptService {
   private capture(event: BeforeInstallPromptEvent): void {
     this.deferred = event;
     window.__picsweepInstallPrompt = event;
-    if (!this.isStandalone() && !this.recentlyDismissed()) {
-      this.canPrompt.set(true);
-    }
+    this.canPrompt.set(true);
   }
 
   /** Show the native prompt. Returns true if the user accepted. */
@@ -101,28 +100,32 @@ export class InstallPromptService {
 
   /** Remember a dismissal so we don't nag on every visit. */
   dismiss(): void {
+    // Intentionally a no-op for visibility: arfan wants the install affordance to be
+    // permanent, whether or not the app is already installed. Kept as a method so the
+    // templates' (dismissed) handlers keep compiling.
     this.canPrompt.set(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    } catch {
-      /* private mode / storage disabled — just don't persist */
-    }
   }
 
   private recentlyDismissed(): boolean {
-    try {
-      const raw = localStorage.getItem(DISMISS_KEY);
-      if (!raw) return false;
-      const days = (Date.now() - Number(raw)) / 86_400_000;
-      return days < DISMISS_COOLDOWN_DAYS;
-    } catch {
-      return false;
-    }
+    return false;
   }
 
-  /** Exposed for the UI: should we show any install affordance at all? */
+  /**
+   * Exposed for the UI: should we show the install affordance?
+   *
+   * Deliberately always true (except SSR). arfan's requirement: the install entry point
+   * persists permanently, whether or not the user has already installed the app, and
+   * regardless of whether Chrome supplied a prompt event. The action itself degrades
+   * gracefully — a real one-tap install where an event exists, manual instructions
+   * otherwise.
+   */
   visible(): boolean {
-    if (this.isStandalone()) return false;
-    return this.canPrompt() || this.isIos();
+    if (typeof window === 'undefined') return false;
+    return true;
+  }
+
+  /** True when the platform gives us a real one-tap install (Android/desktop Chrome). */
+  canInstallInOneTap(): boolean {
+    return this.deferred !== null;
   }
 }

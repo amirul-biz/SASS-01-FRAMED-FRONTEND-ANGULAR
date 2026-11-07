@@ -11,7 +11,7 @@
  * Bump VERSION to invalidate every cache on next visit.
  */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const STATIC_CACHE = `picsweep-static-${VERSION}`;
 const SHELL_CACHE = `picsweep-shell-${VERSION}`;
 

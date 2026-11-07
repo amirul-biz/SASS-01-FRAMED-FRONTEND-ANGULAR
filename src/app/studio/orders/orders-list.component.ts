@@ -1,6 +1,7 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, switchMap } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { RangePipe } from '../../shared/pipes/range.pipe';
@@ -95,6 +96,8 @@ export class OrdersListComponent {
   private readonly ordersService = inject(StudioOrdersService);
   private readonly eventsService = inject(StudioEventsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly loadTrigger$ = new Subject<void>();
   private readonly legacyLoadTrigger$ = new Subject<void>();
 
@@ -156,6 +159,20 @@ export class OrdersListComponent {
   readonly resendError = signal<string | null>(null);
 
   constructor() {
+    // Deep link support: the WhatsApp order message links here as
+    // /studio/orders?orderId=<id> so the photographer lands on the order already filtered,
+    // instead of pasting the ID into the search box by hand. Seed the filter signals
+    // before the first loadTrigger so the very first request already carries the search.
+    const params = this.route.snapshot.queryParamMap;
+    const linkedOrderId = params.get('orderId');
+    if (linkedOrderId) {
+      this.orderIdFilter.set(linkedOrderId);
+    }
+    const linkedEmail = params.get('email');
+    if (linkedEmail) {
+      this.emailFilter.set(linkedEmail);
+    }
+
     this.loadTrigger$
       .pipe(
         switchMap(() => {
