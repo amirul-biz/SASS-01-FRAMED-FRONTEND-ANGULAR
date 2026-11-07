@@ -91,6 +91,148 @@ const PAYMENT_STATUS_BADGE_CLASS: Record<PaymentStatus, string> = {
   imports: [RangePipe, DatePipe, NgTemplateOutlet, PaginatorComponent, OrderCommissionComponent],
   templateUrl: './orders-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      /*
+       * Mobile card layout (< 768px).
+       *
+       * The table has 7 columns and a nowrap date cell, so its intrinsic min-width
+       * always exceeded a phone viewport and every row needed sideways scrolling.
+       * Rather than maintain a second card component, we restyle the SAME table into
+       * stacked cards below md. One source of truth => desktop and mobile can't drift.
+       *
+       * Desktop is untouched: every rule below is inside the media query.
+       */
+      @media (max-width: 767px) {
+        .orders-table-wrap {
+          overflow-x: visible;
+        }
+
+        .orders-table {
+          display: block;
+          width: 100%;
+        }
+
+        /* Column headings are meaningless once rows are cards. */
+        .orders-table thead {
+          display: none;
+        }
+
+        .orders-table tbody {
+          display: block;
+        }
+
+        /* One card per order. */
+        .orders-table tbody > tr.order-row {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          grid-template-areas:
+            'date    payment'
+            'event   event'
+            'total   chevron';
+          align-items: center;
+          gap: 0.375rem 0.75rem;
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--mat-sys-outline-variant, rgba(20, 33, 61, 0.12));
+          border-radius: 0.75rem;
+          margin-bottom: 0.75rem;
+          background: #fff;
+        }
+
+        /* The table itself has a bottom border on each row; the card replaces it. */
+        .orders-table tbody > tr.order-row {
+          border-bottom-width: 1px;
+        }
+
+        .orders-table tbody > tr.order-row:last-child {
+          margin-bottom: 0;
+        }
+
+        /* Neutralise the table cell boxes so grid areas can place them. */
+        .orders-table tbody > tr.order-row > td {
+          display: block;
+          padding: 0;
+          border: 0;
+          min-width: 0;
+          white-space: normal;
+        }
+
+        .orders-table td.order-date {
+          grid-area: date;
+          white-space: normal;
+        }
+
+        /* Date and time sit on one line: "Nov 7, 2026 · 11:17 PM". */
+        .orders-table td.order-date > div {
+          flex-direction: row;
+          align-items: baseline;
+          gap: 0.375rem;
+          flex-wrap: wrap;
+        }
+
+        .orders-table td.order-event {
+          grid-area: event;
+          font-weight: 500;
+          /* Long event titles must wrap, never widen the card. */
+          overflow-wrap: anywhere;
+        }
+
+        .orders-table td.order-total {
+          grid-area: total;
+          text-align: left;
+          white-space: normal;
+        }
+
+        .orders-table td.order-payment {
+          grid-area: payment;
+          justify-self: end;
+          white-space: normal;
+        }
+
+        .orders-table td.order-chevron {
+          grid-area: chevron;
+          justify-self: end;
+          white-space: normal;
+        }
+
+        /* Hidden-on-mobile columns stay hidden. */
+        .orders-table td.hidden.md\\:table-cell {
+          display: none;
+        }
+
+        /* Expanded details: full-width row inside the same card stack. */
+        .orders-table tbody > tr.order-details-row {
+          display: block;
+          background: transparent;
+        }
+
+        .orders-table tbody > tr.order-details-row > td {
+          display: block;
+          padding: 0;
+          border: 0;
+        }
+
+        /* Let action buttons wrap instead of pushing the card wider. */
+        .order-details-actions {
+          flex-wrap: wrap;
+        }
+
+        .order-details-actions > button {
+          flex: 0 1 auto;
+          min-width: 0;
+        }
+
+        /* Photos row: thumbnail + text + price may wrap onto two lines. */
+        .order-item-row {
+          flex-wrap: wrap;
+        }
+
+        .order-item-price {
+          white-space: normal;
+        }
+      }
+    `,
+  ],
 })
 export class OrdersListComponent {
   private readonly ordersService = inject(StudioOrdersService);

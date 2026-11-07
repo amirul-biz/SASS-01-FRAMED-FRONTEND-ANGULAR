@@ -49,11 +49,11 @@
       />
     </div>
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto orders-table-wrap">
       @if (isLoading()) {
         <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">Loading your orders...</p>
       } @else {
-        <table class="w-full text-left">
+        <table class="w-full text-left orders-table">
           <thead>
             <tr class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider">
               <th class="p-md">Date</th>
@@ -68,16 +68,16 @@
           <tbody>
             @for (order of response()?.items ?? []; track order.id) {
               <tr
-                class="border-b border-outline-variant last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors"
+                class="border-b border-outline-variant last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors order-row"
                 (click)="toggleExpanded(order.id)"
               >
-                <td class="p-md whitespace-nowrap">
+                <td class="p-md whitespace-nowrap order-date">
                   <div class="flex flex-col">
                     <span class="font-body-md text-body-md text-on-surface">{{ order.createdAt | date: 'mediumDate' }}</span>
                     <span class="font-caption text-caption text-on-surface-variant">{{ order.createdAt | date: 'h:mm a' }}</span>
                   </div>
                 </td>
-                <td class="p-md font-body-md text-body-md text-on-surface">{{ order.eventTitle }}</td>
+                <td class="p-md font-body-md text-body-md text-on-surface order-event">{{ order.eventTitle }}</td>
                 <td class="p-md hidden md:table-cell">
                   <div class="flex flex-col">
                     <span class="font-label-md text-label-md text-on-surface">{{ order.email }}</span>
@@ -85,8 +85,8 @@
                   </div>
                 </td>
                 <td class="p-md font-body-md text-body-md text-on-surface hidden md:table-cell">{{ order.items.length }}</td>
-                <td class="p-md text-right font-label-md text-label-md text-on-surface">{{ formatCurrency(order.total) }}</td>
-                <td class="p-md whitespace-nowrap">
+                <td class="p-md text-right font-label-md text-label-md text-on-surface order-total">{{ formatCurrency(order.total) }}</td>
+                <td class="p-md whitespace-nowrap order-payment">
                   @if (order.payment; as payment) {
                     <div class="flex flex-wrap items-center gap-xs">
                       <span class="inline-flex items-center gap-xs px-sm py-0.5 rounded-full border border-outline-variant font-caption text-caption text-on-surface">
@@ -101,14 +101,14 @@
                     <span class="font-caption text-caption text-on-surface-variant">—</span>
                   }
                 </td>
-                <td class="p-md text-right">
+                <td class="p-md text-right order-chevron">
                   <span class="material-symbols-outlined text-[20px] text-on-surface-variant transition-transform" [class.rotate-180]="isExpanded(order.id)">
                     expand_more
                   </span>
                 </td>
               </tr>
               @if (isExpanded(order.id)) {
-                <tr class="bg-surface-container-low">
+                <tr class="bg-surface-container-low order-details-row">
                   <td colspan="7" class="p-md">
                     <ng-container *ngTemplateOutlet="orderDetails; context: { $implicit: order }" />
                   </td>
@@ -275,7 +275,7 @@
                             <span class="text-caption font-label-md text-on-surface-variant">· {{ order.createdAt | date: 'mediumDate' }}</span>
                             <span class="text-caption font-label-md text-on-surface-variant">· Order #{{ orderReference(order.id) }}</span>
                           </div>
-                          <div class="flex flex-wrap items-center gap-sm">
+                          <div class="flex flex-wrap items-center gap-sm order-details-actions">
                             @if (getPaymentProviderLabel(order); as providerLabel) {
                               <span class="inline-flex items-center gap-xs px-sm py-0.5 rounded-full border border-outline-variant font-caption text-caption text-on-surface">
                                 <span class="material-symbols-outlined text-[14px]">{{ getPaymentProviderIcon(order) }}</span>
@@ -396,7 +396,7 @@
                                 <button
                                   type="button"
                                   (click)="openPhotoPreview(item)"
-                                  class="w-full flex items-center gap-md p-sm rounded-lg bg-surface-container-low text-left hover:bg-surface-container transition-colors"
+                                  class="w-full flex items-center gap-md p-sm rounded-lg bg-surface-container-low text-left hover:bg-surface-container transition-colors order-item-row"
                                 >
                                   <img
                                     [src]="item.photoUrl"
@@ -410,7 +410,7 @@
                                       {{ item.formatLabel }}
                                     </span>
                                   </div>
-                                  <span class="font-label-md text-label-md text-on-surface whitespace-nowrap">{{ formatCurrency(item.price) }}</span>
+                                  <span class="font-label-md text-label-md text-on-surface whitespace-nowrap order-item-price">{{ formatCurrency(item.price) }}</span>
                                 </button>
                               }
                             </div>
