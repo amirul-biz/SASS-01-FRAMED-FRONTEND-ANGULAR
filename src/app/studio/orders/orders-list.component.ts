@@ -149,6 +149,8 @@ export class OrdersListComponent {
 
   readonly resendingOrderId = signal<string | null>(null);
   readonly resendFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
+  readonly copiedOrderId = signal<string | null>(null);
+  readonly copyFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
   readonly orderBeingResent = signal<StudioOrder | null>(null);
   readonly resendEmail = signal('');
   readonly resendError = signal<string | null>(null);
@@ -473,7 +475,63 @@ export class OrdersListComponent {
   }
 
   canResendDeliveryEmail(order: StudioOrder): boolean {
-    return order.status === 'DELIVERED' && order.payment?.provider === 'TOYYIBPAY';
+    // Any delivered order has a delivery email worth re-sending, whichever provider got it
+    // there — cash reaches DELIVERED via the photographer's mark-as-paid, which sends the same
+    // email ToyyibPay sends. Mirrors the backend guard in order.service.ts.
+    return order.status === 'DELIVERED' && order.payment !== null;
+  }
+
+  canCopyOrderLink(order: StudioOrder): boolean {
+    // Paid orders only — the /order-images page 400s for unpaid ones, so offering the link there
+    // would hand the photographer a URL that just shows an error.
+    return order.status !== 'PENDING_CONFIRMATION' && order.status !== 'CANCELLED';
+  }
+
+  getOrderLink(order: StudioOrder): string {
+    // window.location.origin, not an env value: the link must point at whichever deployment the
+    // photographer is actually using (staging vs prod), which the browser already knows.
+    return `${globalThis.location.origin}/order-images?orderId=${order.id}`;
+  }
+
+  isCopyingLink(order: StudioOrder): boolean {
+    return this.copiedOrderId() === order.id;
+  }
+
+  getCopyFeedback(order: StudioOrder): { message: string; isError: boolean } | null {
+    const feedback = this.copyFeedback();
+    return feedback?.orderId === order.id
+      ? { message: feedback.message, isError: feedback.isError }
+      : null;
+  }
+
+  async copyOrderLink(order: StudioOrder): Promise<void> {
+    const isCopyUnavailable = !this.canCopyOrderLink(order);
+    if (isCopyUnavailable) {
+      return;
+    }
+
+    this.copyFeedback.set(null);
+    try {
+      await navigator.clipboard.writeText(this.getOrderLink(order));
+      this.copiedOrderId.set(order.id);
+      this.copyFeedback.set({
+        orderId: order.id,
+        message: 'Order link copied — send it to your customer on WhatsApp.',
+        isError: false,
+      });
+      setTimeout(() => {
+        if (this.copiedOrderId() === order.id) {
+          this.copiedOrderId.set(null);
+        }
+      }, 2000);
+    } catch {
+      this.copiedOrderId.set(null);
+      this.copyFeedback.set({
+        orderId: order.id,
+        message: 'Could not copy the link. Copy it manually from your browser.',
+        isError: true,
+      });
+    }
   }
 
   isResendingEmail(order: StudioOrder): boolean {

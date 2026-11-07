@@ -331,6 +331,19 @@
                                 }
                               </button>
                             }
+                            @if (canCopyOrderLink(order)) {
+                              <button
+                                type="button"
+                                (click)="copyOrderLink(order)"
+                                class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs"
+                                [attr.aria-label]="'Copy order link for order ' + orderReference(order.id)"
+                              >
+                                <span class="material-symbols-outlined text-[18px]">
+                                  {{ isCopyingLink(order) ? 'check' : 'link' }}
+                                </span>
+                                {{ isCopyingLink(order) ? 'Copied' : 'Copy link' }}
+                              </button>
+                            }
                             @if (canResendDeliveryEmail(order)) {
                               <button
                                 type="button"
@@ -344,6 +357,15 @@
                             }
                           </div>
                         </div>
+                        @if (getCopyFeedback(order); as copyFeedback) {
+                          <p
+                            class="px-lg pt-sm text-caption"
+                            [class]="copyFeedback.isError ? 'text-error' : 'text-on-surface-variant'"
+                            role="status"
+                          >
+                            {{ copyFeedback.message }}
+                          </p>
+                        }
                         @if (getSyncFeedback(order); as syncFeedback) {
                           <p
                             class="px-lg pt-sm text-caption"

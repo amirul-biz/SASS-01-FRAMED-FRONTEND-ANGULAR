@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { formatCurrency } from '../../pricing/currency.util';
@@ -6,7 +7,9 @@ import { getOrderReference } from '../order-reference.util';
 import { OrderResponse, OrderService } from '../order.service';
 import { downloadReceiptPdf } from '../receipt-pdf.util';
 
-type ReceiptPageStatus = 'loading' | 'ready' | 'unavailable';
+// 'unpaid' mirrors OrderImagesComponent: a 400 means the order is real but not confirmed yet,
+// which is a different message for the customer than a 404 (link matches nothing).
+type ReceiptPageStatus = 'loading' | 'ready' | 'unpaid' | 'unavailable';
 
 // Landing page for the "View your receipt" link in the delivery email — public, read via
 // ?orderId= in the URL. The backend 400s/404s if the order was never paid or doesn't exist, so
@@ -39,7 +42,10 @@ export class OrderReceiptComponent implements OnInit {
         this.order.set(order);
         this.status.set('ready');
       },
-      error: () => this.status.set('unavailable'),
+      error: (error: unknown) => {
+        const isUnpaid = error instanceof HttpErrorResponse && error.status === 400;
+        this.status.set(isUnpaid ? 'unpaid' : 'unavailable');
+      },
     });
   }
 
