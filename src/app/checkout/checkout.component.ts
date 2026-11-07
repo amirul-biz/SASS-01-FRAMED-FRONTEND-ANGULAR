@@ -209,6 +209,10 @@ export class CheckoutComponent {
     lines.push(`Total: ${formatCurrency(pricing.total)}`);
     lines.push('');
     lines.push('Please confirm my order and arrange payment. Thank you!');
+    lines.push('');
+    // Studio-facing link so the photographer can open the order directly
+    // instead of hunting for it. Same route the studio "Copy link" uses.
+    lines.push(`View order: ${globalThis.location.origin}/order-images?orderId=${order.id}`);
 
     return lines.join('\n');
   }

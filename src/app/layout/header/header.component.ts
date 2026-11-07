@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService, Role } from '../../auth/auth.service';
 import { SelectionService } from '../../pricing/selection.service';
+import { InstallMenuItemComponent } from '../../shared/install-banner/install-menu-item.component';
+import { InstallBarComponent } from '../../shared/install-banner/install-bar.component';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, InstallMenuItemComponent, InstallBarComponent],
   templateUrl: './header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
