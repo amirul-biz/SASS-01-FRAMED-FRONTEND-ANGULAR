@@ -77,8 +77,7 @@ export class InstallMenuItemComponent {
   readonly isIos = this.prompt.isIos.asReadonly();
 
   visible(): boolean {
-    if (this.prompt.isStandalone()) return false;
-    return this.prompt.canPrompt() || this.isIos();
+    return this.prompt.visible();
   }
 
   async install(): Promise<void> {

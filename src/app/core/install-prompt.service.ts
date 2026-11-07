@@ -1,15 +1,22 @@
 import { Injectable, signal } from '@angular/core';
 
 /**
- * Android/Chrome install prompt.
+ * Install-prompt state for the "Install App" affordance.
  *
- * The browser fires `beforeinstallprompt` once, and only if the app meets
- * the installability criteria (manifest + icons + SW + HTTPS). We must
- * capture and stash the event — it can only be used once, and only from a
- * user gesture.
+ * Chrome/Edge/Android fire `beforeinstallprompt` when the app is installable
+ * (manifest + icons + SW + HTTPS). The event can be used ONCE and only from a
+ * user gesture, so we stash it.
  *
- * iOS never fires it, so `isIosInstallable` exposes a manual
- * "Share -> Add to Home Screen" hint instead.
+ * Two things this must get right:
+ *
+ * 1. RACE — the event often fires while the page is still booting, possibly
+ *    before Angular instantiates this service. We therefore attach the
+ *    listener in the constructor AND check a global that an inline script in
+ *    index.html sets, so an early event is never missed.
+ *
+ * 2. SCOPE — `isIos` must ONLY be true for actual iOS. iPadOS 13+ masquerades
+ *    as "Macintosh", so it needs the touch-point test. Getting this wrong
+ *    shows the manual hint on Android/desktop, where a real button exists.
  */
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -18,6 +25,13 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = 'picsweep.installPromptDismissedAt';
 const DISMISS_COOLDOWN_DAYS = 14;
+
+/** Set by an inline script in index.html if the event fires before we load. */
+declare global {
+  interface Window {
+    __picsweepInstallPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
 
 @Injectable({ providedIn: 'root' })
 export class InstallPromptService {
@@ -29,7 +43,7 @@ export class InstallPromptService {
   /** True when already running as an installed app. */
   readonly isStandalone = signal(false);
 
-  /** True on iOS Safari, where we show the manual hint instead. */
+  /** True only on real iOS/iPadOS, where no programmatic install exists. */
   readonly isIos = signal(false);
 
   constructor() {
@@ -42,22 +56,33 @@ export class InstallPromptService {
     );
 
     const ua = navigator.userAgent;
-    // iPadOS 13+ reports as Mac; detect touch-capable "Macs".
-    const isIpadOs = /Macintosh/.test(ua) && 'ontoumax' in document;
+    // iPadOS 13+ reports as desktop "Macintosh"; detect touch-capable Macs.
+    const isIpadOs = /Macintosh/.test(ua) && 'ontouchstart' in document;
     this.isIos.set(/iPhone|iPad|iPod/.test(ua) || isIpadOs);
 
+    // 1. Pick up an event captured by the inline bootstrap script, if any.
+    const early = window.__picsweepInstallPrompt;
+    if (early) this.capture(early);
+
+    // 2. Also listen normally for events that fire after boot.
     window.addEventListener('beforeinstallprompt', (event) => {
-      event.preventDefault(); // stop Chrome's mini-infobar
-      this.deferred = event as BeforeInstallPromptEvent;
-      if (!this.isStandalone() && !this.recentlyDismissed()) {
-        this.canPrompt.set(true);
-      }
+      event.preventDefault(); // suppress Chrome's own mini-infobar
+      this.capture(event as BeforeInstallPromptEvent);
     });
 
     window.addEventListener('appinstalled', () => {
       this.deferred = null;
+      window.__picsweepInstallPrompt = null;
       this.canPrompt.set(false);
     });
+  }
+
+  private capture(event: BeforeInstallPromptEvent): void {
+    this.deferred = event;
+    window.__picsweepInstallPrompt = event;
+    if (!this.isStandalone() && !this.recentlyDismissed()) {
+      this.canPrompt.set(true);
+    }
   }
 
   /** Show the native prompt. Returns true if the user accepted. */
@@ -66,6 +91,7 @@ export class InstallPromptService {
     if (!event) return false;
 
     this.deferred = null; // single-use
+    window.__picsweepInstallPrompt = null;
     this.canPrompt.set(false);
 
     await event.prompt();
@@ -92,5 +118,11 @@ export class InstallPromptService {
     } catch {
       return false;
     }
+  }
+
+  /** Exposed for the UI: should we show any install affordance at all? */
+  visible(): boolean {
+    if (this.isStandalone()) return false;
+    return this.canPrompt() || this.isIos();
   }
 }

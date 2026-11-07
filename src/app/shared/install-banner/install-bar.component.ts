@@ -121,6 +121,8 @@ export class InstallBarComponent {
   }
 
   visible(): boolean {
+    // Desktop bar only when a real native prompt exists — iOS has no prompt,
+    // and the manual hint belongs in the mobile menu, not a desktop bar.
     return this.canPrompt() && !this.prompt.isStandalone();
   }
 

@@ -17,6 +17,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script>
+    // Capture beforeinstallprompt BEFORE the Angular bundle loads. Chrome can
+    // fire it during boot, and the event is single-use — if no listener exists
+    // yet it is lost and the app looks permanently non-installable.
+    window.__picsweepInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__picsweepInstallPrompt = e;
+    });
+  </script>
 </head>
 <body>
   <app-root></app-root>
