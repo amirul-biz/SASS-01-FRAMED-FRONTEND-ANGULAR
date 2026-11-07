@@ -4,9 +4,13 @@ import { InstallPromptService } from '../../core/install-prompt.service';
 /**
  * "Install Picsweep" row for the mobile hamburger menu.
  *
- * Mobile placement is deliberately NOT a floating banner — it sits inside the
- * nav sheet alongside Homepage/Events/Login, which is where users already look
- * for app-level actions. Avoids covering content on a small screen.
+ * Sits inside the nav sheet alongside Homepage/Events/Login — where users
+ * already look for app-level actions — instead of a floating banner that
+ * covers content on a small screen.
+ *
+ * Android/Chrome: a plain tappable row. One tap -> native install prompt.
+ * iOS Safari: NO button. Apple exposes no API for programmatic install, so a
+ * button would silently do nothing. We render a quiet one-line hint instead.
  */
 @Component({
   selector: 'app-install-menu-item',
@@ -14,8 +18,9 @@ import { InstallPromptService } from '../../core/install-prompt.service';
     @if (visible()) {
       <div class="h-unit bg-outline-variant/30 my-xs"></div>
       @if (isIos()) {
-        <p class="ios-hint">
-          Tap <strong>Share</strong> then <strong>Add to Home Screen</strong> to install.
+        <p class="ios-hint" aria-label="How to install on iPhone">
+          Install: tap <strong>Share</strong>, then
+          <strong>Add to Home Screen</strong>
         </p>
       } @else {
         <button type="button" class="install-row" (click)="install()">
@@ -50,10 +55,17 @@ import { InstallPromptService } from '../../core/install-prompt.service';
         font-size: 22px;
       }
       .ios-hint {
-        margin: 0.25rem 0 0;
-        font-size: 0.8125rem;
-        line-height: 1.45;
-        color: rgba(20, 33, 61, 0.72);
+        display: flex;
+        align-items: center;
+        min-height: 2.75rem;
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        color: rgba(20, 33, 61, 0.62);
+      }
+      .ios-hint strong {
+        color: rgba(20, 33, 61, 0.82);
+        font-weight: 600;
       }
     `,
   ],
