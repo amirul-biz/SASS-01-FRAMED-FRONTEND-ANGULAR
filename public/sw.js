@@ -11,7 +11,7 @@
  * Bump VERSION to invalidate every cache on next visit.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `picsweep-static-${VERSION}`;
 const SHELL_CACHE = `picsweep-shell-${VERSION}`;
 
@@ -77,18 +77,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Static assets are content-hashed by the Angular build, so a given URL's
+  // bytes never change. Cache-first is correct AND avoids the "stale app for
+  // one load after deploy" problem that stale-while-revalidate caused.
+  // The SW itself is never cached by nginx, so a new build ships a new SW
+  // version and this cache is dropped on activate.
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.open(STATIC_CACHE).then((cache) =>
-        cache.match(request).then((cached) => {
-          const network = fetch(request)
-            .then((response) => {
-              if (response.ok) cache.put(request, response.clone());
-              return response;
-            })
-            .catch(() => cached);
-          return cached || network;
-        })
+        cache.match(request).then(
+          (cached) => cached || fetch(request).then((response) => {
+            if (response.ok) cache.put(request, response.clone());
+            return response;
+          })
+        )
       )
     );
   }
