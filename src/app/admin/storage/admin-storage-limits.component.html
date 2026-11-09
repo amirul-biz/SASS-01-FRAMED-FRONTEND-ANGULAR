@@ -1,0 +1,186 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1
+      class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+    >
+      Storage Limits
+    </h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      Reusable storage quotas you can assign to photographers.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
+  >
+    <div
+      class="p-md flex flex-wrap items-center justify-between gap-sm border-b border-outline-variant"
+    >
+      <span
+        class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
+        >{{ limits().length }} limits</span
+      >
+      <button
+        type="button"
+        (click)="openCreate()"
+        class="h-10 px-lg bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center gap-xs"
+      >
+        <span class="material-symbols-outlined text-[20px]">add</span>
+        New Limit
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        Loading storage limits...
+      </p>
+    } @else if (limits().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        No storage limits yet.
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr
+              class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider"
+            >
+              <th class="p-md">Name</th>
+              <th class="p-md text-right">Limit</th>
+              <th class="p-md text-center">Assigned</th>
+              <th class="p-md text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (limit of limits(); track limit.id) {
+              <tr
+                class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors"
+              >
+                <td class="p-md font-label-md text-label-md text-on-surface">{{ limit.name }}</td>
+                <td class="p-md text-right font-label-md text-label-md text-on-surface">
+                  {{ formatGb(limit.limitMb) }}
+                </td>
+                <td class="p-md text-center font-body-md text-body-md text-on-surface">
+                  {{ limit.assignmentCount }}
+                </td>
+                <td class="p-md text-right">
+                  <div class="flex justify-end gap-sm">
+                    <button
+                      type="button"
+                      (click)="deleteTarget.set(limit)"
+                      class="h-9 px-md border border-error text-error rounded-xl font-label-md text-label-md hover:bg-error-container transition-colors"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openEdit(limit)"
+                      class="h-9 px-md border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (isModalOpen()) {
+  <div
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg"
+    role="dialog"
+    aria-modal="true"
+    (click)="closeModal()"
+  >
+    <div
+      class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)]"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="font-headline-md text-headline-md text-primary mb-sm">
+        {{ editingId() ? 'Edit Storage Limit' : 'New Storage Limit' }}
+      </h2>
+      <p class="text-caption text-on-surface-variant mb-lg">
+        Enter the limit in GB (1 GB = 1024 MB). It is stored in MB.
+      </p>
+
+      <div class="flex flex-col gap-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="limit-name"
+            >Limit Name <span class="text-error">*</span></label
+          >
+          <input
+            id="limit-name"
+            type="text"
+            placeholder="e.g. Starter 5 GB"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            [value]="name()"
+            (input)="name.set($any($event.target).value)"
+          />
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="limit-gb"
+            >Limit (GB) <span class="text-error">*</span></label
+          >
+          <input
+            id="limit-gb"
+            type="number"
+            min="0.001"
+            step="any"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            [value]="limitGb()"
+            (input)="limitGb.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (formError()) {
+          <p class="text-caption text-error">{{ formError() }}</p>
+        }
+
+        <div class="flex justify-end gap-sm mt-sm">
+          <button
+            type="button"
+            (click)="closeModal()"
+            [disabled]="isSaving()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submit()"
+            [disabled]="isSaving()"
+            class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {{ isSaving() ? 'Saving...' : editingId() ? 'Save Changes' : 'Create Limit' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (deleteTarget(); as target) {
+  <app-confirm-dialog
+    title="Delete storage limit?"
+    [message]="
+      'Delete &quot;' +
+      target.name +
+      '&quot;? This cannot be undone. A limit that is still assigned cannot be deleted.'
+    "
+    [isBusy]="isDeleting()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="deleteTarget.set(null)"
+  />
+}

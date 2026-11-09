@@ -279,6 +279,20 @@ export const routes: Routes = [
             ),
         },
         {
+          path: 'storage-limits',
+          loadComponent: () =>
+            import('./admin/storage/admin-storage-limits.component').then(
+              (m) => m.AdminStorageLimitsComponent,
+            ),
+        },
+        {
+          path: 'storage-assignments',
+          loadComponent: () =>
+            import('./admin/storage/admin-storage-assignments.component').then(
+              (m) => m.AdminStorageAssignmentsComponent,
+            ),
+        },
+        {
           path: 'commission-assignments',
           loadComponent: () =>
             import('./admin/payments/admin-commission-assignments.component').then(

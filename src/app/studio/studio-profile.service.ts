@@ -51,6 +51,8 @@ export interface PhotographerDashboard {
   inactiveEvents: number;
   photoCount: number;
   storageBytes: number;
+  // Assigned storage limit in MB; null = unlimited.
+  storageLimitMb: number | null;
   ordersByStatus: Record<
     'PENDING_CONFIRMATION' | 'PROCESSING' | 'DELIVERED' | 'CANCELLED',
     number

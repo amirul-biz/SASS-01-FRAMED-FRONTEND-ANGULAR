@@ -39,10 +39,10 @@
           <span class="font-label-md text-label-md">Storage used</span>
         </div>
         <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
-          {{ formatStorage(s.storageBytes) }}
+          {{ formatStorage(s.storageBytes) }}@if (s.storageLimitMb !== null) {<span class="text-on-surface-variant text-body-md"> / {{ formatGb(s.storageLimitMb) }}</span>}
         </p>
         <p class="font-caption text-caption text-on-surface-variant mt-xs">
-          {{ s.photoCount }} photos uploaded
+          {{ s.photoCount }} photos uploaded{{ s.storageLimitMb === null ? ' · unlimited storage' : '' }}
         </p>
       </div>
 

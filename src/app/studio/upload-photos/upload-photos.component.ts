@@ -6,6 +6,7 @@ import { parse as parseExif } from 'exifr';
 import { Observable, Subject, catchError, filter, finalize, from, map, mergeMap, of, switchMap, tap, toArray } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { apiErrorMessage } from '../../shared/storage.util';
 import { Event as StudioEvent, StudioEventsService } from '../studio-events.service';
 import { Photo, PresignedPhoto, StudioPhotosService } from '../studio-photos.service';
 
@@ -508,7 +509,9 @@ export class UploadPhotosComponent implements OnInit {
         next: ({ fileChunk, presigned }) => {
           fileChunk.forEach((file, index) => this.queueUpload(file, presigned[index]));
         },
-        error: () => this.errorMsg.set('Failed to start upload. Please try again.'),
+        // 400s carry a user-facing reason (e.g. the storage limit was reached).
+        error: (error) =>
+          this.errorMsg.set(apiErrorMessage(error?.status === 400 ? error : null, 'Failed to start upload. Please try again.')),
       });
   }
 

@@ -3,9 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { formatCurrency } from '../../pricing/currency.util';
+import { formatBytes, formatGb } from '../../shared/storage.util';
 import { PhotographerDashboard, StudioProfileService } from '../studio-profile.service';
-
-const STORAGE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 
 const ORDER_STATUS_CHIPS = [
   { key: 'PENDING_CONFIRMATION', label: 'Pending' },
@@ -44,15 +43,8 @@ export class StudioDashboardComponent {
       });
   }
 
-  formatStorage(bytes: number): string {
-    let value = bytes;
-    let unit = 0;
-    while (value >= 1024 && unit < STORAGE_UNITS.length - 1) {
-      value /= 1024;
-      unit += 1;
-    }
-    return `${unit === 0 ? value : value.toFixed(1)} ${STORAGE_UNITS[unit]}`;
-  }
+  readonly formatStorage = formatBytes;
+  readonly formatGb = formatGb;
 
   paidOrderCount(stats: PhotographerDashboard): number {
     return stats.ordersByStatus.PROCESSING + stats.ordersByStatus.DELIVERED;

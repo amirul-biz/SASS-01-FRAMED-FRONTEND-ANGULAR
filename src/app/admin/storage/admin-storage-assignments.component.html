@@ -1,0 +1,172 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1
+      class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+    >
+      Storage Assignments
+    </h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      Which storage limit applies to each photographer. Photographers without a limit are unlimited.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
+  >
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        Loading photographers...
+      </p>
+    } @else if (rows().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        No photographers yet.
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr
+              class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider"
+            >
+              <th class="p-md">Photographer</th>
+              <th class="p-md">Storage Limit</th>
+              <th class="p-md">Usage</th>
+              <th class="p-md text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.photographerId) {
+              <tr
+                class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors"
+              >
+                <td class="p-md">
+                  <span class="block font-label-md text-label-md text-on-surface">{{
+                    row.name
+                  }}</span>
+                  <span class="text-caption text-on-surface-variant">{{ row.email }}</span>
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">
+                  @if (row.limitMb !== null) {
+                    {{ row.storageLimitName }}
+                    <span class="text-on-surface-variant">({{ formatGb(row.limitMb) }})</span>
+                  } @else {
+                    <span class="text-on-surface-variant">Unlimited</span>
+                  }
+                </td>
+                <td class="p-md min-w-48">
+                  <span class="block text-caption text-on-surface">
+                    {{ formatBytes(row.usedBytes) }}
+                    @if (row.limitMb !== null) {
+                      of {{ formatGb(row.limitMb) }}
+                    }
+                  </span>
+                  @if (row.limitMb !== null) {
+                    <div
+                      class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden mt-xs"
+                    >
+                      <div
+                        class="h-full rounded-full"
+                        [class]="usagePercent(row) >= 90 ? 'bg-error' : 'bg-primary'"
+                        [style.width.%]="usagePercent(row)"
+                      ></div>
+                    </div>
+                  }
+                </td>
+                <td class="p-md text-right">
+                  <button
+                    type="button"
+                    (click)="openAssign(row)"
+                    class="h-9 px-md bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors"
+                  >
+                    {{ row.storageLimitId ? 'Change' : 'Assign' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (editingRow(); as row) {
+  <div
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg"
+    role="dialog"
+    aria-modal="true"
+    (click)="closeModal()"
+  >
+    <div
+      class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)]"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="font-headline-md text-headline-md text-primary mb-sm">Assign Storage Limit</h2>
+      <p class="text-caption text-on-surface-variant mb-lg">{{ row.name }} — {{ row.email }}</p>
+
+      <div class="flex flex-col gap-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-limit"
+            >Storage Limit <span class="text-error">*</span></label
+          >
+          <select
+            id="assign-limit"
+            class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+            (change)="selectedLimitId.set($any($event.target).value)"
+          >
+            <option value="" [selected]="selectedLimitId() === ''">Select a limit...</option>
+            @for (limit of limits(); track limit.id) {
+              <option [value]="limit.id" [selected]="limit.id === selectedLimitId()">
+                {{ limit.name }} ({{ formatGb(limit.limitMb) }})
+              </option>
+            }
+          </select>
+        </div>
+
+        @if (formError()) {
+          <p class="text-caption text-error">{{ formError() }}</p>
+        }
+
+        <div class="flex justify-between gap-sm mt-sm">
+          @if (row.storageLimitId) {
+            <button
+              type="button"
+              (click)="save(null)"
+              [disabled]="isSaving()"
+              class="px-md py-sm border border-error text-error rounded-xl font-label-md text-label-md hover:bg-error-container transition-colors disabled:opacity-40"
+            >
+              Remove limit
+            </button>
+          } @else {
+            <span></span>
+          }
+          <div class="flex gap-sm">
+            <button
+              type="button"
+              (click)="closeModal()"
+              [disabled]="isSaving()"
+              class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              (click)="submitAssignment()"
+              [disabled]="isSaving()"
+              class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {{ isSaving() ? 'Saving...' : 'Save' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
