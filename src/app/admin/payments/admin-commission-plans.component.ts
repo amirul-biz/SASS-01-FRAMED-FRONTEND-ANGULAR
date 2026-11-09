@@ -51,7 +51,7 @@ export class AdminCommissionPlansComponent {
   // drive the read-only hint in the modal.
   readonly name = signal('');
   readonly type = signal<CommissionType>('PERCENTAGE_PER_TRANSACTION');
-  readonly provider = signal<PaymentProvider | ''>('');
+  readonly provider = signal<PaymentProvider | null>('CASH');
   readonly value = signal('');
   readonly isDefault = signal(false);
   readonly isActive = signal(true);
@@ -94,7 +94,7 @@ export class AdminCommissionPlansComponent {
     this.editingId.set(null);
     this.name.set('');
     this.type.set('PERCENTAGE_PER_TRANSACTION');
-    this.provider.set('');
+    this.provider.set('CASH');
     this.value.set('');
     this.isDefault.set(false);
     this.isActive.set(true);
@@ -106,7 +106,7 @@ export class AdminCommissionPlansComponent {
     this.editingId.set(plan.id);
     this.name.set(plan.name);
     this.type.set(plan.type);
-    this.provider.set(plan.provider ?? '');
+    this.provider.set(plan.provider ?? 'CASH');
     this.value.set(String(plan.value));
     this.isDefault.set(plan.isDefault);
     this.isActive.set(plan.isActive);
@@ -140,6 +140,12 @@ export class AdminCommissionPlansComponent {
       return;
     }
 
+    const provider = this.provider();
+    if (!provider) {
+      this.formError.set('Pick a provider.');
+      return;
+    }
+
     this.isSaving.set(true);
     this.formError.set(null);
     const request$ = isEdit
@@ -153,7 +159,7 @@ export class AdminCommissionPlansComponent {
           name,
           type: this.type(),
           value,
-          ...(this.provider() && { provider: this.provider() as PaymentProvider }),
+          provider,
           ...(this.isDefault() && { isDefault: true }),
         });
 

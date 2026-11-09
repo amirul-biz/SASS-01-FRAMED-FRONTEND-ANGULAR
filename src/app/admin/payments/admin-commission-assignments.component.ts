@@ -23,7 +23,6 @@ export class AdminCommissionAssignmentsComponent {
   readonly providerOptions: { value: PaymentProvider | ''; label: string }[] = [
     { value: '', label: 'All providers' },
     { value: 'TOYYIBPAY', label: 'ToyyibPay' },
-    { value: 'STRIPE', label: 'Stripe' },
     { value: 'CASH', label: 'Cash' },
   ];
 
@@ -98,6 +97,36 @@ export class AdminCommissionAssignmentsComponent {
     this.isAssignModalOpen.set(true);
   }
 
+  // Only plans of the row's own provider can be assigned: the backend rejects a mismatch, so
+  // listing other providers' plans only produces a dead end. Legacy "any provider" plans are
+  // excluded too — every plan now belongs to exactly one provider.
+  plansForRow(): AdminCommissionPlan[] {
+    const row = this.editingRow();
+    if (!row) {
+      return [];
+    }
+    return this.plans().filter((plan) => plan.isActive && plan.provider === row.provider);
+  }
+
+  // Splitting is only offered when a ToyyibPay system account actually exists — otherwise the
+  // checkbox leads to an empty dropdown and the save is blocked by a validation error.
+  canSplit(): boolean {
+    return this.toyyibPayAccounts().length > 0;
+  }
+
+  toggleSplit(isEnabled: boolean): void {
+    this.splitEnabled.set(isEnabled);
+    if (isEnabled) {
+      const current = this.selectedSplitAccountId();
+      const isCurrentStillValid = this.toyyibPayAccounts().some((account) => account.id === current);
+      if (!isCurrentStillValid) {
+        const defaultAccount =
+          this.toyyibPayAccounts().find((account) => account.isDefault) ?? this.toyyibPayAccounts()[0];
+        this.selectedSplitAccountId.set(defaultAccount?.id ?? '');
+      }
+    }
+  }
+
   closeAssignModal(): void {
     if (this.isSaving()) {
       return;
@@ -115,9 +144,17 @@ export class AdminCommissionAssignmentsComponent {
       this.formError.set('Pick a commission plan.');
       return;
     }
-    if (this.splitEnabled() && !this.selectedSplitAccountId()) {
-      this.formError.set('Pick a system account to split the commission to.');
-      return;
+    if (this.splitEnabled()) {
+      if (!this.canSplit()) {
+        this.formError.set(
+          'Add a ToyyibPay system account under System Payment Accounts before splitting the commission.',
+        );
+        return;
+      }
+      if (!this.selectedSplitAccountId()) {
+        this.formError.set('Pick a ToyyibPay system account to split the commission to.');
+        return;
+      }
     }
 
     this.isSaving.set(true);
@@ -125,7 +162,8 @@ export class AdminCommissionAssignmentsComponent {
     this.paymentsService
       .assignCommissionPlan(row.paymentPlatformOptionId, {
         commissionPlanId: this.selectedPlanId(),
-        splitSystemAccountId: this.splitEnabled() ? this.selectedSplitAccountId() : null,
+        splitSystemAccountId:
+          row.provider === 'TOYYIBPAY' && this.splitEnabled() ? this.selectedSplitAccountId() : null,
       })
       .pipe(
         finalize(() => this.isSaving.set(false)),

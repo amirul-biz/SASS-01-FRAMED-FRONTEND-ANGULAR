@@ -123,15 +123,13 @@
             </select>
           </div>
           <div>
-            <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-provider">Provider</label>
+            <label class="block font-label-md text-label-md text-on-surface mb-xs" for="plan-provider">Provider <span class="text-error">*</span></label>
             <select
               id="plan-provider"
               class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
-              (change)="provider.set($any($event.target).value)"
+              (change)="provider.set($any($event.target).value || null)"
             >
-              <option value="" [selected]="provider() === ''">Any provider</option>
               <option value="TOYYIBPAY" [selected]="provider() === 'TOYYIBPAY'">ToyyibPay</option>
-              <option value="STRIPE" [selected]="provider() === 'STRIPE'">Stripe</option>
               <option value="CASH" [selected]="provider() === 'CASH'">Cash</option>
             </select>
           </div>
