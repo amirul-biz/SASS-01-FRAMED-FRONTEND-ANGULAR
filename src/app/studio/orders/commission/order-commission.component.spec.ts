@@ -88,7 +88,7 @@ describe('OrderCommissionComponent', () => {
       commissionAmount: 4.5,
     });
 
-    expect(text).toContain('Fixed amount per photo');
+    expect(text).toContain('Total Fixed amount per photo commission');
     expect(text).toContain('Total photos 3');
     expect(text).toContain('Commission per photo RM 1.50');
     expect(text).toContain('Total commission RM 4.50');
