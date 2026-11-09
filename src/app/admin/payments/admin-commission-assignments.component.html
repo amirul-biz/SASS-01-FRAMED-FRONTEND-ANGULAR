@@ -116,30 +116,25 @@
 
           @if (row.provider === 'TOYYIBPAY') {
             @if (canSplit()) {
-              <label class="flex items-center gap-sm cursor-pointer">
-                <input type="checkbox" class="accent-primary w-4 h-4" [checked]="splitEnabled()" (change)="toggleSplit($any($event.target).checked)" />
-                <span class="font-body-md text-body-md text-on-surface">Split commission to a ToyyibPay system account</span>
-              </label>
-              @if (splitEnabled()) {
-                <div>
-                  <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-split">System Account <span class="text-error">*</span></label>
-                  <select
-                    id="assign-split"
-                    class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
-                    (change)="selectedSplitAccountId.set($any($event.target).value)"
-                  >
-                    <option value="" [selected]="selectedSplitAccountId() === ''">Select a system account...</option>
-                    @for (account of toyyibPayAccounts(); track account.id) {
-                      <option [value]="account.id" [selected]="account.id === selectedSplitAccountId()">
-                        {{ account.username ?? account.accountId }}{{ account.isDefault ? ' (default)' : '' }}
-                      </option>
-                    }
-                  </select>
-                </div>
-              }
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-split">ToyyibPay System Account <span class="text-error">*</span></label>
+                <p class="text-caption text-on-surface-variant mb-xs">The commission is split into this account on every payment.</p>
+                <select
+                  id="assign-split"
+                  class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+                  (change)="selectedSplitAccountId.set($any($event.target).value)"
+                >
+                  <option value="" [selected]="selectedSplitAccountId() === ''">Select a system account...</option>
+                  @for (account of toyyibPayAccounts(); track account.accountId) {
+                    <option [value]="account.accountId" [selected]="account.accountId === selectedSplitAccountId()">
+                      {{ account.username ?? account.accountId }}{{ account.isDefault ? ' (default)' : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
             } @else {
-              <p class="text-caption text-on-surface-variant">
-                Commission split is unavailable — add a ToyyibPay system account under System Payment Accounts first.
+              <p class="text-caption text-error">
+                No ToyyibPay system account yet — add one under System Payment Accounts before assigning a ToyyibPay plan.
               </p>
             }
           } @else {
