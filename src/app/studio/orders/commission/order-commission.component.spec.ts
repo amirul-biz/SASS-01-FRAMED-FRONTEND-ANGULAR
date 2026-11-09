@@ -64,13 +64,15 @@ describe('OrderCommissionComponent', () => {
       commissionAmount: 6,
     });
 
-    expect(text).toContain('Percentage per photo');
+    expect(text).toContain('Percentage of photo sales');
     expect(text).toContain('Total photos 3');
-    expect(text).toContain('Average cost per photo RM 20.00');
     expect(text).toContain('Total photo cost RM 60.00');
-    expect(text).toContain('Commission rate 10%');
-    expect(text).toContain('Average commission per photo RM 2.00');
+    expect(text).toContain('Commission rate 10% of photo sales');
     expect(text).toContain('Total commission RM 6.00');
+    // "Average cost per photo" reads like the photographer's rate, which is not what a
+    // percentage plan stores — the rate applies to the whole photo total.
+    expect(text).not.toContain('Average cost per photo');
+    expect(text).not.toContain('Average commission per photo');
   });
 
   it('amount per unit: shows photo count, cost per photo and the fixed commission per photo', () => {

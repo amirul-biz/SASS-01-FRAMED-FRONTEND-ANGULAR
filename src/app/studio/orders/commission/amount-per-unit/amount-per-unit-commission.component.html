@@ -8,10 +8,6 @@
       <dd class="text-on-surface">&nbsp;{{ commission().unitCount }}</dd>
     </div>
     <div class="flex justify-between gap-sm">
-      <dt>Average cost per photo</dt>
-      <dd class="text-on-surface">&nbsp;{{ formatCurrency(commission().averageCostPerUnit ?? 0) }}</dd>
-    </div>
-    <div class="flex justify-between gap-sm">
       <dt>Total photo cost</dt>
       <dd class="text-on-surface">&nbsp;{{ formatCurrency(commission().totalUnitCost ?? 0) }}</dd>
     </div>
