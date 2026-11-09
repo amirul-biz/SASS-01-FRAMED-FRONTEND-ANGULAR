@@ -41,6 +41,7 @@ export class AdminCommissionAssignmentsComponent {
   readonly selectedPlanId = signal('');
   readonly splitEnabled = signal(false);
   readonly selectedSplitAccountId = signal('');
+  readonly decidingId = signal<string | null>(null);
 
   constructor() {
     this.load();
@@ -180,6 +181,30 @@ export class AdminCommissionAssignmentsComponent {
             Array.isArray(message) ? message.join(' ') : 'Failed to save the assignment. Please try again.',
           );
         },
+      });
+  }
+
+  decide(row: AdminCommissionAssignment, status: 'APPROVED' | 'REJECTED'): void {
+    this.decidingId.set(row.paymentPlatformOptionId);
+    this.errorMsg.set(null);
+    this.paymentsService
+      .setPaymentOptionApproval(row.paymentPlatformOptionId, status)
+      .pipe(
+        finalize(() => this.decidingId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.flash(status === 'APPROVED' ? 'Payment channel approved.' : 'Payment channel rejected.');
+          this.load();
+        },
+        // Approving a ToyyibPay option re-checks its credentials, so a 400 carries the reason.
+        error: (error) =>
+          this.errorMsg.set(
+            typeof error?.error?.message === 'string'
+              ? error.error.message
+              : 'Failed to record the decision. Please try again.',
+          ),
       });
   }
 

@@ -57,6 +57,24 @@
                 <td class="p-md font-body-md text-body-md text-on-surface">{{ row.splitUsername ?? '—' }}</td>
                 <td class="p-md text-right">
                   <div class="flex justify-end gap-sm">
+                    @if (row.approvalStatus === 'PENDING') {
+                      <button
+                        type="button"
+                        (click)="decide(row, 'REJECTED')"
+                        [disabled]="decidingId() === row.paymentPlatformOptionId"
+                        class="h-9 px-md border border-outline-variant text-on-surface-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        (click)="decide(row, 'APPROVED')"
+                        [disabled]="decidingId() === row.paymentPlatformOptionId"
+                        class="h-9 px-md bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-secondary/90 transition-colors disabled:opacity-40"
+                      >
+                        {{ decidingId() === row.paymentPlatformOptionId ? 'Saving...' : 'Approve' }}
+                      </button>
+                    }
                     @if (row.commissionPlanId) {
                       <button
                         type="button"
