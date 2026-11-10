@@ -130,6 +130,14 @@ export class UploadPhotosComponent implements OnInit {
       .reduce((total, item) => total + item.file.size, 0);
     return Math.max(0, storage.limitMb * 1024 * 1024 - storage.accountUsedBytes - inFlight);
   });
+  // Pill value: server snapshot only, so it stays fixed during an upload and refreshes when the queue goes idle.
+  readonly pillRemainingBytes = computed(() => {
+    const storage = this.storage();
+    if (!storage || storage.limitMb === null) {
+      return null;
+    }
+    return Math.max(0, storage.limitMb * 1024 * 1024 - storage.accountUsedBytes);
+  });
   readonly exceedsQuota = computed(() => {
     const remaining = this.remainingBytes();
     return remaining !== null && this.pendingBytes() > remaining;

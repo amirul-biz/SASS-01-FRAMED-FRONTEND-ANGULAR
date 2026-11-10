@@ -1,12 +1,24 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, finalize, switchMap } from 'rxjs';
 import { RangePipe } from '../../shared/pipes/range.pipe';
 import { MerchantPaymentPlatformService } from '../../merchant-payment-platform/merchant-payment-platform.service';
-import { formatBytes } from '../../shared/storage.util';
-import { Event, PaginatedResponse, StudioEventsService } from '../studio-events.service';
+import { formatBytes, formatGb } from '../../shared/storage.util';
+import {
+  Event,
+  MyStorage,
+  PaginatedResponse,
+  StudioEventsService,
+} from '../studio-events.service';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
@@ -25,6 +37,20 @@ export class MyEventsDashboardComponent {
   readonly hasApprovedPaymentPlatform = this.paymentPlatformService.hasApprovedPaymentPlatform;
 
   readonly formatBytes = formatBytes;
+  readonly formatGb = formatGb;
+  // Account-wide, so it doesn't change with the Active/Inactive tab; loaded once per visit.
+  readonly storage = signal<MyStorage | null>(null);
+  readonly storageUsedPercent = computed(() => {
+    const s = this.storage();
+    if (!s || s.limitMb === null) {
+      return 0;
+    }
+    return Math.min(100, Math.round((s.usedBytes / (s.limitMb * 1024 * 1024)) * 100));
+  });
+  readonly storageRemainingBytes = computed(() => {
+    const s = this.storage();
+    return s && s.limitMb !== null ? Math.max(0, s.limitMb * 1024 * 1024 - s.usedBytes) : null;
+  });
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly pageNumber = signal(1);
   readonly pageSize = signal(PAGE_SIZE_OPTIONS[0]);
@@ -54,6 +80,12 @@ export class MyEventsDashboardComponent {
       });
 
     this.loadTrigger$.next();
+
+    // Banner is optional chrome: a failure just hides it.
+    this.eventsService
+      .getMyStorage()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (storage) => this.storage.set(storage), error: () => undefined });
   }
 
   setStatus(status: 'active' | 'inactive'): void {

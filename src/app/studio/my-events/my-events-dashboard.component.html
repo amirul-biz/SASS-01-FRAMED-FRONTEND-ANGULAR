@@ -31,6 +31,43 @@
     <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
   }
 
+  @if (storage(); as s) {
+    <div
+      class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] p-md mb-lg flex flex-col md:flex-row md:items-center gap-md"
+    >
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-xs font-label-md text-label-md text-on-surface mb-xs">
+          <span class="material-symbols-outlined text-[20px] text-on-surface-variant">cloud</span>
+          @if (s.limitMb === null) {
+            {{ formatBytes(s.usedBytes) }} used · Unlimited storage
+          } @else {
+            <span [class.text-error]="storageRemainingBytes() === 0"
+              >{{ formatBytes(storageRemainingBytes() ?? 0) }} remaining</span
+            >
+            <span class="text-on-surface-variant font-body-md"
+              >of {{ formatGb(s.limitMb) }} ({{ formatBytes(s.usedBytes) }} used)</span
+            >
+          }
+        </div>
+        @if (s.limitMb !== null) {
+          <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full"
+              [class]="storageUsedPercent() >= 90 ? 'bg-error' : 'bg-primary'"
+              [style.width.%]="storageUsedPercent()"
+            ></div>
+          </div>
+        }
+      </div>
+      <span
+        class="inline-flex items-center gap-xs self-start md:self-auto font-caption text-caption text-on-surface-variant bg-surface-container px-md py-sm rounded-full shrink-0"
+      >
+        <span class="material-symbols-outlined text-[18px]">photo_library</span>
+        <strong class="text-on-surface">{{ s.photoCount }}</strong> uploaded photos
+      </span>
+    </div>
+  }
+
   <div
     class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
   >
@@ -165,7 +202,8 @@
                     {{ event.eventEndDate | date: 'mediumDate' }}
                   }
                   <span class="font-caption text-caption text-on-surface-variant"
-                    >&middot; {{ formatBytes(event.usedBytes ?? 0) }}</span
+                    >&middot; {{ event.photoCount ?? 0 }} photos &middot;
+                    {{ formatBytes(event.usedBytes ?? 0) }}</span
                   >
                 </span>
                 @if (event.deletedAt) {
@@ -198,7 +236,8 @@
                 <th class="p-md">Event Name</th>
                 <th class="p-md">Dates</th>
                 <th class="p-md">Status</th>
-                <th class="p-md">Storage</th>
+                <th class="p-md">Photos</th>
+                <th class="p-md">Storage Usage</th>
                 <th class="p-md text-right">Actions</th>
               </tr>
             </thead>
@@ -256,6 +295,9 @@
                         >Draft</span
                       >
                     }
+                  </td>
+                  <td class="p-md font-body-md text-body-md text-on-surface">
+                    {{ event.photoCount ?? 0 }}
                   </td>
                   <td class="p-md font-body-md text-body-md text-on-surface">
                     {{ formatBytes(event.usedBytes ?? 0) }}

@@ -30,6 +30,13 @@ export interface Event {
   updatedAt: string;
   pricingBundleIds: string[];
   usedBytes?: number;
+  photoCount?: number;
+}
+
+export interface MyStorage {
+  usedBytes: number;
+  limitMb: number | null;
+  photoCount: number;
 }
 
 export interface CreateEventDto {
@@ -87,6 +94,10 @@ export class StudioEventsService {
       `${this.env.apiUrl}/events`,
       { params: { pageNumber, pageSize, status } },
     );
+  }
+
+  getMyStorage(): Observable<MyStorage> {
+    return this.http.get<MyStorage>(`${this.env.apiUrl}/events/storage`);
   }
 
   getEvent(id: string): Observable<Event> {

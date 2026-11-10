@@ -102,17 +102,17 @@
         </span>
         <span
           class="inline-flex items-center gap-xs font-caption text-caption px-md py-sm rounded-full shadow-[0_4px_12px_rgba(20,33,61,0.08)]"
-          [class.bg-surface-container-lowest]="(remainingBytes() ?? 1) > 0"
-          [class.text-on-surface-variant]="(remainingBytes() ?? 1) > 0"
-          [class.bg-error-container]="remainingBytes() === 0"
-          [class.text-error]="remainingBytes() === 0"
+          [class.bg-surface-container-lowest]="(pillRemainingBytes() ?? 1) > 0"
+          [class.text-on-surface-variant]="(pillRemainingBytes() ?? 1) > 0"
+          [class.bg-error-container]="pillRemainingBytes() === 0"
+          [class.text-error]="pillRemainingBytes() === 0"
         >
           <span class="material-symbols-outlined text-[18px]">cloud</span>
           @if (s.limitMb === null) {
             Account: <strong class="text-on-surface">{{ formatBytes(s.accountUsedBytes) }}</strong> · unlimited storage
           } @else {
             Account: <strong class="text-on-surface">{{ formatBytes(s.accountUsedBytes) }} / {{ formatGb(s.limitMb) }}</strong>
-            · {{ formatBytes(remainingBytes() ?? 0) }} left
+            · {{ formatBytes(pillRemainingBytes() ?? 0) }} left
           }
         </span>
       </div>
