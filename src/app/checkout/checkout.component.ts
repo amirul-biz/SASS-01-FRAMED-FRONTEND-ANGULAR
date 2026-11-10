@@ -209,6 +209,11 @@ export class CheckoutComponent {
     lines.push(`Total: ${formatCurrency(pricing.total)}`);
     lines.push('');
     lines.push('Please confirm my order and arrange payment. Thank you!');
+    lines.push('');
+    // Studio-facing link: the photographer opens Studio → Orders with this order already
+    // filtered, then marks it paid from the order table. studioGuard bounces a logged-out
+    // photographer through login and returns them here via ?redirectTo.
+    lines.push(`View order: ${globalThis.location.origin}/studio/orders?orderId=${order.id}`);
 
     return lines.join('\n');
   }

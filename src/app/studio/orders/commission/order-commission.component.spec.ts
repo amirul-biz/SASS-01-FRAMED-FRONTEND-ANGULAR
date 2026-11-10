@@ -32,7 +32,7 @@ describe('OrderCommissionComponent', () => {
   it('percentage per transaction: shows the amount paid, the rate and the commission', () => {
     const text = render(baseCommission);
 
-    expect(text).toContain('Percentage per transaction');
+    expect(text).toContain('Total Percentage per transaction commission');
     expect(text).toContain('Amount paid RM 30.00');
     expect(text).toContain('Commission rate 10%');
     expect(text).toContain('-RM 3.00');
@@ -47,7 +47,7 @@ describe('OrderCommissionComponent', () => {
       commissionAmount: 2.5,
     });
 
-    expect(text).toContain('Fixed amount per transaction');
+    expect(text).toContain('Total Fixed amount per transaction commission');
     expect(text).toContain('Fixed fee for this order RM 2.50');
     expect(text).toContain('-RM 2.50');
   });
@@ -64,13 +64,15 @@ describe('OrderCommissionComponent', () => {
       commissionAmount: 6,
     });
 
-    expect(text).toContain('Percentage per photo');
+    expect(text).toContain('Total Percentage of photo sales commission');
     expect(text).toContain('Total photos 3');
-    expect(text).toContain('Average cost per photo RM 20.00');
     expect(text).toContain('Total photo cost RM 60.00');
-    expect(text).toContain('Commission rate 10%');
-    expect(text).toContain('Average commission per photo RM 2.00');
+    expect(text).toContain('Commission rate 10% of photo sales');
     expect(text).toContain('Total commission RM 6.00');
+    // "Average cost per photo" reads like the photographer's rate, which is not what a
+    // percentage plan stores — the rate applies to the whole photo total.
+    expect(text).not.toContain('Average cost per photo');
+    expect(text).not.toContain('Average commission per photo');
   });
 
   it('amount per unit: shows photo count, cost per photo and the fixed commission per photo', () => {
@@ -86,7 +88,7 @@ describe('OrderCommissionComponent', () => {
       commissionAmount: 4.5,
     });
 
-    expect(text).toContain('Fixed amount per photo');
+    expect(text).toContain('Total Fixed amount per photo commission');
     expect(text).toContain('Total photos 3');
     expect(text).toContain('Commission per photo RM 1.50');
     expect(text).toContain('Total commission RM 4.50');

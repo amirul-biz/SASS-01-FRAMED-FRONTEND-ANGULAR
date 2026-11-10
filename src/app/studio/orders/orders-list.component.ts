@@ -1,6 +1,7 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, switchMap } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { RangePipe } from '../../shared/pipes/range.pipe';
@@ -90,11 +91,155 @@ const PAYMENT_STATUS_BADGE_CLASS: Record<PaymentStatus, string> = {
   imports: [RangePipe, DatePipe, NgTemplateOutlet, PaginatorComponent, OrderCommissionComponent],
   templateUrl: './orders-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      /*
+       * Mobile card layout (< 768px).
+       *
+       * The table has 7 columns and a nowrap date cell, so its intrinsic min-width
+       * always exceeded a phone viewport and every row needed sideways scrolling.
+       * Rather than maintain a second card component, we restyle the SAME table into
+       * stacked cards below md. One source of truth => desktop and mobile can't drift.
+       *
+       * Desktop is untouched: every rule below is inside the media query.
+       */
+      @media (max-width: 767px) {
+        .orders-table-wrap {
+          overflow-x: visible;
+        }
+
+        .orders-table {
+          display: block;
+          width: 100%;
+        }
+
+        /* Column headings are meaningless once rows are cards. */
+        .orders-table thead {
+          display: none;
+        }
+
+        .orders-table tbody {
+          display: block;
+        }
+
+        /* One card per order. */
+        .orders-table tbody > tr.order-row {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          grid-template-areas:
+            'date    payment'
+            'event   event'
+            'total   chevron';
+          align-items: center;
+          gap: 0.375rem 0.75rem;
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--mat-sys-outline-variant, rgba(20, 33, 61, 0.12));
+          border-radius: 0.75rem;
+          margin-bottom: 0.75rem;
+          background: #fff;
+        }
+
+        /* The table itself has a bottom border on each row; the card replaces it. */
+        .orders-table tbody > tr.order-row {
+          border-bottom-width: 1px;
+        }
+
+        .orders-table tbody > tr.order-row:last-child {
+          margin-bottom: 0;
+        }
+
+        /* Neutralise the table cell boxes so grid areas can place them. */
+        .orders-table tbody > tr.order-row > td {
+          display: block;
+          padding: 0;
+          border: 0;
+          min-width: 0;
+          white-space: normal;
+        }
+
+        .orders-table td.order-date {
+          grid-area: date;
+          white-space: normal;
+        }
+
+        /* Date and time sit on one line: "Nov 7, 2026 · 11:17 PM". */
+        .orders-table td.order-date > div {
+          flex-direction: row;
+          align-items: baseline;
+          gap: 0.375rem;
+          flex-wrap: wrap;
+        }
+
+        .orders-table td.order-event {
+          grid-area: event;
+          font-weight: 500;
+          /* Long event titles must wrap, never widen the card. */
+          overflow-wrap: anywhere;
+        }
+
+        .orders-table td.order-total {
+          grid-area: total;
+          text-align: left;
+          white-space: normal;
+        }
+
+        .orders-table td.order-payment {
+          grid-area: payment;
+          justify-self: end;
+          white-space: normal;
+        }
+
+        .orders-table td.order-chevron {
+          grid-area: chevron;
+          justify-self: end;
+          white-space: normal;
+        }
+
+        /* Hidden-on-mobile columns stay hidden. */
+        .orders-table td.hidden.md\\:table-cell {
+          display: none;
+        }
+
+        /* Expanded details: full-width row inside the same card stack. */
+        .orders-table tbody > tr.order-details-row {
+          display: block;
+          background: transparent;
+        }
+
+        .orders-table tbody > tr.order-details-row > td {
+          display: block;
+          padding: 0;
+          border: 0;
+        }
+
+        /* Let action buttons wrap instead of pushing the card wider. */
+        .order-details-actions {
+          flex-wrap: wrap;
+        }
+
+        .order-details-actions > button {
+          flex: 0 1 auto;
+          min-width: 0;
+        }
+
+        /* Photos row: thumbnail + text + price may wrap onto two lines. */
+        .order-item-row {
+          flex-wrap: wrap;
+        }
+
+        .order-item-price {
+          white-space: normal;
+        }
+      }
+    `,
+  ],
 })
 export class OrdersListComponent {
   private readonly ordersService = inject(StudioOrdersService);
   private readonly eventsService = inject(StudioEventsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly loadTrigger$ = new Subject<void>();
   private readonly legacyLoadTrigger$ = new Subject<void>();
 
@@ -149,11 +294,27 @@ export class OrdersListComponent {
 
   readonly resendingOrderId = signal<string | null>(null);
   readonly resendFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
+  readonly copiedOrderId = signal<string | null>(null);
+  readonly copyFeedback = signal<{ orderId: string; message: string; isError: boolean } | null>(null);
   readonly orderBeingResent = signal<StudioOrder | null>(null);
   readonly resendEmail = signal('');
   readonly resendError = signal<string | null>(null);
 
   constructor() {
+    // Deep link support: the WhatsApp order message links here as
+    // /studio/orders?orderId=<id> so the photographer lands on the order already filtered,
+    // instead of pasting the ID into the search box by hand. Seed the filter signals
+    // before the first loadTrigger so the very first request already carries the search.
+    const params = this.route.snapshot.queryParamMap;
+    const linkedOrderId = params.get('orderId');
+    if (linkedOrderId) {
+      this.orderIdFilter.set(linkedOrderId);
+    }
+    const linkedEmail = params.get('email');
+    if (linkedEmail) {
+      this.emailFilter.set(linkedEmail);
+    }
+
     this.loadTrigger$
       .pipe(
         switchMap(() => {
@@ -473,7 +634,63 @@ export class OrdersListComponent {
   }
 
   canResendDeliveryEmail(order: StudioOrder): boolean {
-    return order.status === 'DELIVERED' && order.payment?.provider === 'TOYYIBPAY';
+    // Any delivered order has a delivery email worth re-sending, whichever provider got it
+    // there — cash reaches DELIVERED via the photographer's mark-as-paid, which sends the same
+    // email ToyyibPay sends. Mirrors the backend guard in order.service.ts.
+    return order.status === 'DELIVERED' && order.payment !== null;
+  }
+
+  canCopyOrderLink(order: StudioOrder): boolean {
+    // Paid orders only — the /order-images page 400s for unpaid ones, so offering the link there
+    // would hand the photographer a URL that just shows an error.
+    return order.status !== 'PENDING_CONFIRMATION' && order.status !== 'CANCELLED';
+  }
+
+  getOrderLink(order: StudioOrder): string {
+    // window.location.origin, not an env value: the link must point at whichever deployment the
+    // photographer is actually using (staging vs prod), which the browser already knows.
+    return `${globalThis.location.origin}/order-images?orderId=${order.id}`;
+  }
+
+  isCopyingLink(order: StudioOrder): boolean {
+    return this.copiedOrderId() === order.id;
+  }
+
+  getCopyFeedback(order: StudioOrder): { message: string; isError: boolean } | null {
+    const feedback = this.copyFeedback();
+    return feedback?.orderId === order.id
+      ? { message: feedback.message, isError: feedback.isError }
+      : null;
+  }
+
+  async copyOrderLink(order: StudioOrder): Promise<void> {
+    const isCopyUnavailable = !this.canCopyOrderLink(order);
+    if (isCopyUnavailable) {
+      return;
+    }
+
+    this.copyFeedback.set(null);
+    try {
+      await navigator.clipboard.writeText(this.getOrderLink(order));
+      this.copiedOrderId.set(order.id);
+      this.copyFeedback.set({
+        orderId: order.id,
+        message: 'Order link copied — send it to your customer on WhatsApp.',
+        isError: false,
+      });
+      setTimeout(() => {
+        if (this.copiedOrderId() === order.id) {
+          this.copiedOrderId.set(null);
+        }
+      }, 2000);
+    } catch {
+      this.copiedOrderId.set(null);
+      this.copyFeedback.set({
+        orderId: order.id,
+        message: 'Could not copy the link. Copy it manually from your browser.',
+        isError: true,
+      });
+    }
   }
 
   isResendingEmail(order: StudioOrder): boolean {

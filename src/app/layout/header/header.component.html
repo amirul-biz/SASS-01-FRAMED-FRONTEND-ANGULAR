@@ -1,4 +1,8 @@
-<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+<header
+  class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
+  [style.--header-h]="'calc(4rem + var(--install-bar-h, 0px))'"
+>
+  <app-install-bar />
   <div class="h-16 md:h-20 w-full max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between gap-sm">
     <a routerLink="/" class="flex items-center gap-md shrink-0">
       <span class="material-symbols-outlined text-primary text-[28px]">home</span>
@@ -53,7 +57,8 @@
   @if (menuOpen()) {
     <nav
       id="mobile-nav"
-      class="md:hidden fixed inset-x-0 top-16 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 px-margin-mobile py-lg flex flex-col gap-xs z-40"
+      class="md:hidden fixed inset-x-0 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 px-margin-mobile py-lg flex flex-col gap-xs z-40"
+      [style.top]="'calc(var(--header-h, 4rem))'"
     >
       <a
         routerLink="/"
@@ -84,6 +89,7 @@
         (click)="closeMenu()"
       >How It Works</a>
       <div class="h-unit bg-outline-variant/30 my-xs"></div>
+      <app-install-menu-item />
       <a
         routerLink="/login"
         class="min-h-11 flex items-center text-body-md font-body-md text-on-surface-variant opacity-70"

@@ -6,6 +6,25 @@
         <p class="font-body-md text-body-md text-on-surface-variant">Loading your photos…</p>
       </div>
     }
+    @case ('unpaid') {
+      <div class="flex flex-col items-center text-center gap-md py-xl">
+        <span class="material-symbols-outlined text-on-surface-variant text-[64px]">hourglass_empty</span>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">
+          Payment not confirmed yet
+        </h1>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
+          Your photographer hasn't confirmed this payment yet. Once it's confirmed, your photos
+          will appear here — this link will keep working, so just check back later.
+        </p>
+        <button
+          type="button"
+          (click)="reload()"
+          class="mt-md px-lg py-md border-2 border-primary text-primary font-label-md rounded-xl hover:bg-primary/5 transition-colors"
+        >
+          Check again
+        </button>
+      </div>
+    }
     @case ('unavailable') {
       <div class="flex flex-col items-center text-center gap-md py-xl">
         <span class="material-symbols-outlined text-on-surface-variant text-[64px]">image</span>
@@ -13,7 +32,8 @@
           These photos aren't available
         </h1>
         <p class="font-body-md text-body-md text-on-surface-variant max-w-[28rem]">
-          The link may be incorrect, or this order hasn't been paid yet.
+          This link doesn't match an order. Please double-check the link your photographer sent
+          you, or ask them to share it again.
         </p>
         <button
           type="button"

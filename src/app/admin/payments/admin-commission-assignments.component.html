@@ -57,6 +57,24 @@
                 <td class="p-md font-body-md text-body-md text-on-surface">{{ row.splitUsername ?? '—' }}</td>
                 <td class="p-md text-right">
                   <div class="flex justify-end gap-sm">
+                    @if (row.approvalStatus === 'PENDING') {
+                      <button
+                        type="button"
+                        (click)="decide(row, 'REJECTED')"
+                        [disabled]="decidingId() === row.paymentPlatformOptionId"
+                        class="h-9 px-md border border-outline-variant text-on-surface-variant rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        (click)="decide(row, 'APPROVED')"
+                        [disabled]="decidingId() === row.paymentPlatformOptionId"
+                        class="h-9 px-md bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:bg-secondary/90 transition-colors disabled:opacity-40"
+                      >
+                        {{ decidingId() === row.paymentPlatformOptionId ? 'Saving...' : 'Approve' }}
+                      </button>
+                    }
                     @if (row.commissionPlanId) {
                       <button
                         type="button"
@@ -101,37 +119,41 @@
               (change)="selectedPlanId.set($any($event.target).value)"
             >
               <option value="" [selected]="selectedPlanId() === ''">Select a plan...</option>
-              @for (plan of plans(); track plan.id) {
-                @if (plan.isActive) {
-                  <option [value]="plan.id" [selected]="plan.id === selectedPlanId()">
-                    {{ plan.name }} ({{ plan.provider ? providerLabel(plan.provider) : 'Any provider' }})
-                  </option>
-                }
+              @for (plan of plansForRow(); track plan.id) {
+                <option [value]="plan.id" [selected]="plan.id === selectedPlanId()">
+                  {{ plan.name }}
+                </option>
               }
             </select>
+            @if (plansForRow().length === 0) {
+              <p class="text-caption text-error mt-xs">
+                No active {{ providerLabel(row.provider) }} commission plan yet — create one first.
+              </p>
+            }
           </div>
 
           @if (row.provider === 'TOYYIBPAY') {
-            <label class="flex items-center gap-sm cursor-pointer">
-              <input type="checkbox" class="accent-primary w-4 h-4" [checked]="splitEnabled()" (change)="splitEnabled.set($any($event.target).checked)" />
-              <span class="font-body-md text-body-md text-on-surface">Split commission to a system account</span>
-            </label>
-            @if (splitEnabled()) {
+            @if (canSplit()) {
               <div>
-                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-split">Split Account <span class="text-error">*</span></label>
+                <label class="block font-label-md text-label-md text-on-surface mb-xs" for="assign-split">ToyyibPay System Account <span class="text-error">*</span></label>
+                <p class="text-caption text-on-surface-variant mb-xs">The commission is split into this account on every payment.</p>
                 <select
                   id="assign-split"
                   class="w-full h-12 px-md border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
                   (change)="selectedSplitAccountId.set($any($event.target).value)"
                 >
-                  <option value="" [selected]="selectedSplitAccountId() === ''">Select an account...</option>
-                  @for (account of toyyibPayAccounts(); track account.id) {
-                    <option [value]="account.id" [selected]="account.id === selectedSplitAccountId()">
+                  <option value="" [selected]="selectedSplitAccountId() === ''">Select a system account...</option>
+                  @for (account of toyyibPayAccounts(); track account.accountId) {
+                    <option [value]="account.accountId" [selected]="account.accountId === selectedSplitAccountId()">
                       {{ account.username ?? account.accountId }}{{ account.isDefault ? ' (default)' : '' }}
                     </option>
                   }
                 </select>
               </div>
+            } @else {
+              <p class="text-caption text-error">
+                No ToyyibPay system account yet — add one under System Payment Accounts before assigning a ToyyibPay plan.
+              </p>
             }
           } @else {
             <p class="text-caption text-on-surface-variant">Commission splitting is only available on ToyyibPay channels.</p>

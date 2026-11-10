@@ -23,7 +23,6 @@ export class AdminCommissionAssignmentsComponent {
   readonly providerOptions: { value: PaymentProvider | ''; label: string }[] = [
     { value: '', label: 'All providers' },
     { value: 'TOYYIBPAY', label: 'ToyyibPay' },
-    { value: 'STRIPE', label: 'Stripe' },
     { value: 'CASH', label: 'Cash' },
   ];
 
@@ -42,6 +41,7 @@ export class AdminCommissionAssignmentsComponent {
   readonly selectedPlanId = signal('');
   readonly splitEnabled = signal(false);
   readonly selectedSplitAccountId = signal('');
+  readonly decidingId = signal<string | null>(null);
 
   constructor() {
     this.load();
@@ -92,10 +92,35 @@ export class AdminCommissionAssignmentsComponent {
   openAssignModal(row: AdminCommissionAssignment): void {
     this.editingRow.set(row);
     this.selectedPlanId.set(row.commissionPlanId ?? '');
-    this.splitEnabled.set(row.splitSystemAccountId !== null);
-    this.selectedSplitAccountId.set(row.splitSystemAccountId ?? '');
+    // ToyyibPay always splits: an existing assignment keeps its account, a new one starts on the
+    // default system account so the field is never left empty.
+    this.splitEnabled.set(row.provider === 'TOYYIBPAY');
+    this.selectedSplitAccountId.set(row.splitSystemAccountId ?? this.defaultSplitAccountId());
     this.formError.set(null);
     this.isAssignModalOpen.set(true);
+  }
+
+  // Only plans of the row's own provider can be assigned: the backend rejects a mismatch, so
+  // listing other providers' plans only produces a dead end. Legacy "any provider" plans are
+  // excluded too — every plan now belongs to exactly one provider.
+  plansForRow(): AdminCommissionPlan[] {
+    const row = this.editingRow();
+    if (!row) {
+      return [];
+    }
+    return this.plans().filter((plan) => plan.isActive && plan.provider === row.provider);
+  }
+
+  // Splitting is not optional for ToyyibPay: the platform must know which system account receives
+  // the commission, so the account is a required field rather than an opt-in checkbox.
+  canSplit(): boolean {
+    return this.toyyibPayAccounts().length > 0;
+  }
+
+  defaultSplitAccountId(): string {
+    const defaultAccount =
+      this.toyyibPayAccounts().find((account) => account.isDefault) ?? this.toyyibPayAccounts()[0];
+    return defaultAccount?.accountId ?? '';
   }
 
   closeAssignModal(): void {
@@ -115,9 +140,17 @@ export class AdminCommissionAssignmentsComponent {
       this.formError.set('Pick a commission plan.');
       return;
     }
-    if (this.splitEnabled() && !this.selectedSplitAccountId()) {
-      this.formError.set('Pick a system account to split the commission to.');
-      return;
+    if (row.provider === 'TOYYIBPAY') {
+      if (!this.canSplit()) {
+        this.formError.set(
+          'Add a ToyyibPay system account under System Payment Accounts before assigning a ToyyibPay plan.',
+        );
+        return;
+      }
+      if (!this.selectedSplitAccountId()) {
+        this.formError.set('Pick the ToyyibPay system account that receives the commission.');
+        return;
+      }
     }
 
     this.isSaving.set(true);
@@ -125,7 +158,10 @@ export class AdminCommissionAssignmentsComponent {
     this.paymentsService
       .assignCommissionPlan(row.paymentPlatformOptionId, {
         commissionPlanId: this.selectedPlanId(),
-        splitSystemAccountId: this.splitEnabled() ? this.selectedSplitAccountId() : null,
+        splitSystemAccountId:
+          row.provider === 'TOYYIBPAY' && this.selectedSplitAccountId()
+            ? this.selectedSplitAccountId()
+            : null,
       })
       .pipe(
         finalize(() => this.isSaving.set(false)),
@@ -145,6 +181,30 @@ export class AdminCommissionAssignmentsComponent {
             Array.isArray(message) ? message.join(' ') : 'Failed to save the assignment. Please try again.',
           );
         },
+      });
+  }
+
+  decide(row: AdminCommissionAssignment, status: 'APPROVED' | 'REJECTED'): void {
+    this.decidingId.set(row.paymentPlatformOptionId);
+    this.errorMsg.set(null);
+    this.paymentsService
+      .setPaymentOptionApproval(row.paymentPlatformOptionId, status)
+      .pipe(
+        finalize(() => this.decidingId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.flash(status === 'APPROVED' ? 'Payment channel approved.' : 'Payment channel rejected.');
+          this.load();
+        },
+        // Approving a ToyyibPay option re-checks its credentials, so a 400 carries the reason.
+        error: (error) =>
+          this.errorMsg.set(
+            typeof error?.error?.message === 'string'
+              ? error.error.message
+              : 'Failed to record the decision. Please try again.',
+          ),
       });
   }
 

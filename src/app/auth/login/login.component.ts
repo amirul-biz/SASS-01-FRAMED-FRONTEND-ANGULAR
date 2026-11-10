@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, Role } from '../auth.service';
 
 @Component({
@@ -13,6 +13,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly showPassword = signal(false);
   readonly loading = signal(false);
@@ -61,6 +62,15 @@ export class LoginComponent {
     this.auth
       .login(email, password)
       .then((user) => {
+        // Honour ?redirectTo= set by studioGuard so a photographer who arrived from an
+        // order link lands back on that order rather than the generic landing page.
+        const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo');
+        const isSafeInternalPath =
+          !!redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//');
+        if (isSafeInternalPath && user.role === Role.Photographer) {
+          void this.router.navigateByUrl(redirectTo);
+          return;
+        }
         this.router.navigate([user.role === Role.Admin ? '/admin' : '/studio']);
       })
       .catch((error: unknown) => {
