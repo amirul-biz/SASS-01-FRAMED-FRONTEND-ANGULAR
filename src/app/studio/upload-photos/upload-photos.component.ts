@@ -6,9 +6,9 @@ import { parse as parseExif } from 'exifr';
 import { Observable, Subject, catchError, filter, finalize, from, map, mergeMap, of, switchMap, tap, toArray } from 'rxjs';
 import { PaginatorComponent } from '../../shared/paginator/paginator.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
-import { apiErrorMessage } from '../../shared/storage.util';
+import { apiErrorMessage, formatBytes, formatGb } from '../../shared/storage.util';
 import { Event as StudioEvent, StudioEventsService } from '../studio-events.service';
-import { Photo, PresignedPhoto, StudioPhotosService } from '../studio-photos.service';
+import { EventStorage, Photo, PresignedPhoto, StudioPhotosService } from '../studio-photos.service';
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -111,6 +111,29 @@ export class UploadPhotosComponent implements OnInit {
 
   readonly formatDisplayDate = formatDisplayDate;
   readonly formatCategory = formatCategory;
+  readonly formatBytes = formatBytes;
+  readonly formatGb = formatGb;
+
+  // Storage quota: `storage` is refreshed whenever the confirm modal opens, uploads finish or photos are deleted.
+  readonly storage = signal<EventStorage | null>(null);
+  readonly isStorageLoading = signal(false);
+  readonly pendingFiles = signal<File[]>([]);
+  readonly pendingBytes = computed(() => this.pendingFiles().reduce((total, file) => total + file.size, 0));
+  // Bytes still uploading aren't counted by the server until confirmed, so subtract them here.
+  readonly remainingBytes = computed(() => {
+    const storage = this.storage();
+    if (!storage || storage.limitMb === null) {
+      return null;
+    }
+    const inFlight = this.uploading()
+      .filter((item) => item.status === 'uploading')
+      .reduce((total, item) => total + item.file.size, 0);
+    return Math.max(0, storage.limitMb * 1024 * 1024 - storage.accountUsedBytes - inFlight);
+  });
+  readonly exceedsQuota = computed(() => {
+    const remaining = this.remainingBytes();
+    return remaining !== null && this.pendingBytes() > remaining;
+  });
 
   eventDateRangeLabel(ev: StudioEvent): string {
     const start = formatEventDate(ev.eventStartDate);
@@ -173,6 +196,7 @@ export class UploadPhotosComponent implements OnInit {
       });
 
     this.photosLoadTrigger$.next();
+    this.loadStorage();
 
     this.uploadQueue$
       .pipe(
@@ -288,6 +312,7 @@ export class UploadPhotosComponent implements OnInit {
           this.photosTotalItemCount.set(totalItemCount);
           this.photosTotalPageCount.set(totalPageCount);
           this.selectedPhotoIds.set(new Set());
+          this.loadStorage();
           // remaining.length === 0 doesn't mean the event has no photos left — later pages may
           // still have items to backfill this one, so always refetch instead of assuming blank.
           if (remaining.length === 0 && totalItemCount > 0) {
@@ -417,6 +442,7 @@ export class UploadPhotosComponent implements OnInit {
       return next;
     });
 
+    this.loadStorage();
     const totalItemCount = Math.max(0, this.photosTotalItemCount() - 1);
     const totalPageCount = Math.max(1, Math.ceil(totalItemCount / this.photosPageSize()));
     this.photosTotalItemCount.set(totalItemCount);
@@ -487,7 +513,34 @@ export class UploadPhotosComponent implements OnInit {
       return;
     }
 
-    this.presignAndUpload(validFiles);
+    // Show the confirmation modal first; fresh storage numbers are fetched each time it opens.
+    this.pendingFiles.set(validFiles);
+    this.loadStorage();
+  }
+
+  confirmUpload(): void {
+    if (this.isStorageLoading() || this.exceedsQuota()) {
+      return;
+    }
+    const files = this.pendingFiles();
+    this.pendingFiles.set([]);
+    this.presignAndUpload(files);
+  }
+
+  cancelPendingUpload(): void {
+    this.pendingFiles.set([]);
+  }
+
+  private loadStorage(): void {
+    this.isStorageLoading.set(true);
+    this.photosService
+      .getStorage(this.id())
+      .pipe(
+        finalize(() => this.isStorageLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      // On failure keep the last known numbers; the server still enforces the limit on presign.
+      .subscribe({ next: (storage) => this.storage.set(storage), error: () => undefined });
   }
 
   private presignAndUpload(files: File[]): void {
@@ -535,6 +588,7 @@ export class UploadPhotosComponent implements OnInit {
     if (this.uploading().length === 0) {
       this.uploadTotalCount.set(0);
       this.uploadCompletedCount.set(0);
+      this.loadStorage();
     }
   }
 

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import {
@@ -24,6 +31,22 @@ export class AdminStorageAssignmentsComponent {
 
   readonly rows = signal<AdminStorageAssignment[]>([]);
   readonly limits = signal<AdminStorageLimit[]>([]);
+  readonly sortBy = signal<'usage' | 'quotaDesc' | 'quotaAsc'>('usage');
+  // ponytail: client-side sort over the first 100 rows (pageSize 100); add a server sort param when photographers > 100
+  readonly sortedRows = computed(() => {
+    const sort = this.sortBy();
+    const rank = (r: AdminStorageAssignment) => r.limitMb ?? Number.NEGATIVE_INFINITY;
+    return [...this.rows()].sort((a, b) => {
+      if (sort === 'usage') {
+        return b.usedBytes - a.usedBytes;
+      }
+      // unlimited rows always last
+      if (a.limitMb === null || b.limitMb === null) {
+        return Number(a.limitMb === null) - Number(b.limitMb === null);
+      }
+      return sort === 'quotaDesc' ? rank(b) - rank(a) : rank(a) - rank(b);
+    });
+  });
   readonly isLoading = signal(true);
   readonly errorMsg = signal<string | null>(null);
   readonly successMsg = signal<string | null>(null);

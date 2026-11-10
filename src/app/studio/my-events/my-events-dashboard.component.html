@@ -164,6 +164,9 @@
                     {{ event.eventStartDate | date: 'mediumDate' }} &ndash;
                     {{ event.eventEndDate | date: 'mediumDate' }}
                   }
+                  <span class="font-caption text-caption text-on-surface-variant"
+                    >&middot; {{ formatBytes(event.usedBytes ?? 0) }}</span
+                  >
                 </span>
                 @if (event.deletedAt) {
                   <span
@@ -195,6 +198,7 @@
                 <th class="p-md">Event Name</th>
                 <th class="p-md">Dates</th>
                 <th class="p-md">Status</th>
+                <th class="p-md">Storage</th>
                 <th class="p-md text-right">Actions</th>
               </tr>
             </thead>
@@ -252,6 +256,9 @@
                         >Draft</span
                       >
                     }
+                  </td>
+                  <td class="p-md font-body-md text-body-md text-on-surface">
+                    {{ formatBytes(event.usedBytes ?? 0) }}
                   </td>
                   <td class="p-md">
                     @if (status() === 'active') {

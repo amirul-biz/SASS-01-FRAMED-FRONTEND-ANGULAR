@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AdminStorageLimit, AdminStorageService } from '../admin-storage.service';
@@ -7,7 +15,7 @@ import { apiErrorMessage, formatGb, gbToMb, mbToGb } from '../../shared/storage.
 
 @Component({
   selector: 'app-admin-storage-limits',
-  imports: [ConfirmDialogComponent],
+  imports: [ConfirmDialogComponent, DecimalPipe],
   templateUrl: './admin-storage-limits.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -28,6 +36,10 @@ export class AdminStorageLimitsComponent {
   readonly editingId = signal<string | null>(null);
   readonly name = signal('');
   readonly limitGb = signal('');
+  readonly limitMbPreview = computed(() => {
+    const mb = gbToMb(Number(this.limitGb()));
+    return Number.isFinite(mb) && mb >= 1 ? mb : null;
+  });
 
   readonly deleteTarget = signal<AdminStorageLimit | null>(null);
   readonly isDeleting = signal(false);

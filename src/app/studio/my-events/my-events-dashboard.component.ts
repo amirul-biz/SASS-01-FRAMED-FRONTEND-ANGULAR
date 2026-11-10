@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { Subject, finalize, switchMap } from 'rxjs';
 import { RangePipe } from '../../shared/pipes/range.pipe';
 import { MerchantPaymentPlatformService } from '../../merchant-payment-platform/merchant-payment-platform.service';
+import { formatBytes } from '../../shared/storage.util';
 import { Event, PaginatedResponse, StudioEventsService } from '../studio-events.service';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -23,6 +24,7 @@ export class MyEventsDashboardComponent {
 
   readonly hasApprovedPaymentPlatform = this.paymentPlatformService.hasApprovedPaymentPlatform;
 
+  readonly formatBytes = formatBytes;
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly pageNumber = signal(1);
   readonly pageSize = signal(PAGE_SIZE_OPTIONS[0]);

@@ -20,6 +20,27 @@
   <div
     class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
   >
+    <div
+      class="p-md flex flex-wrap items-center justify-between gap-sm border-b border-outline-variant"
+    >
+      <span
+        class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
+        >{{ rows().length }} photographers</span
+      >
+      <label class="flex items-center gap-sm text-caption text-on-surface-variant" for="sort-by">
+        Sort by
+        <select
+          id="sort-by"
+          class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface bg-surface focus:outline-none focus:border-primary"
+          (change)="sortBy.set($any($event.target).value)"
+        >
+          <option value="usage" [selected]="sortBy() === 'usage'">Highest usage</option>
+          <option value="quotaDesc" [selected]="sortBy() === 'quotaDesc'">Highest quota</option>
+          <option value="quotaAsc" [selected]="sortBy() === 'quotaAsc'">Lowest quota</option>
+        </select>
+      </label>
+    </div>
+
     @if (isLoading()) {
       <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
         Loading photographers...
@@ -42,7 +63,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (row of rows(); track row.photographerId) {
+            @for (row of sortedRows(); track row.photographerId) {
               <tr
                 class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors"
               >
@@ -77,6 +98,11 @@
                         [style.width.%]="usagePercent(row)"
                       ></div>
                     </div>
+                    <span
+                      class="block text-caption mt-xs"
+                      [class]="usagePercent(row) >= 90 ? 'text-error' : 'text-on-surface-variant'"
+                      >{{ 100 - usagePercent(row) }}% remaining</span
+                    >
                   }
                 </td>
                 <td class="p-md text-right">
@@ -124,7 +150,7 @@
             <option value="" [selected]="selectedLimitId() === ''">Select a limit...</option>
             @for (limit of limits(); track limit.id) {
               <option [value]="limit.id" [selected]="limit.id === selectedLimitId()">
-                {{ limit.name }} ({{ formatGb(limit.limitMb) }})
+                {{ limit.name }} ({{ formatGb(limit.limitMb) }} / {{ limit.limitMb }} MB)
               </option>
             }
           </select>

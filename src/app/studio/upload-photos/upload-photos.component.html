@@ -92,6 +92,32 @@
       <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
     }
 
+    @if (storage(); as s) {
+      <div class="flex flex-wrap gap-sm mb-md">
+        <span
+          class="inline-flex items-center gap-xs font-caption text-caption text-on-surface-variant bg-surface-container-lowest shadow-[0_4px_12px_rgba(20,33,61,0.08)] px-md py-sm rounded-full"
+        >
+          <span class="material-symbols-outlined text-[18px]">folder</span>
+          This event: <strong class="text-on-surface">{{ formatBytes(s.eventUsedBytes) }}</strong>
+        </span>
+        <span
+          class="inline-flex items-center gap-xs font-caption text-caption px-md py-sm rounded-full shadow-[0_4px_12px_rgba(20,33,61,0.08)]"
+          [class.bg-surface-container-lowest]="(remainingBytes() ?? 1) > 0"
+          [class.text-on-surface-variant]="(remainingBytes() ?? 1) > 0"
+          [class.bg-error-container]="remainingBytes() === 0"
+          [class.text-error]="remainingBytes() === 0"
+        >
+          <span class="material-symbols-outlined text-[18px]">cloud</span>
+          @if (s.limitMb === null) {
+            Account: <strong class="text-on-surface">{{ formatBytes(s.accountUsedBytes) }}</strong> · unlimited storage
+          } @else {
+            Account: <strong class="text-on-surface">{{ formatBytes(s.accountUsedBytes) }} / {{ formatGb(s.limitMb) }}</strong>
+            · {{ formatBytes(remainingBytes() ?? 0) }} left
+          }
+        </span>
+      </div>
+    }
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
       <div
         class="lg:col-span-2 border-2 border-dashed rounded-xl p-xl flex flex-col items-center justify-center bg-surface-container-lowest cursor-pointer transition-all"
@@ -367,6 +393,81 @@
           @if (photoTimestamp(photo); as timestamp) {
             <p class="text-caption text-white/70">{{ photoTimestampLabel(photo) }} {{ formatDisplayDate(timestamp) }}</p>
           }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (pendingFiles().length > 0) {
+    <div
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg"
+      role="dialog"
+      aria-modal="true"
+      (click)="cancelPendingUpload()"
+    >
+      <div
+        class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)]"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 class="font-headline-md text-headline-md text-primary mb-sm">
+          Upload {{ pendingFiles().length }} {{ pendingFiles().length === 1 ? 'photo' : 'photos' }}?
+        </h2>
+
+        <dl class="flex flex-col gap-sm text-body-md font-body-md mb-md">
+          <div class="flex justify-between">
+            <dt class="text-on-surface-variant">Total upload size</dt>
+            <dd class="font-label-md text-on-surface">{{ formatBytes(pendingBytes()) }}</dd>
+          </div>
+          @if (isStorageLoading() && !storage()) {
+            <p class="text-caption text-on-surface-variant">Checking your storage...</p>
+          } @else if (storage(); as s) {
+            @if (s.limitMb === null) {
+              <div class="flex justify-between">
+                <dt class="text-on-surface-variant">Account storage</dt>
+                <dd class="font-label-md text-on-surface">Unlimited</dd>
+              </div>
+            } @else {
+              <div class="flex justify-between">
+                <dt class="text-on-surface-variant">Storage used</dt>
+                <dd class="font-label-md text-on-surface">{{ formatBytes(s.accountUsedBytes) }} / {{ formatGb(s.limitMb) }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-on-surface-variant">Remaining now</dt>
+                <dd class="font-label-md text-on-surface">{{ formatBytes(remainingBytes() ?? 0) }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-on-surface-variant">Remaining after upload</dt>
+                <dd class="font-label-md" [class.text-error]="exceedsQuota()" [class.text-on-surface]="!exceedsQuota()">
+                  {{ exceedsQuota() ? '0 B' : formatBytes((remainingBytes() ?? 0) - pendingBytes()) }}
+                </dd>
+              </div>
+            }
+          }
+        </dl>
+
+        @if (exceedsQuota()) {
+          <p class="text-caption text-error mb-md" role="alert">
+            This upload is {{ formatBytes(pendingBytes() - (remainingBytes() ?? 0)) }} over your remaining storage.
+            Remove some photos or delete existing ones, or contact the admin to raise your limit.
+          </p>
+        }
+
+        <div class="flex justify-end gap-sm">
+          <button
+            type="button"
+            (click)="cancelPendingUpload()"
+            class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmUpload()"
+            [disabled]="isStorageLoading() || exceedsQuota()"
+            class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Confirm Upload
+          </button>
         </div>
       </div>
     </div>

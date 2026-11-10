@@ -41,6 +41,12 @@ export interface PresignPhotosBatchResponse {
   expiresIn: number;
 }
 
+export interface EventStorage {
+  eventUsedBytes: number;
+  accountUsedBytes: number;
+  limitMb: number | null;
+}
+
 export interface ReuploadPhotoResponse {
   status: PhotoUploadStatus;
   key: string;
@@ -62,6 +68,10 @@ export class StudioPhotosService {
       `${this.env.apiUrl}/events/${eventId}/photos/presign-batch`,
       { files },
     );
+  }
+
+  getStorage(eventId: string): Observable<EventStorage> {
+    return this.http.get<EventStorage>(`${this.env.apiUrl}/events/${eventId}/photos/storage`);
   }
 
   confirmUpload(

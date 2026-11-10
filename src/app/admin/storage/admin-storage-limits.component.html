@@ -66,6 +66,7 @@
                 <td class="p-md font-label-md text-label-md text-on-surface">{{ limit.name }}</td>
                 <td class="p-md text-right font-label-md text-label-md text-on-surface">
                   {{ formatGb(limit.limitMb) }}
+                  <span class="text-on-surface-variant">({{ limit.limitMb | number }} MB)</span>
                 </td>
                 <td class="p-md text-center font-body-md text-body-md text-on-surface">
                   {{ limit.assignmentCount }}
@@ -142,6 +143,9 @@
             [value]="limitGb()"
             (input)="limitGb.set($any($event.target).value)"
           />
+          @if (limitMbPreview(); as mb) {
+            <p class="text-caption text-on-surface-variant mt-xs">= {{ mb | number }} MB</p>
+          }
         </div>
 
         @if (formError()) {

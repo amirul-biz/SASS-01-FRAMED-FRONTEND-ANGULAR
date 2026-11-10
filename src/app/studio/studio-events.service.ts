@@ -29,6 +29,7 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   pricingBundleIds: string[];
+  usedBytes?: number;
 }
 
 export interface CreateEventDto {
