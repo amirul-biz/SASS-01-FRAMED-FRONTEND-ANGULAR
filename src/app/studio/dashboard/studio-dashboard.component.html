@@ -94,6 +94,29 @@
       </div>
     </div>
 
+    @if (monthlyCommission(); as m) {
+      <a
+        routerLink="/studio/commission"
+        class="flex flex-wrap items-center justify-between gap-md bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_12px_rgba(20,33,61,0.08)] mb-xl hover:bg-surface-container-low transition-colors"
+      >
+        <div>
+          <p class="font-label-md text-label-md text-on-surface-variant mb-xs">
+            Commission this month ({{ m.period + '-01' | date: 'MMMM y' }})
+          </p>
+          <p class="font-headline-lg text-headline-lg-mobile text-on-surface">
+            {{ formatCurrency(m.amount) }}
+          </p>
+          <p class="font-caption text-caption text-on-surface-variant mt-xs">
+            Resets every month. Paid on the 1st–5th of next month.
+          </p>
+        </div>
+        <span class="flex items-center gap-xs font-label-md text-label-md text-primary">
+          Commission history
+          <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        </span>
+      </a>
+    }
+
     <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] p-lg mb-xl">
       <h2 class="font-label-md text-label-md text-on-surface mb-md">Orders by status</h2>
       <div class="flex flex-wrap gap-sm">

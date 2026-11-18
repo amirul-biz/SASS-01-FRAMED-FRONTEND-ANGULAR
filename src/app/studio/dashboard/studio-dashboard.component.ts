@@ -1,8 +1,13 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { formatCurrency } from '../../pricing/currency.util';
+import {
+  CommissionStatementService,
+  CurrentCommission,
+} from '../../shared/commission-statement.service';
 import { formatBytes, formatGb } from '../../shared/storage.util';
 import { PhotographerDashboard, StudioProfileService } from '../studio-profile.service';
 
@@ -15,13 +20,17 @@ const ORDER_STATUS_CHIPS = [
 
 @Component({
   selector: 'app-studio-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, DatePipe],
   templateUrl: './studio-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudioDashboardComponent {
   private readonly profileService = inject(StudioProfileService);
+  private readonly commissionService = inject(CommissionStatementService);
   private readonly destroyRef = inject(DestroyRef);
+
+  // This month's commission (Malaysia time). Optional chrome: a failure just hides the card.
+  readonly monthlyCommission = signal<CurrentCommission | null>(null);
 
   readonly formatCurrency = formatCurrency;
   readonly orderStatusChips = ORDER_STATUS_CHIPS;
@@ -31,6 +40,11 @@ export class StudioDashboardComponent {
   readonly errorMsg = signal<string | null>(null);
 
   constructor() {
+    this.commissionService
+      .getCurrent()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (c) => this.monthlyCommission.set(c), error: () => undefined });
+
     this.profileService
       .getDashboard()
       .pipe(

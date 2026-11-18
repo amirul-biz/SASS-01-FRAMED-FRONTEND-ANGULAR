@@ -1,0 +1,236 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1
+      class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+    >
+      Commission Statements
+    </h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      Monthly commission each photographer owes (cash and non-split payments). Pick a month, review
+      proof of payment, then mark it as paid. Photographers can only see the status.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
+  >
+    <div
+      class="p-md flex flex-wrap items-center justify-between gap-sm border-b border-outline-variant"
+    >
+      <span
+        class="font-caption text-caption text-on-surface-variant bg-surface-container px-sm py-xs rounded-full"
+        >{{ rows().length }} photographers</span
+      >
+      <div class="flex flex-wrap items-center gap-sm">
+        <label class="flex items-center gap-sm text-caption text-on-surface-variant" for="cs-month">
+          Month
+          <input
+            id="cs-month"
+            type="month"
+            class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface bg-surface focus:outline-none focus:border-primary"
+            [value]="period()"
+            (change)="onPeriodChange($event)"
+          />
+        </label>
+        <label class="flex items-center gap-sm text-caption text-on-surface-variant" for="cs-status">
+          Status
+          <select
+            id="cs-status"
+            class="h-10 px-md border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface bg-surface focus:outline-none focus:border-primary"
+            (change)="onStatusFilterChange($event)"
+          >
+            <option value="" [selected]="statusFilter() === ''">All</option>
+            @for (status of statusOptions; track status) {
+              <option [value]="status" [selected]="statusFilter() === status">
+                {{ statusLabel[status] }}
+              </option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        Loading commission statements...
+      </p>
+    } @else if (rows().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        No commission for this month.
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr
+              class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider"
+            >
+              <th class="p-md">Photographer</th>
+              <th class="p-md text-right">Commission</th>
+              <th class="p-md">Status</th>
+              <th class="p-md text-center">Files</th>
+              <th class="p-md text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.photographerId) {
+              <tr
+                class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors"
+              >
+                <td class="p-md">
+                  <span class="block font-label-md text-label-md text-on-surface">{{
+                    row.photographerName
+                  }}</span>
+                  <span class="text-caption text-on-surface-variant">{{
+                    row.photographerEmail
+                  }}</span>
+                </td>
+                <td class="p-md text-right font-label-md text-label-md text-on-surface">
+                  {{ formatCurrency(row.amount) }}
+                </td>
+                <td class="p-md">
+                  <span
+                    class="px-sm py-xs rounded-full text-caption font-label-md"
+                    [class]="statusClass[row.status]"
+                    >{{ statusLabel[row.status] }}</span
+                  >
+                </td>
+                <td class="p-md text-center font-body-md text-body-md text-on-surface">
+                  {{ row.attachments.length }}
+                </td>
+                <td class="p-md text-right">
+                  <button
+                    type="button"
+                    (click)="openRow(row)"
+                    class="h-9 px-md bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors"
+                  >
+                    Manage
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (editingRow(); as row) {
+  <div
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-lg"
+    role="dialog"
+    aria-modal="true"
+    (click)="closeModal()"
+  >
+    <div
+      class="bg-surface-container-lowest rounded-xl p-lg max-w-md w-full shadow-[0_8px_32px_rgba(20,33,61,0.24)] max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="font-headline-md text-headline-md text-primary mb-sm">
+        {{ monthDate(period()) | date: 'MMMM y' }} commission
+      </h2>
+      <p class="text-caption text-on-surface-variant mb-md">
+        {{ row.photographerName }} — {{ row.photographerEmail }}
+      </p>
+
+      <div class="flex items-center justify-between mb-lg">
+        <span class="font-headline-md text-headline-md text-on-surface">{{
+          formatCurrency(row.amount)
+        }}</span>
+        <span
+          class="px-sm py-xs rounded-full text-caption font-label-md"
+          [class]="statusClass[row.status]"
+          >{{ statusLabel[row.status] }}</span
+        >
+      </div>
+
+      <div class="mb-lg">
+        <span class="block font-label-md text-label-md text-on-surface mb-xs">Proof of payment</span>
+        <div class="flex flex-col gap-xs mb-sm">
+          @for (file of row.attachments; track file.id) {
+            <a
+              [href]="file.url"
+              target="_blank"
+              rel="noopener"
+              class="flex items-center gap-xs text-caption text-primary hover:underline"
+            >
+              <span class="material-symbols-outlined text-[16px]">attach_file</span>
+              {{ file.fileName }}
+              <span class="text-on-surface-variant"
+                >· {{ file.uploadedByRole === 'ADMIN' ? 'Admin' : 'Photographer' }} ·
+                {{ file.createdAt | date: 'd MMM y' }}</span
+              >
+            </a>
+          } @empty {
+            <span class="text-caption text-on-surface-variant">No files uploaded yet.</span>
+          }
+        </div>
+        <label
+          class="inline-flex items-center gap-xs h-9 px-md border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+          [class.opacity-40]="isBusy()"
+          [class.pointer-events-none]="isBusy()"
+        >
+          <span class="material-symbols-outlined text-[18px]">upload_file</span>
+          Add file
+          <input type="file" class="sr-only" [accept]="fileAccept" (change)="onFileSelected($event)" />
+        </label>
+      </div>
+
+      <div class="mb-lg">
+        <label class="block font-label-md text-label-md text-on-surface mb-xs" for="cs-notes"
+          >Notes</label
+        >
+        <textarea
+          id="cs-notes"
+          rows="3"
+          maxlength="500"
+          class="w-full px-md py-sm border border-outline-variant rounded-xl font-body-md text-body-md bg-surface focus:outline-none focus:border-primary"
+          [value]="notes()"
+          (input)="notes.set($any($event.target).value)"
+        ></textarea>
+      </div>
+
+      @if (formError()) {
+        <p class="text-caption text-error mb-sm">{{ formError() }}</p>
+      }
+
+      <div class="flex justify-between gap-sm">
+        <button
+          type="button"
+          (click)="closeModal()"
+          [disabled]="isBusy()"
+          class="px-md py-sm border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-40"
+        >
+          Close
+        </button>
+        @if (row.status === 'PAID') {
+          <button
+            type="button"
+            (click)="setStatus('UNPAID')"
+            [disabled]="isBusy()"
+            class="px-md py-sm border border-error text-error rounded-xl font-label-md text-label-md hover:bg-error-container transition-colors disabled:opacity-40"
+          >
+            Mark as unpaid
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="setStatus('PAID')"
+            [disabled]="isBusy()"
+            class="px-md py-sm bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {{ isBusy() ? 'Saving...' : 'Mark as paid' }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -95,6 +95,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'commission',
+        loadComponent: () =>
+          import('./studio/commission/studio-commission.component').then(
+            (m) => m.StudioCommissionComponent,
+          ),
+      },
+      {
         path: 'events',
         loadComponent: () =>
           import('./studio/my-events/my-events-dashboard.component').then(
@@ -276,6 +283,13 @@ export const routes: Routes = [
           loadComponent: () =>
             import('./admin/payments/admin-commission-report.component').then(
               (m) => m.AdminCommissionReportComponent,
+            ),
+        },
+        {
+          path: 'commission-statements',
+          loadComponent: () =>
+            import('./admin/payments/admin-commission-statements.component').then(
+              (m) => m.AdminCommissionStatementsComponent,
             ),
         },
         {

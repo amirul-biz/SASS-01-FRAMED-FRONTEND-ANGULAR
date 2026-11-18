@@ -18,6 +18,8 @@ export class CartComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    this.selection.ensureActiveCart();
+
     // Pricing-bundle data lives only in memory (see selection.service.ts), so a cart restored from
     // storage — e.g. after a refresh, or one the rider never actually browsed to this session —
     // has no voucher options or format prices to compute from yet. Refetch once per event the

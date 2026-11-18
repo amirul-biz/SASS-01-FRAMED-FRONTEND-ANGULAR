@@ -77,6 +77,17 @@ export class SelectionService {
     this.activeId.set(eventId);
   }
 
+  // Browsing an event with no cart makes it the active event, so the cart page would read an empty
+  // cart even though other events hold items (header badge counts all carts). The cart page calls
+  // this to land on a cart that exists instead.
+  ensureActiveCart(): void {
+    const carts = this.carts();
+    const id = this.activeId();
+    if (carts.size > 0 && (!id || !carts.has(id))) {
+      this.activeId.set(carts.keys().next().value ?? null);
+    }
+  }
+
   // Every cart the rider currently holds, for the cart page's event switcher.
   readonly eventCarts = computed<EventCartSummary[]>(() => {
     const active = this.activeId();

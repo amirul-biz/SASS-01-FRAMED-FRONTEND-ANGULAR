@@ -62,6 +62,15 @@
       <span class="material-symbols-outlined mr-md">receipt_long</span>
       <span class="font-label-md text-label-md">Orders</span>
     </a>
+    <a
+      routerLink="/studio/commission"
+      routerLinkActive="bg-secondary-container text-on-secondary-container font-bold"
+      class="flex items-center px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+      (click)="closeSidebar()"
+    >
+      <span class="material-symbols-outlined mr-md">request_quote</span>
+      <span class="font-label-md text-label-md">Commission</span>
+    </a>
     <button
       type="button"
       (click)="togglePricing()"

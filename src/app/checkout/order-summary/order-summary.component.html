@@ -29,6 +29,16 @@
             <span class="text-caption text-on-surface-variant">{{ entry.formatOption.label }}</span>
           </div>
         </div>
+        @if (previewable()) {
+          <button
+            type="button"
+            (click)="openPreview(i)"
+            class="shrink-0 flex items-center gap-xs px-sm py-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors"
+          >
+            <span class="material-symbols-outlined text-[18px]">zoom_in</span>
+            View Photo
+          </button>
+        }
         <span class="font-label-md text-label-md text-on-surface-variant shrink-0">{{ formatCurrency(entry.formatOption.price) }}</span>
         @if (removable()) {
           <button

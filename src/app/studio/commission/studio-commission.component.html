@@ -1,0 +1,111 @@
+<div class="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-xl w-full">
+  <div class="mb-xl">
+    <h1
+      class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-xs"
+    >
+      Commission History
+    </h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      Commission you owe the platform, month by month. A month's commission is paid on the 1st–5th of
+      the next month. Upload your proof of payment and we'll mark it as paid.
+    </p>
+  </div>
+
+  @if (errorMsg()) {
+    <p class="text-caption text-error mb-md">{{ errorMsg() }}</p>
+  }
+  @if (successMsg()) {
+    <p class="text-caption text-secondary mb-md">{{ successMsg() }}</p>
+  }
+
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(20,33,61,0.08)] overflow-hidden"
+  >
+    @if (isLoading()) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        Loading commission history...
+      </p>
+    } @else if (rows().length === 0) {
+      <p class="text-body-md font-body-md text-on-surface-variant text-center py-xl">
+        No commission to pay yet.
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr
+              class="border-b border-outline-variant text-caption font-label-md text-on-surface-variant uppercase tracking-wider"
+            >
+              <th class="p-md">Month</th>
+              <th class="p-md">Commission</th>
+              <th class="p-md">Status</th>
+              <th class="p-md">Proof of payment</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.period) {
+              <tr class="border-b border-outline-variant last:border-0 align-top">
+                <td class="p-md">
+                  <span class="block font-label-md text-label-md text-on-surface">{{
+                    monthDate(row.period) | date: 'MMMM y'
+                  }}</span>
+                  @if (row.status === 'DUE' || row.status === 'OVERDUE') {
+                    <span class="text-caption text-on-surface-variant"
+                      >Pay by {{ payByDate(row.period) | date: 'd MMM y' }}</span
+                    >
+                  }
+                </td>
+                <td class="p-md font-body-md text-body-md text-on-surface">
+                  {{ formatCurrency(row.amount) }}
+                </td>
+                <td class="p-md">
+                  <span
+                    class="px-sm py-xs rounded-full text-caption font-label-md"
+                    [class]="statusClass[row.status]"
+                    >{{ statusLabel[row.status] }}</span
+                  >
+                  @if (row.paidAt) {
+                    <span class="block text-caption text-on-surface-variant mt-xs"
+                      >{{ row.paidAt | date: 'd MMM y' }}</span
+                    >
+                  }
+                </td>
+                <td class="p-md">
+                  <div class="flex flex-col gap-xs items-start">
+                    @for (file of row.attachments; track file.id) {
+                      <a
+                        [href]="file.url"
+                        target="_blank"
+                        rel="noopener"
+                        class="flex items-center gap-xs text-caption text-primary hover:underline"
+                      >
+                        <span class="material-symbols-outlined text-[16px]">attach_file</span>
+                        {{ file.fileName }}
+                      </a>
+                    }
+                    @if (row.status !== 'PAID') {
+                      <label
+                        class="inline-flex items-center gap-xs h-9 px-md border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+                        [class.opacity-40]="uploadingPeriod() !== null"
+                        [class.pointer-events-none]="uploadingPeriod() !== null"
+                      >
+                        <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                        {{ uploadingPeriod() === row.period ? 'Uploading...' : 'Upload' }}
+                        <input
+                          type="file"
+                          class="sr-only"
+                          [accept]="fileAccept"
+                          (change)="onFileSelected(row.period, $event)"
+                        />
+                      </label>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
