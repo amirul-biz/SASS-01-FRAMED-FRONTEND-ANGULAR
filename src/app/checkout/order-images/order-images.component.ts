@@ -40,6 +40,24 @@ export class OrderImagesComponent implements OnInit {
     this.load();
   }
 
+  // `<a download>` is ignored for cross-origin hrefs (R2 host != app host), so it just navigates.
+  // Fetch -> blob -> same-origin object URL forces a real download; falls back to a new tab if CORS/network fails.
+  async download(event: Event, item: { photoUrl: string; photoName: string }): Promise<void> {
+    event.preventDefault();
+    try {
+      const res = await fetch(item.photoUrl);
+      if (!res.ok) throw new Error(String(res.status));
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = item.photoName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(item.photoUrl, '_blank', 'noopener');
+    }
+  }
+
   private load(): void {
     const orderId = this.route.snapshot.queryParamMap.get('orderId');
     if (!orderId) {
