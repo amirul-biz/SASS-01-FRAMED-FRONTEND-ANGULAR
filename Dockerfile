@@ -9,6 +9,9 @@ COPY . .
 ARG NG_BUILD_CONFIG=production
 ARG ENV_CONFIG_JSON
 RUN node scripts/write-environment.js
+# Stamp sw.js VERSION per build so installed PWAs drop their cached chunks.
+# Without this a hard-coded VERSION means a deploy never reaches existing installs.
+RUN BUILD_ID=${BUILD_ID:-$(date +%s)} node scripts/stamp-sw.mjs
 RUN npm run build -- --configuration $NG_BUILD_CONFIG
 
 # ── Stage 2: Serve ────────────────────────────────────────────

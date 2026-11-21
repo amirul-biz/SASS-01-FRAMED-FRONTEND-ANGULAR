@@ -8,10 +8,12 @@
  *   static assets      -> stale-while-revalidate
  *   /api/**, /v1/**    -> never touched (network only, no caching)
  *
- * Bump VERSION to invalidate every cache on next visit.
+ * Bump VERSION to invalidate every cache on next visit. VERSION is stamped by
+ * scripts/stamp-sw.mjs on every build (see Dockerfile) — do not hard-code a
+ * literal here, or installed PWAs keep serving the previous build's chunks.
  */
 
-const VERSION = 'v3';
+const VERSION = '__SW_VERSION__';
 const STATIC_CACHE = `picsweep-static-${VERSION}`;
 const SHELL_CACHE = `picsweep-shell-${VERSION}`;
 
