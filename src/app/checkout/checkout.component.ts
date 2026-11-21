@@ -76,8 +76,19 @@ export class CheckoutComponent {
     const isSelectionEmpty = this.selection.selectedCount() === 0;
     const isAlreadySubmitting = this.isSubmitting();
 
-    const isPurchaseBlocked = isFormInvalid || isSelectionEmpty || isAlreadySubmitting;
+    // The event/pricing lookup fills selectedTier() with the pricingOptionId sent to
+    // POST /orders. If it hasn't landed (or failed), the payload would go out with an
+    // undefined pricingOptionId, the API answers 400, and we would still hand the customer
+    // off to WhatsApp with a message for an order that was never created.
+    const eventId = this.selection.eventId();
+    const isEventNotReady = !eventId || this.loadedEventId() !== eventId;
+
+    const isPurchaseBlocked =
+      isFormInvalid || isSelectionEmpty || isAlreadySubmitting || isEventNotReady;
     if (isPurchaseBlocked) {
+      if (isEventNotReady) {
+        this.submitError.set('We could not load this event. Please refresh the page and try again.');
+      }
       return;
     }
 
